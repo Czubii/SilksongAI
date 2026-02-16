@@ -42,7 +42,7 @@ Example of correct `Directory.Build.props.user` file:
 
 ### Building the Mod
 
-1. Open `SilksongAImod.sln` in Visual Studio.  
+1. Open `mod\SilksongAImod.sln` in Visual Studio.  
 2. Choose your configuration: **Release** is recommended for gameplay.  
 3. Build the solution (`Build → Build Solution`).  
 
@@ -53,7 +53,7 @@ Example of correct `Directory.Build.props.user` file:
 You have two options:
 
 #### 1. Deploy manually
-Copy the `SilksongAImod.dll` file from `SilksongAImod\bin\Release` to `\BepInEx\plugins` folder inside your game instalation directory
+Copy the `SilksongAImod.dll` file from `mod\SilksongAImod\bin\Release` to `\BepInEx\plugins` folder inside your game instalation directory
 
 #### 2. Use the DeployAndRun target to copy the DLL and launch the game automatically:
 Use the `DeployAndRun` MSBuild target to copy the DLL to your game’s BepInEx/plugins folder and automatically run the game:
