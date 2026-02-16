@@ -56,7 +56,7 @@ You have two options:
 Copy the `SilksongAImod.dll` file from `SilksongAImod\bin\Release` to `\BepInEx\plugins` folder inside your game instalation directory
 
 #### 2. Use the DeployAndRun target to copy the DLL and launch the game automatically:
-Use the `DeployAndRun` MSBuild target to copy the DLL to your game’s BepInEx/plugins folder:
+Use the `DeployAndRun` MSBuild target to copy the DLL to your game’s BepInEx/plugins folder and automatically run the game:
 
 ```powershell
 msbuild SilksongAImod.csproj /t:DeployAndRun /p:Configuration=Release
