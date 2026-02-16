@@ -2,32 +2,20 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <Import Project="Directory.Build.props.user" Condition="Exists('Directory.Build.props.user')" />
-
-
   <!-- Fail build if GameDir is not defined -->
-<Target Name="ValidateConfig" BeforeTargets="Build">
-  <Error Condition="!Exists('Directory.Build.props.user')"
-         Text="ERROR: Directory.Build.props.user is missing. Copy Directory.Build.props.example to Directory.Build.props.user." />
-
-  <Error Condition="'$(GameDir)' == ''"
-         Text="ERROR: GameDir not set in Directory.Build.props.user." />
-
-  <Message Text="GameDir is: $(GameDir)" Importance="high" />
-</Target>
-
-
-<Target Name="DeployAndRun">
-  <!-- Kill the game if it is running -->
-  <Exec Command="taskkill /IM &quot;Hollow Knight Silksong.exe&quot; /F" ContinueOnError="true" />
-
-  <!-- Copy the compiled DLL to BepInEx/plugins -->
-  <Copy SourceFiles="$(TargetPath)"
-        DestinationFolder="$(GameDir)\BepInEx\plugins" />
-
-  <!-- Launch the game -->
-  <Exec Command="start &quot;&quot; &quot;$(GameDir)\Hollow Knight Silksong.exe&quot;" />
-</Target>
-
+  <Target Name="ValidateConfig" BeforeTargets="Build">
+    <Error Condition="!Exists('Directory.Build.props.user')" Text="ERROR: Directory.Build.props.user is missing. Copy Directory.Build.props.example to Directory.Build.props.user." />
+    <Error Condition="'$(GameDir)' == ''" Text="ERROR: GameDir not set in Directory.Build.props.user." />
+    <Message Text="GameDir is: $(GameDir)" Importance="high" />
+  </Target>
+  <Target Name="DeployAndRun">
+    <!-- Kill the game if it is running -->
+    <Exec Command="taskkill /IM &quot;Hollow Knight Silksong.exe&quot; /F" ContinueOnError="true" />
+    <!-- Copy the compiled DLL to BepInEx/plugins -->
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameDir)\BepInEx\plugins" />
+    <!-- Launch the game -->
+    <Exec Command="start &quot;&quot; &quot;$(GameDir)\Hollow Knight Silksong.exe&quot;" />
+  </Target>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -108,6 +96,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ModGUI.cs" />
     <Compile Include="SilksongAImod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
