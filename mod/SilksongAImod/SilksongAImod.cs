@@ -8,7 +8,8 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-[BepInPlugin("com.yourname.SilksongAImod", "Silksong AI mod", "1.0.0 ")]
+[BepInPlugin("com.czubii.SilksongAImod", "Silksong AI mod", "1.0.0 ")]
+
 public class SilksongAImod : BaseUnityPlugin
 {
     private ConfigEntry<bool> getPositionButton;
@@ -16,6 +17,7 @@ public class SilksongAImod : BaseUnityPlugin
     private ConfigEntry<bool> godModeToggle;
     private ConfigEntry<bool> fightMossMotherButton;
     internal static ManualLogSource Log;
+
 
     private static bool godMode = false;
 
