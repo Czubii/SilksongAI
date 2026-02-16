@@ -128,7 +128,7 @@ namespace SilksongAI
 
                 string scene_name = "Tut_03";
                 Vector3 pos = new Vector3(68f, 17.6f, 0);
-                plugin.TeleportTo(scene_name, pos);
+                TeleportUtils.TeleportTo(scene_name, pos);
             }
         }
 

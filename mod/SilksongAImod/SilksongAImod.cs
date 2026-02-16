@@ -33,8 +33,6 @@ public class SilksongAImod : BaseUnityPlugin
         Vector3 pos;
         Vector3 vel;
         int hp;
-
-
     }
 
 private void Awake()
@@ -44,23 +42,15 @@ private void Awake()
 
         gui = new ModGUI(this);
 
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneLoaded += TeleportUtils.OnSceneLoaded;
         
-
-
         Harmony.CreateAndPatchAll(typeof(SilksongAImod), null);
 
 
     }
-
-
-   
-
-    private void Update()
+    private void OnDestroy()
     {
-        //Log.LogInfo($"Scene: CHUJ!");
-        //Time.timeScale = 2f;
- 
+        SceneManager.sceneLoaded -= TeleportUtils.OnSceneLoaded;
     }
 
     private EnemyData? getEnemyData(string enemyName)
@@ -148,36 +138,6 @@ private void Awake()
             Value = false
         });
     }
-
-    private Vector3 pendingPos;
-    private string pendingScene;
-    private bool pendingTeleport;
-
-    private void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
-    public void TeleportTo(string sceneName, Vector3 pos)
-    {
-        pendingScene = sceneName;
-        pendingPos = pos;
-        pendingTeleport = true;
-
-        GameManager.instance.ChangeToScene(sceneName, "top1", 0.5f);
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (!pendingTeleport) return;
-        if (scene.name != pendingScene) return;
-
-        pendingTeleport = false;
-
-        HeroController.instance.transform.position = pendingPos;
-        GameManager.instance.cameraCtrl.PositionToHeroInstant(false);
-    }
-
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerData), "TakeHealth")]
