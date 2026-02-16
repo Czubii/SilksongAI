@@ -13,6 +13,19 @@
          Text="ERROR: GameDir not set in Directory.Build.props.user." />
 </Target>
 
+
+<Target Name="DeployAndRun">
+  <!-- Kill the game if it is running -->
+  <Exec Command="taskkill /IM &quot;Hollow Knight Silksong.exe&quot; /F" ContinueOnError="true" />
+
+  <!-- Copy the compiled DLL to BepInEx/plugins -->
+  <Copy SourceFiles="$(TargetPath)"
+        DestinationFolder="$(GameDir)\BepInEx\plugins" />
+
+  <!-- Launch the game -->
+  <Exec Command="start &quot;&quot; &quot;$(GameDir)\Hollow Knight Silksong.exe&quot;" />
+</Target>
+
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
