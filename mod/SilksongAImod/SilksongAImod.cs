@@ -22,9 +22,9 @@ public struct EnemyData
 
 public struct HeroData
 {
-    Vector3 pos;
-    Vector3 vel;
-    int hp;
+    public Vector3 pos;
+    public Vector3 vel;
+    public int hp;
 }
 
 
