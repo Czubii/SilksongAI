@@ -11,6 +11,8 @@
 
   <Error Condition="'$(GameDir)' == ''"
          Text="ERROR: GameDir not set in Directory.Build.props.user." />
+
+  <Message Text="GameDir is: $(GameDir)" Importance="high" />
 </Target>
 
 
