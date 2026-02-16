@@ -10,22 +10,7 @@ using UnityEngine.SceneManagement;
 using SilksongAI;
 
 
-public struct EnemyData
-{
 
-    public Vector3 pos;
-    public Vector2 vel;
-    public int hp;
-    public PlayMakerFSM fsm;
-
-}
-
-public struct HeroData
-{
-    public Vector3 pos;
-    public Vector3 vel;
-    public int hp;
-}
 
 
 [BepInPlugin("com.czubii.SilksongAImod", "Silksong AI mod", "1.0.0 ")]
@@ -37,7 +22,7 @@ public class SilksongAImod : BaseUnityPlugin
     public static bool GodModeEnabled { get; set; } = false;
 
 
-private void Awake()
+    private void Awake()
     {
         Log = Logger;
         Log.LogInfo("Plugin loaded and initialized");
@@ -54,10 +39,6 @@ private void Awake()
     {
         SceneManager.sceneLoaded -= TeleportUtils.OnSceneLoaded;
     }
-
-  
-
-    
 
     public void RespawnMossMother()
     {

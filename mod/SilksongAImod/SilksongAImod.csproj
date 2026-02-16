@@ -96,6 +96,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataStructures.cs" />
     <Compile Include="ModGUI.cs" />
     <Compile Include="SilksongAImod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
