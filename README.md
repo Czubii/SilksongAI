@@ -28,7 +28,6 @@ Before building, you need to tell the project where your game is installed:
 
 1. In the `mod/SilksongAImod` directory, duplicate the `Directory.Build.props` file and rename it to `Directory.Build.props.user`.  
 2. Edit `Directory.Build.props.user` and set the `GameDir` property to your game path.  
-3. Restart visual studio for the changes to take affect.
 
 Example of correct `Directory.Build.props.user` file:
 
