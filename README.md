@@ -53,7 +53,18 @@ Example of correct `Directory.Build.props.user` file:
 You have two options:
 
 #### 1. Deploy manually
-Copy the `SilksongAImod.dll` file from `mod\SilksongAImod\bin\Release` to `\BepInEx\plugins` folder inside your game instalation directory
+Copy the `SilksongAImod.dll` file from `mod\SilksongAImod\bin\Release` to `\BepInEx\plugins` folder inside your game instalation directory. Create a folder inside `\BepInEx\plugins` called `SilksongAI` and from the `mod\SilksongAImod\bin\Release` copy the following files:
+
+ - MessagePack.dll
+ - MessagePack.Annotations.dll
+ - Microsoft.Bcl.AsyncInterfaces.dll
+ - Microsoft.NET.StringTools.dll
+ - System.Buffers.dll
+ - System.Collections.Immutable.dll
+ - System.Memory.dll
+ - System.Numerics.Vectors.dll
+ - System.Runtime.CompilerServices.Unsafe.dll
+ - System.Threading.Tasks.Extensions.dll
 
 #### 2. Use the DeployAndRun target to copy the DLL and launch the game automatically:
 Use the `DeployAndRun` MSBuild target to copy the DLL to your game’s BepInEx/plugins folder and automatically run the game:
