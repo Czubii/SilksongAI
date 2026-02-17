@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 using UnityEngine;
+using HutongGames.PlayMaker.Actions;
 
 namespace SilksongAI
 {
@@ -16,6 +17,8 @@ namespace SilksongAI
         private static bool pendingTeleport;
         public static void TeleportTo(string sceneName, Vector3 pos)
         {
+            if (pendingTeleport) return;
+
             pendingScene = sceneName;
             pendingPos = pos;
             pendingTeleport = true;
@@ -37,10 +40,8 @@ namespace SilksongAI
 
     public static class GetDataUtils
     {
-        private static EnemyData? getEnemyData(string enemyName)
+        public static EnemyData? getEnemyData(GameObject enemy)
         {
-            var enemy = GameObject.Find(enemyName);
-            if (enemy == null) return null;
 
             var hm = enemy.GetComponent<HealthManager>();
             if (hm == null) return null;
@@ -51,18 +52,53 @@ namespace SilksongAI
             var rigidbody = enemy.GetComponent<Rigidbody2D>();
             if (rigidbody == null) return null;
 
-            EnemyData output = new EnemyData();
+            EnemyData output = new EnemyData
+            {
 
-            output.pos = enemy.transform.position;
-            output.vel = rigidbody.linearVelocity;
-            output.hp = hm.hp;
-            output.fsm = fsm;
+                posX = enemy.transform.position.x,
+                posY = enemy.transform.position.y,
+                velX = rigidbody.linearVelocity.x,
+                velY = rigidbody.linearVelocity.y,
+                hp = hm.hp
 
+            };
 
             return output;
         }
 
-        private static Vector3 GetEnemyPosition(string enemyName)
+        public static HeroData? getHeroData()
+        {
+            var hero = HeroController.instance;
+            var rigidbody = hero.GetComponent<Rigidbody2D>();
+
+            if (rigidbody == null) return null;
+            
+            HeroData output = new HeroData
+            {
+
+                posX = hero.transform.position.x,
+                posY = hero.transform.position.y,
+                velX = rigidbody.linearVelocity.x,
+                velY = rigidbody.linearVelocity.y,
+                hp = hero.playerData.health,
+                silk = hero.playerData.silk,
+                canJump = hero.CanJump()
+
+            };
+
+            return output;
+        }
+
+
+        public static EnemyData? getEnemyData(string enemyName)
+        {
+            var enemy = GameObject.Find(enemyName);
+            if (enemy == null) return null;
+
+            return getEnemyData(enemy);
+        }
+
+        public static Vector3 GetEnemyPosition(string enemyName)
         {
             var enemy = GameObject.Find(enemyName);
             if (enemy != null)
@@ -73,7 +109,7 @@ namespace SilksongAI
         }
 
 
-        private static void GetGameObjectComponents(string gameObjectName)
+        public static void GetGameObjectComponents(string gameObjectName)
         {
             var obj = GameObject.Find(gameObjectName);
             if (obj == null) return;
@@ -83,7 +119,7 @@ namespace SilksongAI
                 SilksongAImod.Log.LogInfo(obj.GetComponentAtIndex(i));
         }
 
-        private static PlayMakerFSM[] GetEnemyFSM(string enemyName)
+        public static PlayMakerFSM[] GetEnemyFSM(string enemyName)
         {
             var enemy = GameObject.Find(enemyName);
             if (enemy != null)
@@ -96,7 +132,7 @@ namespace SilksongAI
 
         }
 
-        private static int GetEnemyHP(string enemyName)
+        public static int GetEnemyHP(string enemyName)
         {
             int hp = -1;
 
@@ -109,6 +145,34 @@ namespace SilksongAI
 
             return hp;
         }
+
+
+        public static GameObject[] GetAllEnemies() //TODO: enemy tracker [HarmonyPatch(typeof(HealthManager), "Awake")]
+        {
+            var enemies = GameObject.FindObjectsByType<HealthManager>(FindObjectsSortMode.None);
+            GameObject[] enemiesGo = new GameObject[enemies.Length];
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                enemiesGo[i] = enemies[i].gameObject;
+            }
+
+            return enemiesGo;
+        }
+
+        public static GameObject[] GetAllDamageSources()
+        {
+            var damageSources = GameObject.FindObjectsByType<DamageHero>(FindObjectsSortMode.None);
+            GameObject[] damageSourcesGo = new GameObject[damageSources.Length];
+
+            for (int i = 0; i < damageSources.Length; i++)
+            {
+                damageSourcesGo[i] = damageSources[i].gameObject;
+            }
+
+            return damageSourcesGo;
+        }
+
     }
 
 }
