@@ -40,22 +40,9 @@ public class SilksongAImod : BaseUnityPlugin
         if (Input.GetKeyDown(KeyCode.F11))
         {
             GameStateLogger.LogGameStateToFiles();
-            bossFightRecorder.StartRecording("Mossbone Mother");
         }
 
         bossFightRecorder.RecordFrame();
-    }
-
-    public static bool IsInMainMenu()
-    {
-        string sceneName = SceneManager.GetActiveScene().name;
-
-        if (sceneName.Contains("Menu"))
-        {
-            return true;
-        }
-
-        return false;
     }
 
     [HarmonyPostfix]
