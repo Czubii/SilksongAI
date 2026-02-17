@@ -148,7 +148,7 @@ namespace SilksongAI
         {
             var config = (ConfigEntry<int>)entry;
 
-            string[] bossNames = BossReferenceDatabase.All.Select(s => s.Name).ToArray(); 
+            string[] bossNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToArray(); 
 
             if (!_showBossDropdown) { 
                 // Button showing current selection
@@ -186,7 +186,7 @@ namespace SilksongAI
         private void DrawFightSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
-            BossReference bossInfo = BossReferenceDatabase.All[bossIdx];
+            BossReference bossReference = BossReferenceDatabase.All[bossIdx];
 
 
             bool oldGUIenabled = GUI.enabled;
@@ -194,11 +194,11 @@ namespace SilksongAI
             if (!TeleportUtils.CanPerformTeleportOperations())
                 GUI.enabled = false;
 
-            if (GUILayout.Button($"Fight {bossInfo.Name}"))
+            if (GUILayout.Button($"Fight {bossReference.DisplayName}"))
             {
-                bossInfo.SetDefeated(false);
+                bossReference.SetDefeated(false);
 
-                TeleportUtils.TeleportTo(bossInfo.ArenaMap, bossInfo.ArenaPosition);
+                TeleportUtils.TeleportTo(bossReference.ArenaMap, bossReference.ArenaPosition);
             }
 
             GUI.enabled = oldGUIenabled;

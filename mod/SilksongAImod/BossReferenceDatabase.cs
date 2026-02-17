@@ -9,12 +9,13 @@ using System.Linq.Expressions;
 namespace SilksongAI
 {
 
-    public struct BossReference
+    public class BossReference
     {
-        public string Name;
+        public string DisplayName;
+        public string InternalName;
         public string ArenaMap;
         public Vector3 ArenaPosition;
-        public Action<bool> SetDefeated;
+        public Action<bool> SetDefeated = _ => SilksongAImod.Log.LogWarning("Trying to respawn a boss with undefined SetDefeated action!");
     }
     public static class BossReferenceDatabase
     {
@@ -23,7 +24,8 @@ namespace SilksongAI
         {
             new BossReference
             {
-                Name = "Mossbone Mother",
+                DisplayName = "Moss Mother",
+                InternalName = "Mossbone Mother",
                 ArenaMap = "Tut_03",
                 ArenaPosition = new Vector3(68f, 17.6f, 0),
                 SetDefeated = (val) => 
@@ -39,7 +41,8 @@ namespace SilksongAI
             },
             new BossReference
             {
-                Name = "Bell Beast",
+                DisplayName = "Bell Beast",
+                InternalName = "Bell Beast",
                 ArenaMap = "Bone_05",
                 ArenaPosition = new Vector3(78.59f, 3.57f, 0),
                 SetDefeated = (val) =>
@@ -49,9 +52,15 @@ namespace SilksongAI
             },
             new BossReference
             {
-                Name = "Lace 1",
-                ArenaMap = "Tut_03",
-                ArenaPosition = new Vector3(68f, 17.6f, 0)
+                DisplayName = "Lace 1",
+                InternalName = "Lace Boss1",
+                ArenaMap = "Bone_East_12",
+                ArenaPosition = new Vector3(85f, 7.57f, 0),
+                SetDefeated = (val) =>
+                {
+                    PlayerData.instance.defeatedLace1 = val;
+                    PlayerData.instance.encounteredLace1 = val;
+                }
             },
 
         };
