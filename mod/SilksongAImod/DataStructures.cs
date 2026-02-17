@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MessagePack;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,20 +9,37 @@ using UnityEngine;
 
 namespace SilksongAI
 {
-    public struct EnemyData
+    [MessagePackObject]
+    public struct FrameData
     {
-
-        public Vector3 pos;
-        public Vector2 vel;
-        public int hp;
-        public PlayMakerFSM fsm;
+        [Key(0)]
+        public int frame;
+        [Key(1)]
+        public EnemyData enemy;
+        [Key(2)]
+        public HeroData hero;
 
     }
 
+    [MessagePackObject]
+    public struct EnemyData
+    {
+        [Key(0)]
+        public Vector3 pos;
+        [Key(1)]
+        public Vector2 vel;
+        [Key(2)]
+        public int hp;
+
+    }
+    [MessagePackObject]
     public struct HeroData
     {
+        [Key(0)]
         public Vector3 pos;
+        [Key(1)]
         public Vector3 vel;
+        [Key(2)]
         public int hp;
     }
 
