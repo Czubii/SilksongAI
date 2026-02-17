@@ -26,8 +26,6 @@ public class SilksongAImod : BaseUnityPlugin
 
         gui = new ModGUI(this);
 
-        SceneManager.sceneLoaded += TeleportUtils.OnSceneLoaded;
-
         bossFightRecorder = new BossFightRecorder();
 
         Harmony.CreateAndPatchAll(typeof(SilksongAImod), null);
@@ -35,10 +33,6 @@ public class SilksongAImod : BaseUnityPlugin
         
         
 
-    }
-    private void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= TeleportUtils.OnSceneLoaded;
     }
 
     private void Update()
@@ -52,17 +46,16 @@ public class SilksongAImod : BaseUnityPlugin
         bossFightRecorder.RecordFrame();
     }
 
-
-
-    public void RespawnMossMother()
+    public static bool IsInMainMenu()
     {
-        PlayerData.instance.defeatedMossMother = false;
-        SceneData.instance.PersistentBools.SetValue(new PersistentItemData<bool>
+        string sceneName = SceneManager.GetActiveScene().name;
+
+        if (sceneName.Contains("Menu"))
         {
-            SceneName = "Tut_03",
-            ID = "Battle Scene",
-            Value = false
-        });
+            return true;
+        }
+
+        return false;
     }
 
     [HarmonyPostfix]

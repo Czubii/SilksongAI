@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 using HutongGames.PlayMaker.Actions;
+using System.Collections;
 
 namespace SilksongAI
 {
@@ -15,27 +16,113 @@ namespace SilksongAI
         private static Vector3 pendingPos;
         private static string pendingScene;
         private static bool pendingTeleport;
+        private static MonoBehaviour Runner;
+
+        private static void EnsureRunner()
+        {
+            if (Runner != null) return;
+
+            var go = new GameObject("TeleportUtilsRunner");
+            UnityEngine.Object.DontDestroyOnLoad(go);
+            Runner = go.AddComponent<CoroutineRunner>();
+        }
+
+        private class CoroutineRunner : MonoBehaviour { }
+
         public static void TeleportTo(string sceneName, Vector3 pos)
         {
             if (pendingTeleport) return;
+
 
             pendingScene = sceneName;
             pendingPos = pos;
             pendingTeleport = true;
 
-            GameManager.instance.ChangeToScene(sceneName, "top1", 0.5f);
+            //GameManager.instance.ChangeToScene(sceneName, "left1", 0.0f);
+            GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo
+            {
+                SceneName = sceneName,
+                EntryGateName = "left1",
+                HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
+                EntryDelay = 0f,
+                Visualization = GameManager.SceneLoadVisualizations.Default,
+                AlwaysUnloadUnusedAssets = true
+            });
+            EnsureRunner();
+            Runner.StartCoroutine(TeleportHeroWhenPossible());
         }
 
-        public static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        private static IEnumerator TeleportHeroWhenPossible()
         {
-            if (!pendingTeleport) return;
-            if (scene.name != pendingScene) return;
+            yield return new WaitWhile(() =>
+            {
 
-            pendingTeleport = false;
+                var GM = GameManager.instance;
+                var HC = HeroController.instance;
+
+                if (GM == null || HC == null) return true;
+
+                return !HC.isHeroInPosition || HC.cState.transitioning || GM.IsInSceneTransition;
+
+            });
+
+            yield return new WaitUntil(() =>
+            {
+                var HC = HeroController.instance;
+                return HC != null && HC.CanInput();
+            });
+
+            TeleportHero();
+        }
+
+        private static void TeleportHero()
+        {            
+            if (HeroController.instance == null)
+            {
+                SilksongAImod.Log.LogWarning("Cannot teleport, no HeroController.instance on scene");
+                return;
+            }
 
             HeroController.instance.transform.position = pendingPos;
-            GameManager.instance.cameraCtrl.PositionToHeroInstant(false);
+
+            var HeroRigidbody2D = HeroController.instance.GetComponent<Rigidbody2D>();
+            if (HeroRigidbody2D != null)
+            {
+                HeroRigidbody2D.linearVelocity = Vector2.zero;
+            }
+
+            if (HeroController.instance.cState != null)
+            {
+                HeroController.instance.cState.recoiling = false;
+                HeroController.instance.cState.transitioning = false;
+            }
+
+            pendingTeleport = false;
         }
+
+
+        public static bool CanPerformTeleportOperations()
+        {
+
+                if (PlayerData.instance != null && PlayerData.instance.health <= 0)
+                {
+                    return false;
+                }
+                if (PlayerData.instance != null && PlayerData.instance.atBench)
+                {
+                    return false;
+                }
+                if (PlayerData.instance != null && !PlayerData.instance.bindCutscenePlayed)
+                {
+                    return false;
+                }
+                if (GameManager.instance != null && GameManager.instance.RespawningHero)
+                {
+                    return false;
+                }
+
+                return true;
+            }
     }
 
     public static class GetDataUtils
@@ -174,5 +261,4 @@ namespace SilksongAI
         }
 
     }
-
 }
