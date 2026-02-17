@@ -25,10 +25,14 @@ namespace SilksongAI
     public struct EnemyData
     {
         [Key(0)]
-        public Vector3 pos;
+        public float posX;
         [Key(1)]
-        public Vector2 vel;
+        public float posY;
         [Key(2)]
+        public float velX;
+        [Key(3)]
+        public float velY;
+        [Key(4)]
         public int hp;
 
     }

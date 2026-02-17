@@ -53,8 +53,10 @@ namespace SilksongAI
             EnemyData output = new EnemyData
             {
 
-                pos = enemy.transform.position,
-                vel = rigidbody.linearVelocity,
+                posX = enemy.transform.position.x,
+                posY = enemy.transform.position.y,
+                velX = rigidbody.linearVelocity.x,
+                velY = rigidbody.linearVelocity.y,
                 hp = hm.hp
 
             };

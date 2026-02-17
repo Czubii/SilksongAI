@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using MessagePack;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,7 +16,6 @@ namespace SilksongAI
         private GameObject _bossGo = null;
         private HealthManager _bossHm = null;
         private StreamWriter _outputFile;
-        private int i = 0;
 
         public void StartRecording(string bossName)
         {
@@ -27,31 +27,27 @@ namespace SilksongAI
             _bossHm = _bossGo.GetComponent<HealthManager>();
             if(_bossHm == null) return;
 
-            string path = Path.Combine(Paths.PluginPath, "SilksongAI", "Recordings");
-
-            _outputFile = new StreamWriter(Path.Combine(path, $"session_{DateTime.Now:yyyyMMdd_HHmmss}"));
-
             _isRecording = true;
-            i = 0;
+
+            string path = Path.Combine(Paths.PluginPath, "SilksongAI", "Recordings");
+            _outputFile = new StreamWriter(Path.Combine(path, $"session_{DateTime.Now:yyyyMMdd_HHmmss}"));
 
         }
         public void RecordFrame()
         {
             if (!_isRecording) return;
 
+            var enemyData = GetDataUtils.getEnemyData(_bossGo);
+            var enemyBin = MessagePackSerializer.Serialize(enemyData);
+            _outputFile.WriteLineAsync(MessagePackSerializer.ConvertToJson(enemyBin));
+
             if (_bossHm.isDead)
             {
                 _isRecording = false;
-
-                _outputFile.WriteLineAsync($"Frame: {i}, HP: {_bossHm.hp}");
-
                 _outputFile.Close();
                 return;
             }
 
-            _outputFile.WriteLineAsync($"Frame: {i}, HP: {_bossHm.hp}");
-            i++;
         }
-
     }
 }
