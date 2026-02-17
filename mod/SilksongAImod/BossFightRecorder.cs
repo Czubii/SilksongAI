@@ -60,6 +60,7 @@ namespace SilksongAI
             {
                 _isRecording = false;
                 _outputFileJSON.Close();
+                _outputFileBIN.Close();
                 return;
             }
 
