@@ -9,10 +9,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using SilksongAI;
 
-
-
-
-
 [BepInPlugin("com.czubii.SilksongAImod", "Silksong AI mod", "1.0.0 ")]
 public class SilksongAImod : BaseUnityPlugin
 {
@@ -30,15 +26,30 @@ public class SilksongAImod : BaseUnityPlugin
         gui = new ModGUI(this);
 
         SceneManager.sceneLoaded += TeleportUtils.OnSceneLoaded;
-        
+
+        Recorder.test();
+
         Harmony.CreateAndPatchAll(typeof(SilksongAImod), null);
 
+        
+        
 
     }
     private void OnDestroy()
     {
         SceneManager.sceneLoaded -= TeleportUtils.OnSceneLoaded;
     }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.F11))
+        {
+            GameStateLogger.LogGameStateToFiles();
+            GetDataUtils.GetAllEnemies();
+        }
+    }
+
+
 
     public void RespawnMossMother()
     {

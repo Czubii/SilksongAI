@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 using UnityEngine;
+using HutongGames.PlayMaker.Actions;
 
 namespace SilksongAI
 {
@@ -37,7 +38,7 @@ namespace SilksongAI
 
     public static class GetDataUtils
     {
-        private static EnemyData? getEnemyData(string enemyName)
+        public static EnemyData? getEnemyData(string enemyName)
         {
             var enemy = GameObject.Find(enemyName);
             if (enemy == null) return null;
@@ -62,7 +63,7 @@ namespace SilksongAI
             return output;
         }
 
-        private static Vector3 GetEnemyPosition(string enemyName)
+        public static Vector3 GetEnemyPosition(string enemyName)
         {
             var enemy = GameObject.Find(enemyName);
             if (enemy != null)
@@ -73,7 +74,7 @@ namespace SilksongAI
         }
 
 
-        private static void GetGameObjectComponents(string gameObjectName)
+        public static void GetGameObjectComponents(string gameObjectName)
         {
             var obj = GameObject.Find(gameObjectName);
             if (obj == null) return;
@@ -83,7 +84,7 @@ namespace SilksongAI
                 SilksongAImod.Log.LogInfo(obj.GetComponentAtIndex(i));
         }
 
-        private static PlayMakerFSM[] GetEnemyFSM(string enemyName)
+        public static PlayMakerFSM[] GetEnemyFSM(string enemyName)
         {
             var enemy = GameObject.Find(enemyName);
             if (enemy != null)
@@ -96,7 +97,7 @@ namespace SilksongAI
 
         }
 
-        private static int GetEnemyHP(string enemyName)
+        public static int GetEnemyHP(string enemyName)
         {
             int hp = -1;
 
@@ -109,6 +110,34 @@ namespace SilksongAI
 
             return hp;
         }
+
+
+        public static GameObject[] GetAllEnemies() //TODO: enemy tracker [HarmonyPatch(typeof(HealthManager), "Awake")]
+        {
+            var enemies = GameObject.FindObjectsByType<HealthManager>(FindObjectsSortMode.None);
+            GameObject[] enemiesGo = new GameObject[enemies.Length];
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                enemiesGo[i] = enemies[i].gameObject;
+            }
+
+            return enemiesGo;
+        }
+
+        public static GameObject[] GetAllDamageSources()
+        {
+            var projectiles = GameObject.FindObjectsByType<DamageHero>(FindObjectsSortMode.None);
+            GameObject[] projectilesGo = new GameObject[projectiles.Length];
+
+            for (int i = 0; i < projectiles.Length; i++)
+            {
+                projectilesGo[i] = projectiles[i].gameObject;
+            }
+
+            return projectilesGo;
+        }
+
     }
 
 }
