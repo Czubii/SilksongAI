@@ -8,3 +8,4 @@ obj/
 .idea/
 config.env
 temp/
+packages/
