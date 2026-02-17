@@ -38,10 +38,8 @@ namespace SilksongAI
 
     public static class GetDataUtils
     {
-        public static EnemyData? getEnemyData(string enemyName)
+        public static EnemyData? getEnemyData(GameObject enemy)
         {
-            var enemy = GameObject.Find(enemyName);
-            if (enemy == null) return null;
 
             var hm = enemy.GetComponent<HealthManager>();
             if (hm == null) return null;
@@ -52,15 +50,23 @@ namespace SilksongAI
             var rigidbody = enemy.GetComponent<Rigidbody2D>();
             if (rigidbody == null) return null;
 
-            EnemyData output = new EnemyData();
+            EnemyData output = new EnemyData
+            {
 
-            output.pos = enemy.transform.position;
-            output.vel = rigidbody.linearVelocity;
-            output.hp = hm.hp;
-            output.fsm = fsm;
+                pos = enemy.transform.position,
+                vel = rigidbody.linearVelocity,
+                hp = hm.hp
 
+            };
 
             return output;
+        }
+        public static EnemyData? getEnemyData(string enemyName)
+        {
+            var enemy = GameObject.Find(enemyName);
+            if (enemy == null) return null;
+
+            return getEnemyData(enemy);
         }
 
         public static Vector3 GetEnemyPosition(string enemyName)
