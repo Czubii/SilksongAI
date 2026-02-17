@@ -59,7 +59,6 @@ namespace SilksongAI
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.defeatedLace1 = val;
-                    PlayerData.instance.encounteredLace1 = val;
                 }
             },
 

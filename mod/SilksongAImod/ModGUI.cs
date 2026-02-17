@@ -16,6 +16,7 @@ namespace SilksongAI
         private ConfigEntry<bool> printEnemiesButton;
         private ConfigEntry<bool> godModeToggle;
         private ConfigEntry<bool> fightSelectedBossButton;
+        private ConfigEntry<bool> teleportToSelectedBossButton;
         private ConfigEntry<int> bossSelectionDropdown;
 
         private SilksongAImod plugin;
@@ -82,6 +83,21 @@ namespace SilksongAI
                       {
                           IsAdvanced = false,
                           CustomDrawer = DrawFightSelectedBossButton
+
+                      }
+                  ));
+
+            teleportToSelectedBossButton = plugin.Config.Bind(
+                  "Bosses",
+                  "Teleport to selected boss",
+                  false,
+                  new ConfigDescription(
+                      "Press to teleport to selected boss",
+                      null,
+                      new ConfigurationManagerAttributes
+                      {
+                          IsAdvanced = false,
+                          CustomDrawer = DrawTeleportToSelectedBossButton
 
                       }
                   ));
@@ -198,6 +214,25 @@ namespace SilksongAI
             {
                 bossReference.SetDefeated(false);
 
+                TeleportUtils.TeleportTo(bossReference.ArenaMap, bossReference.ArenaPosition);
+            }
+
+            GUI.enabled = oldGUIenabled;
+        }
+        private void DrawTeleportToSelectedBossButton(ConfigEntryBase entry)
+        {
+            int bossIdx = bossSelectionDropdown.Value;
+            BossReference bossReference = BossReferenceDatabase.All[bossIdx];
+
+
+            bool oldGUIenabled = GUI.enabled;
+
+            if (!TeleportUtils.CanPerformTeleportOperations())
+                GUI.enabled = false;
+
+            if (GUILayout.Button($"Teleport to {bossReference.DisplayName}"))
+            {
+                bossReference.SetDefeated(true);
                 TeleportUtils.TeleportTo(bossReference.ArenaMap, bossReference.ArenaPosition);
             }
 
