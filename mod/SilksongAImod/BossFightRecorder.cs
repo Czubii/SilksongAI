@@ -37,9 +37,18 @@ namespace SilksongAI
         {
             if (!_isRecording) return;
 
-            var enemyData = GetDataUtils.getEnemyData(_bossGo);
-            var enemyBin = MessagePackSerializer.Serialize(enemyData);
-            _outputFile.WriteLineAsync(MessagePackSerializer.ConvertToJson(enemyBin));
+            EnemyData? enemyData = GetDataUtils.getEnemyData(_bossGo);
+            HeroData? heroData = GetDataUtils.getHeroData();
+
+
+            FrameData frameData = new FrameData()
+            {
+                enemy = (EnemyData)enemyData,
+                hero = (HeroData)heroData
+            };
+
+            var dataBin = MessagePackSerializer.Serialize(frameData);
+            _outputFile.WriteLineAsync(MessagePackSerializer.ConvertToJson(dataBin));
 
             if (_bossHm.isDead)
             {

@@ -17,6 +17,8 @@ namespace SilksongAI
         private static bool pendingTeleport;
         public static void TeleportTo(string sceneName, Vector3 pos)
         {
+            if (pendingTeleport) return;
+
             pendingScene = sceneName;
             pendingPos = pos;
             pendingTeleport = true;
@@ -63,6 +65,31 @@ namespace SilksongAI
 
             return output;
         }
+
+        public static HeroData? getHeroData()
+        {
+            var hero = HeroController.instance;
+            var rigidbody = hero.GetComponent<Rigidbody2D>();
+
+            if (rigidbody == null) return null;
+            
+            HeroData output = new HeroData
+            {
+
+                posX = hero.transform.position.x,
+                posY = hero.transform.position.y,
+                velX = rigidbody.linearVelocity.x,
+                velY = rigidbody.linearVelocity.y,
+                hp = hero.playerData.health,
+                silk = hero.playerData.silk,
+                canJump = hero.CanJump()
+
+            };
+
+            return output;
+        }
+
+
         public static EnemyData? getEnemyData(string enemyName)
         {
             var enemy = GameObject.Find(enemyName);

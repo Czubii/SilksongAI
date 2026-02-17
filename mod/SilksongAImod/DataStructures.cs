@@ -1,10 +1,4 @@
 ﻿using MessagePack;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
 
 
 namespace SilksongAI
@@ -13,10 +7,8 @@ namespace SilksongAI
     public struct FrameData
     {
         [Key(0)]
-        public int frame;
-        [Key(1)]
         public EnemyData enemy;
-        [Key(2)]
+        [Key(1)]
         public HeroData hero;
 
     }
@@ -40,11 +32,48 @@ namespace SilksongAI
     public struct HeroData
     {
         [Key(0)]
-        public Vector3 pos;
+        public float posX;
         [Key(1)]
-        public Vector3 vel;
+        public float posY;
         [Key(2)]
+        public float velX;
+        [Key(3)]
+        public float velY;
+        [Key(4)]
         public int hp;
+        [Key(5)]
+        public int silk;
+        [Key(6)]
+        public bool canJump;
+    }
+    [MessagePackObject]
+    public struct Controls
+    {
+        // Movement:
+        [Key(0)]
+        public bool jump;
+        [Key(1)]
+        public float left;
+        [Key(2)]
+        public float right;
+        [Key(3)]
+        public float up;
+        [Key(4)]
+        public float down;
+
+
+        //Actions:
+        [Key(5)]
+        public bool attack;
+        [Key(6)]
+        public bool heal;
+        [Key(7)]
+        public bool skill;
+        [Key(8)]
+        public bool dash;
+        [Key(9)]
+        public bool harpoon;
+
     }
 
 

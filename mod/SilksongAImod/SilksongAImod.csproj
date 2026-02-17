@@ -11,7 +11,6 @@
   <Target Name="DeployAndRun">
     <!-- Kill the game if it is running -->
     <Exec Command="taskkill /IM &quot;Hollow Knight Silksong.exe&quot; /F" ContinueOnError="true" />
-
     <ItemGroup>
       <DeployFiles Include="$(OutputPath)\MessagePack.dll" />
       <DeployFiles Include="$(OutputPath)\MessagePack.Annotations.dll" />
@@ -25,12 +24,9 @@
       <DeployFiles Include="$(OutputPath)\System.Runtime.CompilerServices.Unsafe.dll" />
       <DeployFiles Include="$(OutputPath)\System.Threading.Tasks.Extensions.dll" />
     </ItemGroup>
-
-<!-- Copy the compiled DLL to BepInEx/plugins -->
+    <!-- Copy the compiled DLL to BepInEx/plugins -->
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameDir)\BepInEx\plugins" />
     <Copy SourceFiles="@(DeployFiles)" DestinationFolder="$(GameDir)\BepInEx\plugins\SilksongAI" SkipUnchangedFiles="true" />
-
-
     <!-- Launch the game -->
     <Exec Command="start &quot;&quot; &quot;$(GameDir)\Hollow Knight Silksong.exe&quot;" />
   </Target>
@@ -147,6 +143,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ControlsTracker.cs" />
     <Compile Include="DataStructures.cs" />
     <Compile Include="GameStateLogger.cs" />
     <Compile Include="ModGUI.cs" />
