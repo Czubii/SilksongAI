@@ -11,8 +11,26 @@
   <Target Name="DeployAndRun">
     <!-- Kill the game if it is running -->
     <Exec Command="taskkill /IM &quot;Hollow Knight Silksong.exe&quot; /F" ContinueOnError="true" />
-    <!-- Copy the compiled DLL to BepInEx/plugins -->
+
+    <ItemGroup>
+      <DeployFiles Include="$(OutputPath)\MessagePack.dll" />
+      <DeployFiles Include="$(OutputPath)\MessagePack.Annotations.dll" />
+      <DeployFiles Include="$(OutputPath)\Microsoft.Bcl.AsyncInterfaces.dll" />
+      <DeployFiles Include="$(OutputPath)\Microsoft.NET.StringTools.dll" />
+      <DeployFiles Include="$(OutputPath)\System.Buffers.dll" />
+      <DeployFiles Include="$(OutputPath)\System.Collections.Immutable.dll" />
+      <DeployFiles Include="$(OutputPath)\System.Memory.dll" />
+      <DeployFiles Include="$(OutputPath)\System.Numerics.Vectors.dll" />
+      <DeployFiles Include="$(OutputPath)\System.Threading.Tasks.Extensions.dll" />
+      <DeployFiles Include="$(OutputPath)\System.Runtime.CompilerServices.Unsafe.dll" />
+      <DeployFiles Include="$(OutputPath)\System.Threading.Tasks.Extensions.dll" />
+    </ItemGroup>
+
+<!-- Copy the compiled DLL to BepInEx/plugins -->
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameDir)\BepInEx\plugins" />
+    <Copy SourceFiles="@(DeployFiles)" DestinationFolder="$(GameDir)\BepInEx\plugins\SilksongAI" SkipUnchangedFiles="true" />
+
+
     <!-- Launch the game -->
     <Exec Command="start &quot;&quot; &quot;$(GameDir)\Hollow Knight Silksong.exe&quot;" />
   </Target>
