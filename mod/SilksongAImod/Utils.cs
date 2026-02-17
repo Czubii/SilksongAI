@@ -48,7 +48,6 @@ namespace SilksongAI
                 Visualization = GameManager.SceneLoadVisualizations.Default,
                 AlwaysUnloadUnusedAssets = true
             });
-
             EnsureRunner();
             Runner.StartCoroutine(TeleportHeroWhenPossible());
         }
@@ -77,10 +76,7 @@ namespace SilksongAI
         }
 
         private static void TeleportHero()
-        {
-            SilksongAImod.Log.LogInfo("Teleporting this bad boyy");
-
-            
+        {            
             if (HeroController.instance == null)
             {
                 SilksongAImod.Log.LogWarning("Cannot teleport, no HeroController.instance on scene");
@@ -102,7 +98,6 @@ namespace SilksongAI
             }
 
             pendingTeleport = false;
-            //GameManager.instance.cameraCtrl.PositionToHeroInstant(false);
         }
 
 
@@ -266,5 +261,4 @@ namespace SilksongAI
         }
 
     }
-
 }

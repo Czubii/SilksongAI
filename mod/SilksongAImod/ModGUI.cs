@@ -148,7 +148,7 @@ namespace SilksongAI
         {
             var config = (ConfigEntry<int>)entry;
 
-            string[] bossNames = BossDatabase.All.Select(s => s.Name).ToArray(); 
+            string[] bossNames = BossReferenceDatabase.All.Select(s => s.Name).ToArray(); 
 
             if (!_showBossDropdown) { 
                 // Button showing current selection
@@ -186,7 +186,7 @@ namespace SilksongAI
         private void DrawFightSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
-            BossInfo bossInfo = BossDatabase.All[bossIdx];
+            BossReference bossInfo = BossReferenceDatabase.All[bossIdx];
 
 
             bool oldGUIenabled = GUI.enabled;
@@ -196,7 +196,7 @@ namespace SilksongAI
 
             if (GUILayout.Button($"Fight {bossInfo.Name}"))
             {
-                RespawnMossMother();
+                bossInfo.SetDefeated(false);
 
                 TeleportUtils.TeleportTo(bossInfo.ArenaMap, bossInfo.ArenaPosition);
             }
