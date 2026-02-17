@@ -9,12 +9,12 @@ namespace SilksongAI
 {
     public static class inputTracker
     {
-        public static SilksongAI.Controls? GetInputs()
+        public static SilksongAI.UserInputs? GetInputs()
         {
             var IH = InputHandler.Instance;
             if (IH == null) return null;
 
-            Controls controls = new Controls()
+            UserInputs controls = new UserInputs()
             {
 
                 jump = IH.inputActions.Jump,

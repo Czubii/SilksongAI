@@ -10,6 +10,8 @@ namespace SilksongAI
         public EnemyData enemy;
         [Key(1)]
         public HeroData hero;
+        [Key(2)]
+        public UserInputs userInputs;
 
     }
 
@@ -47,7 +49,7 @@ namespace SilksongAI
         public bool canJump;
     }
     [MessagePackObject]
-    public struct Controls
+    public struct UserInputs
     {
         // Movement:
         [Key(0)]
