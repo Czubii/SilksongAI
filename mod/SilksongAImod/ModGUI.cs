@@ -191,7 +191,7 @@ namespace SilksongAI
 
             bool oldGUIenabled = GUI.enabled;
 
-            if (IsInMainMenu())
+            if (!TeleportUtils.CanPerformTeleportOperations())
                 GUI.enabled = false;
 
             if (GUILayout.Button($"Fight {bossInfo.Name}"))

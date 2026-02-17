@@ -26,7 +26,7 @@ public class SilksongAImod : BaseUnityPlugin
 
         gui = new ModGUI(this);
 
-        SceneManager.sceneLoaded += TeleportUtils.OnSceneLoaded;
+        //SceneManager.sceneLoaded += TeleportUtils.OnSceneLoaded;
 
         bossFightRecorder = new BossFightRecorder();
 
@@ -38,7 +38,7 @@ public class SilksongAImod : BaseUnityPlugin
     }
     private void OnDestroy()
     {
-        SceneManager.sceneLoaded -= TeleportUtils.OnSceneLoaded;
+        //SceneManager.sceneLoaded -= TeleportUtils.OnSceneLoaded;
     }
 
     private void Update()
