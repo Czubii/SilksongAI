@@ -11,7 +11,10 @@ namespace SilksongAI
 {
     public static class GameStateLogger
     {
+        public static void DeleteGameStateLogFiles() //TODO implement
+        {
 
+        }
         public static void LogGameStateToFiles()
         {
             string path = Path.Combine(Paths.PluginPath, "SilksongAI", "Logs", $"session_{DateTime.Now:yyyyMMdd_HHmmss}");

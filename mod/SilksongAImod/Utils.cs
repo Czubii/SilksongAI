@@ -127,15 +127,15 @@ namespace SilksongAI
 
         public static GameObject[] GetAllDamageSources()
         {
-            var projectiles = GameObject.FindObjectsByType<DamageHero>(FindObjectsSortMode.None);
-            GameObject[] projectilesGo = new GameObject[projectiles.Length];
+            var damageSources = GameObject.FindObjectsByType<DamageHero>(FindObjectsSortMode.None);
+            GameObject[] damageSourcesGo = new GameObject[damageSources.Length];
 
-            for (int i = 0; i < projectiles.Length; i++)
+            for (int i = 0; i < damageSources.Length; i++)
             {
-                projectilesGo[i] = projectiles[i].gameObject;
+                damageSourcesGo[i] = damageSources[i].gameObject;
             }
 
-            return projectilesGo;
+            return damageSourcesGo;
         }
 
     }

@@ -14,6 +14,7 @@ public class SilksongAImod : BaseUnityPlugin
 {
     private ModGUI gui;
     public static ManualLogSource Log;
+    private BossFightRecorder bossFightRecorder;
 
     public static bool GodModeEnabled { get; set; } = false;
 
@@ -27,7 +28,7 @@ public class SilksongAImod : BaseUnityPlugin
 
         SceneManager.sceneLoaded += TeleportUtils.OnSceneLoaded;
 
-        Recorder.test();
+        bossFightRecorder = new BossFightRecorder();
 
         Harmony.CreateAndPatchAll(typeof(SilksongAImod), null);
 
@@ -45,8 +46,10 @@ public class SilksongAImod : BaseUnityPlugin
         if (Input.GetKeyDown(KeyCode.F11))
         {
             GameStateLogger.LogGameStateToFiles();
-            GetDataUtils.GetAllEnemies();
+            bossFightRecorder.StartRecording("Mossbone Mother");
         }
+
+        bossFightRecorder.RecordFrame();
     }
 
 
