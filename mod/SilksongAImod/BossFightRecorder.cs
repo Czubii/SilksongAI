@@ -20,13 +20,25 @@ namespace SilksongAI
         private Stream _outputFileBIN;
         public void StartRecording(string bossName)
         {
-            if (_isRecording) return;
+            if (_isRecording)
+            {
+                SilksongAImod.Log.LogWarning("BossFightRecorder: Already recording");
+                return;
+            }
 
             _bossGo = GameObject.Find(bossName);
-            if (_bossGo == null) return;
+            if (_bossGo == null)
+            {
+                SilksongAImod.Log.LogError($"BossFightRecorder: Boss '{bossName}' not found in scene");
+                return;
+            }
 
             _bossHm = _bossGo.GetComponent<HealthManager>();
-            if(_bossHm == null) return;
+            if (_bossGo == null)
+            {
+                SilksongAImod.Log.LogError($"BossFightRecorder: Boss '{bossName}' game object does not contain HealthManager");
+                return;
+            }
 
             _isRecording = true;
 
