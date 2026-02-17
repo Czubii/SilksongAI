@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -14,7 +15,8 @@ namespace SilksongAI
         private ConfigEntry<bool> getPositionButton;
         private ConfigEntry<bool> printEnemiesButton;
         private ConfigEntry<bool> godModeToggle;
-        private ConfigEntry<bool> fightMossMotherButton;
+        private ConfigEntry<bool> fightSelectedBossButton;
+        private ConfigEntry<int> bossSelectionDropdown;
 
         private SilksongAImod plugin;
 
@@ -50,20 +52,41 @@ namespace SilksongAI
                       }
                   ));
 
-            fightMossMotherButton = plugin.Config.Bind(
+
+
+            bossSelectionDropdown = plugin.Config.Bind(
                   "Bosses",
-                  "fight moss mother",
-                  false,
+                  "Boss selection",
+                  0,
                   new ConfigDescription(
-                      "Press to fight moss mother",
+                      "Select boss",
                       null,
                       new ConfigurationManagerAttributes
                       {
                           IsAdvanced = false,
-                          CustomDrawer = DrawFightMossMotherButton
+                          CustomDrawer = DrawBossSelectionDropdown
 
                       }
                   ));
+                
+
+
+            fightSelectedBossButton = plugin.Config.Bind(
+                  "Bosses",
+                  "Fight selected boss",
+                  false,
+                  new ConfigDescription(
+                      "Press to fight selected boss",
+                      null,
+                      new ConfigurationManagerAttributes
+                      {
+                          IsAdvanced = false,
+                          CustomDrawer = DrawFightSelectedBossButton
+
+                      }
+                  ));
+
+
 
             printEnemiesButton = plugin.Config.Bind(
                   "Debug",
@@ -119,17 +142,66 @@ namespace SilksongAI
                 }
             }
         }
-
-        private void DrawFightMossMotherButton(ConfigEntryBase entry)
+        private bool _showBossDropdown;
+        private Vector2 _bossScroll;
+        private void DrawBossSelectionDropdown(ConfigEntryBase entry)
         {
-            if (GUILayout.Button("Fight Moss Mother"))
-            {
-                plugin.RespawnMossMother();
+            var config = (ConfigEntry<int>)entry;
 
-                string scene_name = "Tut_03";
-                Vector3 pos = new Vector3(68f, 17.6f, 0);
-                TeleportUtils.TeleportTo(scene_name, pos);
+            string[] bossNames = BossDatabase.All.Select(s => s.Name).ToArray(); 
+
+            if (!_showBossDropdown) { 
+                // Button showing current selection
+                if (GUILayout.Button(bossNames[config.Value]))
+                {
+                    _showBossDropdown = !_showBossDropdown;
+                }
             }
+
+            if (_showBossDropdown)
+            {
+                GUILayout.BeginVertical("box");
+
+                _bossScroll = GUILayout.BeginScrollView(
+                    _bossScroll,
+                    GUIStyle.none,
+                    GUILayout.Height(200)   // visible height of dropdown
+                );
+
+                for (int i = 0; i < bossNames.Length; i++)
+                {
+                    if (GUILayout.Button(bossNames[i]))
+                    {
+                        config.Value = i;
+                        _showBossDropdown = false;
+                    }
+                }
+
+                GUILayout.EndScrollView();
+                GUILayout.EndVertical();
+            }
+
+        }
+
+        private void DrawFightSelectedBossButton(ConfigEntryBase entry)
+        {
+            int bossIdx = bossSelectionDropdown.Value;
+            BossInfo bossInfo = BossDatabase.All[bossIdx];
+
+
+            bool oldGUIenabled = GUI.enabled;
+
+            if (IsInMainMenu())
+                GUI.enabled = false;
+
+            if (GUILayout.Button($"Fight {bossInfo.Name}"))
+            {
+                RespawnMossMother();
+
+                TeleportUtils.TeleportTo(bossInfo.ArenaMap, bossInfo.ArenaPosition);
+            }
+
+            GUI.enabled = oldGUIenabled;
         }
 
 

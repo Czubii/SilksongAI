@@ -54,7 +54,7 @@ public class SilksongAImod : BaseUnityPlugin
 
 
 
-    public void RespawnMossMother()
+    public static void RespawnMossMother()
     {
         PlayerData.instance.defeatedMossMother = false;
         SceneData.instance.PersistentBools.SetValue(new PersistentItemData<bool>
@@ -63,6 +63,18 @@ public class SilksongAImod : BaseUnityPlugin
             ID = "Battle Scene",
             Value = false
         });
+    }
+
+    public static bool IsInMainMenu()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+
+        if (sceneName.Contains("Menu"))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     [HarmonyPostfix]
