@@ -18,19 +18,19 @@ namespace SilksongAI
     }
 
     [MessagePackObject]
-    public struct FrameData
+    public struct TrainingFrameData
     {
         [Key(0)]
-        public EnemyData enemy;
+        public TrainingEnemyData enemy;
         [Key(1)]
-        public HeroData hero;
+        public TrainingHeroData hero;
         [Key(2)]
-        public UserInputs userInputs;
+        public TrainingUserInputs userInputs;
 
     }
 
     [MessagePackObject]
-    public struct EnemyData
+    public struct TrainingEnemyData
     {
         [Key(0)]
         public float posX;
@@ -45,7 +45,7 @@ namespace SilksongAI
 
     }
     [MessagePackObject]
-    public struct HeroData
+    public struct TrainingHeroData
     {
         [Key(0)]
         public float posX;
@@ -63,7 +63,7 @@ namespace SilksongAI
         public bool canJump;
     }
     [MessagePackObject]
-    public struct UserInputs
+    public struct TrainingUserInputs
     {
         // Movement:
         [Key(0)]

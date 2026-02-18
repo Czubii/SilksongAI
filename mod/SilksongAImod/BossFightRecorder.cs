@@ -124,24 +124,38 @@ namespace SilksongAI
                     return;
                 }
 
-                HeroController HC = HeroController.instance;
-                if (HC == null)
+                _FrameCount++;
+
+                TrainingEnemyData? enemyData = GetDataUtils.getEnemyData(_bossGo); // TODO make those three take the enemy etc. as an argument
+                if (enemyData == null)
                 {
-                    SilksongAImod.Log.LogWarning("BossFightRecorder: Hero controller missing");
+                    SilksongAImod.Log.LogWarning("BossFightRecorder: enemyData missing");
                     return;
                 }
 
-                _FrameCount++;
-
-                EnemyData? enemyData = GetDataUtils.getEnemyData(_bossGo); // TODO make those three take the enemy etc. as an argument
-                HeroData? heroData = GetDataUtils.getHeroData();
-                UserInputs? userInputs = inputTracker.GetInputs();
-
-                FrameData frameData = new FrameData()
+                TrainingHeroData? heroData = GetDataUtils.getHeroData();
+                if (heroData == null)
                 {
-                    enemy = (EnemyData)enemyData,
-                    hero = (HeroData)heroData,
-                    userInputs = (UserInputs)userInputs
+                    SilksongAImod.Log.LogWarning("BossFightRecorder: heroData missing");
+                    return;
+                }
+
+                var IH = InputHandler.Instance;
+                if (IH == null)
+                {
+                    SilksongAImod.Log.LogWarning("BossFightRecorder: InputHandler.Instance missing");
+                    return;
+                }
+                TrainingUserInputs? userInputs = inputTracker.GetInputs(IH);
+
+
+
+
+                TrainingFrameData frameData = new TrainingFrameData()
+                {
+                    enemy = (TrainingEnemyData)enemyData,
+                    hero = (TrainingHeroData)heroData,
+                    userInputs = (TrainingUserInputs)userInputs
                 };
 
                 var dataBinWithKeys = MessagePackSerializer.Serialize(frameData, MessagePack.Resolvers.ContractlessStandardResolver.Options);

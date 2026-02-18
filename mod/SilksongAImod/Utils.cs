@@ -86,6 +86,7 @@ namespace SilksongAI
             if (HeroController.instance == null)
             {
                 SilksongAImod.Log.LogWarning("Cannot teleport, no HeroController.instance on scene");
+                TeleportInProgress = false;
                 return;
             }
 
@@ -124,17 +125,11 @@ namespace SilksongAI
 
                 return true;
         }
-
-        public static bool TeleportConcluded()
-        {
-            if(TeleportInProgress) return false;
-            return true;
-        }
     }
 
     public static class GetDataUtils
     {
-        public static EnemyData? getEnemyData(GameObject enemy)
+        public static TrainingEnemyData? getEnemyData(GameObject enemy)
         {
 
             var hm = enemy.GetComponent<HealthManager>();
@@ -146,7 +141,7 @@ namespace SilksongAI
             var rigidbody = enemy.GetComponent<Rigidbody2D>();
             if (rigidbody == null) return null;
 
-            EnemyData output = new EnemyData
+            TrainingEnemyData output = new TrainingEnemyData
             {
 
                 posX = enemy.transform.position.x,
@@ -160,14 +155,14 @@ namespace SilksongAI
             return output;
         }
 
-        public static HeroData? getHeroData()
+        public static TrainingHeroData? getHeroData()
         {
             var hero = HeroController.instance;
             var rigidbody = hero.GetComponent<Rigidbody2D>();
 
             if (rigidbody == null) return null;
             
-            HeroData output = new HeroData
+            TrainingHeroData output = new TrainingHeroData
             {
 
                 posX = hero.transform.position.x,
@@ -184,7 +179,7 @@ namespace SilksongAI
         }
 
 
-        public static EnemyData? getEnemyData(string enemyName)
+        public static TrainingEnemyData? getEnemyData(string enemyName)
         {
             var enemy = GameObject.Find(enemyName);
             if (enemy == null) return null;
