@@ -8,14 +8,14 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using SilksongAI;
+using Steamworks;
 
 [BepInPlugin("com.czubii.SilksongAImod", "Silksong AI mod", "1.0.0 ")]
 public class SilksongAImod : BaseUnityPlugin
 {
     private ModGUI gui;
     public static ManualLogSource Log;
-    private BossFightRecorder bossFightRecorder;
-
+    public static string SteamUserName = "Unknown";
     public static bool GodModeEnabled { get; set; } = false;
 
 
@@ -26,12 +26,19 @@ public class SilksongAImod : BaseUnityPlugin
 
         gui = new ModGUI(this);
 
-        bossFightRecorder = new BossFightRecorder();
+        try
+        {
+            if (SteamAPI.IsSteamRunning())
+            {
+                SteamUserName = SteamFriends.GetPersonaName();
+            }
+        }
+        catch (Exception e)
+        {
+            SilksongAImod.Log.LogWarning($"Steam name failed: {e}");
+        }
 
         Harmony.CreateAndPatchAll(typeof(SilksongAImod), null);
-
-        
-        
 
     }
 
@@ -42,7 +49,7 @@ public class SilksongAImod : BaseUnityPlugin
             GameStateLogger.LogGameStateToFiles();
         }
 
-        bossFightRecorder.RecordFrame();
+        BossFightRecordingSession.Update();
     }
 
     [HarmonyPostfix]

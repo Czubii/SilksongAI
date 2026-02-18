@@ -4,6 +4,20 @@
 namespace SilksongAI
 {
     [MessagePackObject]
+    public struct RecordingInfo
+    {
+        [Key("FrameCount")]
+        public int FrameCount;
+        [Key("Success")]
+        public bool Success;
+        [Key("PlayerName")]
+        public string PlayerName;
+        [Key("BossInternalName")]
+        public string BossInternalName;
+
+    }
+
+    [MessagePackObject]
     public struct FrameData
     {
         [Key(0)]

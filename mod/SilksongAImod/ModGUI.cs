@@ -17,6 +17,7 @@ namespace SilksongAI
         private ConfigEntry<bool> godModeToggle;
         private ConfigEntry<bool> fightSelectedBossButton;
         private ConfigEntry<bool> teleportToSelectedBossButton;
+        private ConfigEntry<bool> recordSelectedBossButton;
         private ConfigEntry<int> bossSelectionDropdown;
 
         private SilksongAImod plugin;
@@ -102,6 +103,20 @@ namespace SilksongAI
                       }
                   ));
 
+            recordSelectedBossButton = plugin.Config.Bind(
+                  "Bosses",
+                  "Record the selected boss fight",
+                  false,
+                  new ConfigDescription(
+                      "Press to record the selected boss fight",
+                      null,
+                      new ConfigurationManagerAttributes
+                      {
+                          IsAdvanced = false,
+                          CustomDrawer = DrawRecordSelectedBossButton
+
+                      }
+                  ));
 
 
             printEnemiesButton = plugin.Config.Bind(
@@ -207,14 +222,14 @@ namespace SilksongAI
 
             bool oldGUIenabled = GUI.enabled;
 
-            if (!TeleportUtils.CanPerformTeleportOperations())
+            if (!CanUseTeleportButton())
                 GUI.enabled = false;
 
             if (GUILayout.Button($"Fight {bossReference.DisplayName}"))
             {
                 bossReference.SetDefeated(false);
 
-                TeleportUtils.TeleportTo(bossReference.ArenaMap, bossReference.ArenaPosition);
+                TeleportUtils.TeleportTo(bossReference.ArenaMapName, bossReference.ArenaPosition);
             }
 
             GUI.enabled = oldGUIenabled;
@@ -227,16 +242,42 @@ namespace SilksongAI
 
             bool oldGUIenabled = GUI.enabled;
 
-            if (!TeleportUtils.CanPerformTeleportOperations())
+            if (!CanUseTeleportButton())
                 GUI.enabled = false;
 
             if (GUILayout.Button($"Teleport to {bossReference.DisplayName}"))
             {
                 bossReference.SetDefeated(true);
-                TeleportUtils.TeleportTo(bossReference.ArenaMap, bossReference.ArenaPosition);
+                TeleportUtils.TeleportTo(bossReference.ArenaMapName, bossReference.ArenaPosition);
             }
 
             GUI.enabled = oldGUIenabled;
+        }
+        private void DrawRecordSelectedBossButton(ConfigEntryBase entry)
+        {
+            int bossIdx = bossSelectionDropdown.Value;
+            BossReference bossReference = BossReferenceDatabase.All[bossIdx];
+
+
+            bool oldGUIenabled = GUI.enabled;
+
+            if (!CanUseTeleportButton())
+                GUI.enabled = false;
+
+            if (GUILayout.Button($"Record {bossReference.DisplayName} Fight"))
+            {
+                BossFightRecordingSession.StartSession(bossReference, 3);
+            }
+
+            GUI.enabled = oldGUIenabled;
+        }
+
+        private bool CanUseTeleportButton()
+        {
+            if(!TeleportUtils.CanPerformTeleportOperations() || BossFightRecordingSession.SessionActive)
+                return false;
+            
+            return true;
         }
 
 

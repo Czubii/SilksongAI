@@ -12,10 +12,7 @@ namespace SilksongAI
 {
     public static class TeleportUtils
     {
-
-        private static Vector3 pendingPos;
-        private static string pendingScene;
-        private static bool pendingTeleport;
+        public static bool TeleportInProgress { get; private set; }
         private static MonoBehaviour Runner;
 
         private static void EnsureRunner()
@@ -29,16 +26,25 @@ namespace SilksongAI
 
         private class CoroutineRunner : MonoBehaviour { }
 
+        public static void TeleportTo(BossReference boss)
+        {
+            TeleportTo(boss.ArenaMapName, boss.ArenaPosition);
+        }
         public static void TeleportTo(string sceneName, Vector3 pos)
         {
-            if (pendingTeleport) return;
+            if (TeleportInProgress)
+            {
+                SilksongAImod.Log.LogWarning("Cannot teleport, the old one is still in progress");
+                return;
+            }
+            if(!CanPerformTeleportOperations())
+            {
+                SilksongAImod.Log.LogWarning("Cannot teleport.");
+                return;
+            }
 
+            TeleportInProgress = true;
 
-            pendingScene = sceneName;
-            pendingPos = pos;
-            pendingTeleport = true;
-
-            //GameManager.instance.ChangeToScene(sceneName, "left1", 0.0f);
             GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo
             {
                 SceneName = sceneName,
@@ -49,10 +55,10 @@ namespace SilksongAI
                 AlwaysUnloadUnusedAssets = true
             });
             EnsureRunner();
-            Runner.StartCoroutine(TeleportHeroWhenPossible());
+            Runner.StartCoroutine(TeleportHeroWhenPossible(pos));
         }
 
-        private static IEnumerator TeleportHeroWhenPossible()
+        private static IEnumerator TeleportHeroWhenPossible(Vector3 pos)
         {
             yield return new WaitWhile(() =>
             {
@@ -72,10 +78,10 @@ namespace SilksongAI
                 return HC != null && HC.CanInput();
             });
 
-            TeleportHero();
+            TeleportHero(pos);
         }
 
-        private static void TeleportHero()
+        private static void TeleportHero(Vector3 pos)
         {            
             if (HeroController.instance == null)
             {
@@ -83,7 +89,7 @@ namespace SilksongAI
                 return;
             }
 
-            HeroController.instance.transform.position = pendingPos;
+            HeroController.instance.transform.position = pos;
 
             var HeroRigidbody2D = HeroController.instance.GetComponent<Rigidbody2D>();
             if (HeroRigidbody2D != null)
@@ -97,7 +103,7 @@ namespace SilksongAI
                 HeroController.instance.cState.transitioning = false;
             }
 
-            pendingTeleport = false;
+            TeleportInProgress = false;
         }
 
 
@@ -105,24 +111,25 @@ namespace SilksongAI
         {
 
                 if (PlayerData.instance != null && PlayerData.instance.health <= 0)
-                {
                     return false;
-                }
+                
                 if (PlayerData.instance != null && PlayerData.instance.atBench)
-                {
                     return false;
-                }
+                
                 if (PlayerData.instance != null && !PlayerData.instance.bindCutscenePlayed)
-                {
                     return false;
-                }
+                
                 if (GameManager.instance != null && GameManager.instance.RespawningHero)
-                {
                     return false;
-                }
 
                 return true;
-            }
+        }
+
+        public static bool TeleportConcluded()
+        {
+            if(TeleportInProgress) return false;
+            return true;
+        }
     }
 
     public static class GetDataUtils

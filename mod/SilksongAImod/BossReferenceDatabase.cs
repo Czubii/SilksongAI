@@ -13,7 +13,7 @@ namespace SilksongAI
     {
         public string DisplayName;
         public string InternalName;
-        public string ArenaMap;
+        public string ArenaMapName;
         public Vector3 ArenaPosition;
         public Action<bool> SetDefeated = _ => SilksongAImod.Log.LogWarning("Trying to respawn a boss with undefined SetDefeated action!");
     }
@@ -26,7 +26,7 @@ namespace SilksongAI
             {
                 DisplayName = "Moss Mother",
                 InternalName = "Mossbone Mother",
-                ArenaMap = "Tut_03",
+                ArenaMapName = "Tut_03",
                 ArenaPosition = new Vector3(68f, 17.6f, 0),
                 SetDefeated = (val) => 
                 {
@@ -43,7 +43,7 @@ namespace SilksongAI
             {
                 DisplayName = "Bell Beast",
                 InternalName = "Bell Beast",
-                ArenaMap = "Bone_05",
+                ArenaMapName = "Bone_05",
                 ArenaPosition = new Vector3(78.59f, 3.57f, 0),
                 SetDefeated = (val) =>
                 {
@@ -54,7 +54,7 @@ namespace SilksongAI
             {
                 DisplayName = "Lace 1",
                 InternalName = "Lace Boss1",
-                ArenaMap = "Bone_East_12",
+                ArenaMapName = "Bone_East_12",
                 ArenaPosition = new Vector3(85f, 7.57f, 0),
                 SetDefeated = (val) =>
                 {
