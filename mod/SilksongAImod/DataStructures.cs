@@ -68,6 +68,7 @@ namespace SilksongAI
         // Movement:
         [Key(0)]
         public bool jump;
+
         [Key(1)]
         public float left;
         [Key(2)]

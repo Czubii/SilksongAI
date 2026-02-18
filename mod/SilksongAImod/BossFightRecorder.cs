@@ -77,7 +77,7 @@ namespace SilksongAI
             private static RecordingInfo _recordingInfo;
             private static int _FrameCount = 0;
             private static string _BaseFileName;
-            private static readonly string _Path = Path.Combine(Paths.PluginPath, "SilksongAI", "Recordings");
+            private static string _Path;
             public static void StartRecording(BossReference boss)
             {
                 if (IsRecording)
@@ -106,12 +106,34 @@ namespace SilksongAI
                     PlayerName = SilksongAImod.SteamUserName
                 };
 
+                try
+                {
+                    var path = Path.Combine(Paths.PluginPath, "SilksongAI", "Recordings", boss.InternalName);
+                    Directory.CreateDirectory(path);
 
-                Directory.CreateDirectory(_Path);
-                _BaseFileName = $"session_{DateTime.Now:yyyyMMdd_HHmmss}";
-                _outputFileJSON = new StreamWriter(Path.Combine(_Path, _BaseFileName + ".JSON")); //TODO: remove the JSON once no longer needed for debuging
-                _outputFileBIN = new FileStream(Path.Combine(_Path, _BaseFileName), FileMode.Create, FileAccess.Write, FileShare.Read);
-                
+                    var baseFileName = $"session_{DateTime.Now:yyyyMMdd_HHmmss}";
+
+                    var json = new StreamWriter(Path.Combine(path, baseFileName + ".JSON")); //TODO: remove the JSON once no longer needed for debuging
+                    var bin = new FileStream(Path.Combine(path, baseFileName), 
+                        FileMode.Create, FileAccess.Write, FileShare.Read, 
+                        bufferSize: 64 * 1024,
+                        useAsync: false);
+
+                    // Assign only after success
+                    _Path = path;
+                    _BaseFileName = baseFileName;
+                    _outputFileJSON = json;
+                    _outputFileBIN = bin;
+                }
+                catch (Exception ex)
+                {
+                    _outputFileBIN?.Dispose();
+                    _outputFileJSON?.Dispose();
+
+                    SilksongAImod.Log.LogError($"Error: BossFightRecorder.StartRecording: {ex}");
+                    return;
+                }
+
                 IsRecording = true;
                 _FrameCount = 0;
             }
@@ -129,33 +151,33 @@ namespace SilksongAI
                 TrainingEnemyData? enemyData = GetDataUtils.getEnemyData(_bossGo); // TODO make those three take the enemy etc. as an argument
                 if (enemyData == null)
                 {
-                    SilksongAImod.Log.LogWarning("BossFightRecorder: enemyData missing");
+                    SilksongAImod.Log.LogError("BossFightRecorder: enemyData missing. Stopping Recoroding");
+                    StopRecording(false);
                     return;
                 }
 
                 TrainingHeroData? heroData = GetDataUtils.getHeroData();
                 if (heroData == null)
                 {
-                    SilksongAImod.Log.LogWarning("BossFightRecorder: heroData missing");
+                    SilksongAImod.Log.LogError("BossFightRecorder: heroData missing. Stopping Recoroding");
+                    StopRecording(false);
                     return;
                 }
 
                 var IH = InputHandler.Instance;
                 if (IH == null)
                 {
-                    SilksongAImod.Log.LogWarning("BossFightRecorder: InputHandler.Instance missing");
+                    SilksongAImod.Log.LogError("BossFightRecorder: InputHandler.Instance missing. Stopping Recoroding");
+                    StopRecording(false);
                     return;
                 }
-                TrainingUserInputs? userInputs = inputTracker.GetInputs(IH);
-
-
-
+                TrainingUserInputs userInputs = inputTracker.GetInputs(IH);
 
                 TrainingFrameData frameData = new TrainingFrameData()
                 {
                     enemy = (TrainingEnemyData)enemyData,
                     hero = (TrainingHeroData)heroData,
-                    userInputs = (TrainingUserInputs)userInputs
+                    userInputs = userInputs
                 };
 
                 var dataBinWithKeys = MessagePackSerializer.Serialize(frameData, MessagePack.Resolvers.ContractlessStandardResolver.Options);
@@ -180,9 +202,8 @@ namespace SilksongAI
                 if (!IsRecording) return;
 
                 IsRecording = false;
-                _outputFileJSON.Close();
-                _outputFileBIN.Close();
-
+                _outputFileJSON.Dispose();
+                _outputFileBIN.Dispose();
 
                 _recordingInfo.Success = success;
                 _recordingInfo.FrameCount = _FrameCount;
