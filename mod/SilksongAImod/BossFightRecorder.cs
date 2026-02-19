@@ -16,10 +16,12 @@ namespace SilksongAI
 {
     public static class BossFightRecordingSession
     {
-        private static int _remainingFights = 0;
+        public static int RemainingFights { get; private set; } = 0;
+        public static int Fights { get; private set; } = 0;
         public static bool SessionActive { get; private set; } = false;
+
         private static bool _ArenaReloaded = false;
-        private static BossReference _targetBoss;
+        public static BossReference TargetBoss { get; private set; }
         public static void StartSession(BossReference boss, int numFights)
         {
             if (SessionActive)
@@ -27,9 +29,16 @@ namespace SilksongAI
                 SilksongAImod.Log.LogWarning("Cannot Start Recording Session! One is still running");
                 return;
             }
+            if (numFights <= 0)
+            {
+                SilksongAImod.Log.LogError("BossFightRecordingSession.StartSession(): numFights has to be positive");
+                return;
+            }
 
-            _remainingFights = numFights;
-            _targetBoss = boss;
+            RemainingFights = numFights;
+            Fights = numFights;
+
+            TargetBoss = boss;
 
             _ArenaReloaded = false;
 
@@ -42,7 +51,7 @@ namespace SilksongAI
 
             if (!BossFightRecorder.IsRecording)
             {
-                if (_remainingFights == 0)
+                if (RemainingFights == 0)
                 {
                     SessionActive = false;
                     return;
@@ -50,14 +59,14 @@ namespace SilksongAI
 
                 if (!TeleportUtils.TeleportInProgress && !_ArenaReloaded && TeleportUtils.CanPerformTeleportOperations())
                 {
-                    _targetBoss.SetDefeated(false);
-                    TeleportUtils.TeleportTo(_targetBoss);
+                    TargetBoss.SetDefeated(false);
+                    TeleportUtils.TeleportTo(TargetBoss);
                     _ArenaReloaded = true;
                 }
                 if (!TeleportUtils.TeleportInProgress && _ArenaReloaded)
                 {
-                    _remainingFights--;
-                    BossFightRecorder.StartRecording(_targetBoss);
+                    RemainingFights--;
+                    BossFightRecorder.StartRecording(TargetBoss);
                     _ArenaReloaded = false;
                 }
             }

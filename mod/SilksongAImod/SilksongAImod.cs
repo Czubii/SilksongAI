@@ -26,20 +26,28 @@ public class SilksongAImod : BaseUnityPlugin
 
         gui = new ModGUI(this);
 
+
+
+        Harmony.CreateAndPatchAll(typeof(SilksongAImod), null);
+
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(SteamAPI), "Init")]
+    private static void SteamAPIInitPostFix()
+    {
         try
         {
             if (SteamAPI.IsSteamRunning())
             {
                 SteamUserName = SteamFriends.GetPersonaName();
+
             }
         }
         catch (Exception e)
         {
             SilksongAImod.Log.LogWarning($"Steam name failed: {e}");
         }
-
-        Harmony.CreateAndPatchAll(typeof(SilksongAImod), null);
-
     }
 
     private void Update()
@@ -51,6 +59,12 @@ public class SilksongAImod : BaseUnityPlugin
 
         BossFightRecordingSession.Update();
     }
+
+    private void OnGUI()
+    {
+        gui.OnGUIDrawStateLabel();
+    }
+
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerData), "TakeHealth")]

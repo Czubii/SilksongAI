@@ -1,7 +1,9 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using HutongGames.PlayMaker.Actions;
 using System;
 using System.Linq;
+using TMProOld;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -142,7 +144,7 @@ namespace SilksongAI
         }
 
 
-        private void DrawPrintPositionButton(ConfigEntryBase entry)
+        private void DrawPrintPositionButton(ConfigEntryBase entry)// TODO remove or make safe
         {
             if (GUILayout.Button("Print Hornet Position"))
             {
@@ -253,6 +255,8 @@ namespace SilksongAI
 
             GUI.enabled = oldGUIenabled;
         }
+
+        private int _numRecordings = 1;
         private void DrawRecordSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
@@ -261,15 +265,37 @@ namespace SilksongAI
 
             bool oldGUIenabled = GUI.enabled;
 
-            if (!CanUseTeleportButton())
+            GUILayout.BeginHorizontal();
+
+            if (!CanUseTeleportButton() || _numRecordings == 0)
                 GUI.enabled = false;
 
             if (GUILayout.Button($"Record {bossReference.DisplayName} Fight"))
             {
-                BossFightRecordingSession.StartSession(bossReference, 3);
+               BossFightRecordingSession.StartSession(bossReference, _numRecordings);
             }
 
             GUI.enabled = oldGUIenabled;
+
+
+            string _numRecordingsStr = "";
+
+            if (_numRecordings != 0)
+                _numRecordingsStr = _numRecordings.ToString();
+
+            _numRecordingsStr = GUILayout.TextField(_numRecordingsStr, 3, GUILayout.Width(35));
+
+            if (_numRecordingsStr.Length > 0)
+                _numRecordings = int.Parse(_numRecordingsStr);
+            else
+                _numRecordings = 0;
+
+            _numRecordings = Math.Abs(_numRecordings);
+
+
+            GUILayout.EndHorizontal();
+
+            
         }
 
         private bool CanUseTeleportButton()
@@ -280,6 +306,56 @@ namespace SilksongAI
             return true;
         }
 
+        
+        private static readonly GUIStyle labelStyle = new GUIStyle
+        {
+            fontSize = 18,
+            normal = {textColor = Color.white},
+            alignment = TextAnchor.MiddleRight
+            
+        };
+        public void OnGUIDrawStateLabel()
+        {
+
+            Rect labelSceneRect = new Rect(Screen.width - 200, 10, 
+                                           180, 9);
+
+            Rect labelPosSceneRect = new Rect(Screen.width - 200, 30, 
+                                              180, 9);
+
+            Rect labelrecordingInfoRect = new Rect(Screen.width - 200, 50,
+                                  180, 9);
+
+
+            try // TODO look at this closer (can we check wether the instance exists?
+            {
+                var Scene = SceneManager.GetActiveScene();
+                GUI.Label(labelSceneRect, $"Scene: {Scene.name}", labelStyle);
+            }
+            catch (Exception e)
+            {
+                SilksongAImod.Log.LogError(e);
+                GUI.Label(labelSceneRect, $"Scene: {e.Message}", labelStyle);
+            }
+
+            HeroController HC = HeroController.instance;
+            if (HC != null)
+                GUI.Label(labelPosSceneRect, $"Pos: ({HC.transform.position.x,5:0.0}, {HC.transform.position.y,5:0.0})", labelStyle);
+            else
+                GUI.Label(labelPosSceneRect, "Pos: No Hero On Scene", labelStyle);
+
+            if (BossFightRecordingSession.SessionActive)
+            {
+                string BossName = BossFightRecordingSession.TargetBoss.DisplayName;
+                int RecordedFights = BossFightRecordingSession.Fights - BossFightRecordingSession.RemainingFights;
+                int TotalFights = BossFightRecordingSession.Fights;
+                GUI.Label(labelrecordingInfoRect, $"Recording: {BossName} {RecordedFights}/{TotalFights}", labelStyle);
+            }
+            else
+            {
+                GUI.Label(labelrecordingInfoRect, $"Recording: Not Recordnig", labelStyle);
+            }
+        }
 
     }
 }
