@@ -285,8 +285,10 @@ namespace SilksongAI
 
             _numRecordingsStr = GUILayout.TextField(_numRecordingsStr, 3, GUILayout.Width(35));
 
+            _numRecordingsStr = RemoveNonNumberChar(_numRecordingsStr);
+
             if (_numRecordingsStr.Length > 0)
-                _numRecordings = int.Parse(_numRecordingsStr);
+                _numRecordings = int.Parse(_numRecordingsStr, System.Globalization.NumberStyles.Integer);
             else
                 _numRecordings = 0;
 
@@ -296,6 +298,11 @@ namespace SilksongAI
             GUILayout.EndHorizontal();
 
             
+        }
+
+        private static string RemoveNonNumberChar(string input)
+        {
+            return new string(input.Where(c => char.IsDigit(c)).ToArray());
         }
 
         private bool CanUseTeleportButton()
