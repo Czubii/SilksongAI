@@ -78,6 +78,23 @@ namespace SilksongAI
         public int silk;
         [Key(7)]
         public bool canJump;
+        [Key(8)]
+        public bool canDoubleJump;
+        [Key(9)]
+        public bool canAttack;
+        [Key(10)]
+        public bool canSprint;
+        [Key(11)]
+        public bool canBind;
+        [Key(12)]
+        public bool canCast;
+        [Key(13)]
+        public bool canNailArt;
+        [Key(14)]
+        public bool canTryHarpoon;
+        [Key(15)]
+        public bool canInput;
+
     }
     [MessagePackObject]
     public struct TrainingUserInputs

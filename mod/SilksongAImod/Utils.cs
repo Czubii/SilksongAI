@@ -171,7 +171,7 @@ namespace SilksongAI
             var rigidbody = hero.GetComponent<Rigidbody2D>();
 
             if (rigidbody == null) return null;
-            
+
             TrainingHeroData output = new TrainingHeroData
             {
 
@@ -182,7 +182,16 @@ namespace SilksongAI
                 velY = rigidbody.linearVelocity.y,
                 hp = hero.playerData.health,
                 silk = hero.playerData.silk,
-                canJump = hero.CanJump()
+                canJump = hero.CanJump(),
+                canDoubleJump = hero.CanDoubleJump(),
+                canAttack = hero.CanAttack(),
+                canSprint = hero.CanSprint(),
+                canBind = hero.CanBind(),
+                canCast = hero.CanCast(),
+                canNailArt = hero.CanNailArt(),
+                canTryHarpoon = hero.CanTryHarpoonDash(),
+                canInput = hero.CanInput(),
+                canBackDash = hero.CanBackDash(),
 
             };
 
