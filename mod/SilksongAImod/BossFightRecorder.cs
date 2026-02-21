@@ -12,6 +12,7 @@ using Steamworks;
 using System.Xml.Linq;
 using UnityEngine.Playables;
 using HutongGames.PlayMaker.Actions;
+using System.Collections;
 
 namespace SilksongAI
 {
@@ -23,6 +24,20 @@ namespace SilksongAI
 
         private static bool _ArenaReloaded = false;
         public static BossMetaData TargetBoss { get; private set; }
+
+        private static bool _awaitingBoss = false;
+        private static MonoBehaviour Runner;
+        private static void EnsureRunner()
+        {
+            if (Runner != null) return;
+
+            var go = new GameObject("TeleportUtilsRunner");
+            UnityEngine.Object.DontDestroyOnLoad(go);
+            Runner = go.AddComponent<CoroutineRunner>();
+        }
+
+        private class CoroutineRunner : MonoBehaviour { }
+
         public static void StartSession(BossMetaData boss, int numFights)
         {
             if (SessionActive)
@@ -47,7 +62,7 @@ namespace SilksongAI
         }
         public static void Update()
         {
-            if (!SessionActive) return;
+            if (!SessionActive || _awaitingBoss) return;
 
 
             if (!BossFightRecorder.IsRecording)
@@ -72,9 +87,10 @@ namespace SilksongAI
 
                     PlayerUtils.SetFullHP();
                     PlayerUtils.SetFullSilk();
-                    
 
-                    BossFightRecorder.StartRecording(TargetBoss);
+                    _awaitingBoss = true;
+                    EnsureRunner();
+                    Runner.StartCoroutine(AwaitBossAndStartRecording(TargetBoss.InternalName, 2500));
                     _ArenaReloaded = false;
                 }
             }
@@ -84,9 +100,42 @@ namespace SilksongAI
             }
         }
 
+        private static IEnumerator AwaitBossAndStartRecording(string awaitedEnemyName, int timeoutFrames)
+        {
+            int i = 0;
+            yield return new WaitUntil(() =>
+            {
+                if (i >= timeoutFrames)
+                {
+                    SilksongAImod.Log.LogWarning($"AwaitBossAndStartRecording(): Timeout hit when awaiting {awaitedEnemyName}");
+                    return true;
+                }
+                    
+
+                i++;
+
+                var enemies = EnemyTracker.GetAll();
+
+                var boss = EnemyTracker
+                    .GetAll()
+                    .FirstOrDefault(e => e.Name == awaitedEnemyName);
+
+                return boss != null;
+            });
+
+            _awaitingBoss = false;
+            BossFightRecorder.StartRecording(TargetBoss);
+        }
+
         public static void StopRecording()
         {
             if(!SessionActive) return;
+
+            if (_awaitingBoss)
+            {
+                Runner.StopAllCoroutines();
+                _awaitingBoss = false;
+            }
 
             RemainingFights = 0;
             TotalFights = 0;
@@ -217,7 +266,7 @@ namespace SilksongAI
                 frameData.Enemies = new TrainingEnemyData[_enemyList.Count];
                 for (int i = 0; i < _enemyList.Count; i++)
                 {
-                    TrainingEnemyData? enemyData = GetDataUtils.GetTrainingEnemyData(_enemyList[i].GameObject); // TODO make those three take the enemy etc. as an argument
+                    TrainingEnemyData? enemyData = GetDataUtils.GetTrainingEnemyData(_enemyList[i].GameObject); 
                     if (enemyData == null)
                     {
                         SilksongAImod.Log.LogWarning("BossFightRecorder: enemyData missing");

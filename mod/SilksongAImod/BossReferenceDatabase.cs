@@ -61,6 +61,59 @@ namespace SilksongAI
                     PlayerData.instance.defeatedLace1 = val;
                 }
             },
+            new BossMetaData
+            {
+                DisplayName = "Fourth Chorus",
+                InternalName = "SG_head",
+                ArenaMapName = "Bone_East_08",
+                ArenaPosition = new Vector3(80.4f, 7.1f, 0),
+                SetDefeated = (val) =>
+                {
+                    PlayerData.instance.defeatedSongGolem = val;
+                }
+            },
+            new BossMetaData
+            {
+                DisplayName = "Moorwing",
+                InternalName = "Vampire Gnat",
+                ArenaMapName = "Greymoor_08",
+                ArenaPosition = new Vector3(40.5f, 4.7f, 0),
+                SetDefeated = (val) =>
+                {
+                    PlayerData.instance.defeatedVampireGnatBoss = val;
+                }
+            },
+            new BossMetaData
+            {
+                DisplayName = "Sister Splinter",
+                InternalName = "Splinter Queen",
+                ArenaMapName = "Shellwood_18",
+                ArenaPosition = new Vector3(52f, 8.6f, 0),
+                SetDefeated = (val) =>
+                {
+                    PlayerData.instance.defeatedSplinterQueen = val;
+                }
+            },
+            new BossMetaData
+            {
+                DisplayName = "Widow",
+                InternalName = "Spinner Boss",
+                ArenaMapName = "Belltown_Shrine",
+                ArenaPosition = new Vector3(52.4f, 8.6f, 0),
+                SetDefeated = (val) =>
+                {
+                    PlayerData.instance.spinnerDefeated = val;
+                    PlayerData.instance.encounteredSpinner = true;
+                    PlayerData.instance.bellShrineBellhart = val;
+                    SceneData.instance.PersistentInts.SetValue(new PersistentItemData<int> //disables bench in Widow fight while boss is active
+                    {
+                        SceneName = "Belltown_Shrine",
+                        ID = "Bellshrine Sequence Bellhart",
+                        Value = 0,
+                        Mutator = 0
+                    });
+                }
+            }
 
         };
     }

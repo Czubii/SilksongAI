@@ -246,20 +246,6 @@ namespace SilksongAI
             return hp;
         }
 
-
-        public static GameObject[] GetAllEnemies() //TODO: enemy tracker [HarmonyPatch(typeof(HealthManager), "Awake")]
-        {
-            var enemies = GameObject.FindObjectsByType<HealthManager>(FindObjectsSortMode.None);
-            GameObject[] enemiesGo = new GameObject[enemies.Length];
-
-            for (int i = 0; i < enemies.Length; i++)
-            {
-                enemiesGo[i] = enemies[i].gameObject;
-            }
-
-            return enemiesGo;
-        }
-
         public static GameObject[] GetAllDamageSources()
         {
             var damageSources = GameObject.FindObjectsByType<DamageHero>(FindObjectsSortMode.None);
