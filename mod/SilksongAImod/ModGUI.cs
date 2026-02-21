@@ -293,63 +293,62 @@ namespace SilksongAI
             alignment = TextAnchor.MiddleLeft
 
         };
+
+        private static readonly int GUILabelOffsetY = 20;
         public void OnGUIDrawStateLabel()
         {
 
-            Rect labelSceneRect = new Rect(Screen.width - 200, 10, 
-                                           180, 9);
+            Rect rect0 = new Rect(Screen.width - 200, 10, 180, 9);
 
-            Rect labelPosSceneRect = new Rect(Screen.width - 200, 30, 
-                                              180, 9);
-
-            Rect labelrecordingInfoRect = new Rect(Screen.width - 200, 50,
-                                  180, 9);
-
-            Rect labelEnemiesRect0 = new Rect(20, Screen.height - 200,
-                      180, 9);
-
-
-            try // TODO look at this closer (can we check wether the instance exists?
+            try 
             {
                 var Scene = SceneManager.GetActiveScene();
-                GUI.Label(labelSceneRect, $"Scene: {Scene.name}", labelStyleRight);
+                GUI.Label(rect0, $"Scene: {Scene.name}", labelStyleRight);
+                rect0.y += GUILabelOffsetY;
             }
             catch (Exception e)
             {
-                SilksongAImod.Log.LogError(e);
-                GUI.Label(labelSceneRect, $"Scene: {e.Message}", labelStyleRight);
+                SilksongAImod.Log.LogError($"OnGUIDrawStateLabel(): {e}");
             }
 
             HeroController HC = HeroController.instance;
             if (HC != null)
-                GUI.Label(labelPosSceneRect, $"Pos: ({HC.transform.position.x,5:0.0}, {HC.transform.position.y,5:0.0})", labelStyleRight);
+                GUI.Label(rect0, $"Pos: ({HC.transform.position.x,5:0.0}, {HC.transform.position.y,5:0.0})", labelStyleRight);
             else
-                GUI.Label(labelPosSceneRect, "Pos: No Hero On Scene", labelStyleRight);
+                GUI.Label(rect0, "Pos: No Hero On Scene", labelStyleRight);
+
+            rect0.y += GUILabelOffsetY;
 
             if (BossFightRecordingSession.SessionActive)
             {
                 string BossName = BossFightRecordingSession.TargetBoss.DisplayName;
                 int RecordedFights = BossFightRecordingSession.TotalFights - BossFightRecordingSession.RemainingFights;
                 int TotalFights = BossFightRecordingSession.TotalFights;
-                GUI.Label(labelrecordingInfoRect, $"Recording: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
+                GUI.Label(rect0, $"Recording: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
             }
             else
             {
-                GUI.Label(labelrecordingInfoRect, $"Recording: Not Recordnig", labelStyleRight);
+                GUI.Label(rect0, $"Recording: Not Recordnig", labelStyleRight);
             }
+
+
+            int numEnemies = EnemyTracker.GetCount();
+            int labelEnemiesStartY = Screen.height - ((numEnemies + 2) * GUILabelOffsetY);
+            Rect labelEnemiesRect0 = new Rect(20, labelEnemiesStartY, 180, 9);
 
             if (showEnemiesToggle.Value)
             {
-                GUI.Label(labelEnemiesRect0, $"Enemies: ", labelStyleLeft);
+                if (numEnemies > 0)
+                    GUI.Label(labelEnemiesRect0, $"Enemies: ", labelStyleLeft);
+                else
+                    GUI.Label(labelEnemiesRect0, $"Enemies: None", labelStyleLeft);
 
                 int y = 0;
                 foreach(var enemy in EnemyTracker.GetAll())
                 {
-                    y += 20;
-                    Rect rect = new Rect(labelEnemiesRect0);
-                    rect.y += y;
+                    labelEnemiesRect0.y += GUILabelOffsetY;
 
-                    GUI.Label(rect, $"{enemy.Name}", labelStyleLeft);
+                    GUI.Label(labelEnemiesRect0, $"{enemy.Name}", labelStyleLeft);
                     
                 }
             }

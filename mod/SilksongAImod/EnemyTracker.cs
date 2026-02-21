@@ -19,6 +19,10 @@ namespace SilksongAI
         private static Dictionary<GameObject, Enemy> _enemies = 
             new Dictionary<GameObject, Enemy>();
 
+        public static int GetCount()
+        {
+            return _enemies.Count;
+        }
         public static IEnumerable<Enemy> GetAll()
         {
             return _enemies.Values;
