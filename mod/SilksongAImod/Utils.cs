@@ -8,6 +8,7 @@ using UnityEngine;
 using HutongGames.PlayMaker.Actions;
 using System.Collections;
 using static UnityEngine.EventSystems.EventTrigger;
+using Steamworks;
 
 namespace SilksongAI
 {
@@ -263,5 +264,43 @@ namespace SilksongAI
             return damageSourcesGo;
         }
 
+    }
+
+    public static class PlayerUtils
+    {
+        public static void SetFullHP()
+        {
+            HeroController heroController = HeroController.instance;
+            if (heroController == null)
+            {
+                SilksongAImod.Log.LogWarning("PlayerUtils.SetFullHP(): no HeroController.instance on scene");
+                return;
+            }
+            heroController.RefillHealthToMax();
+        }
+
+        public static void SetFullSilk()
+        {
+            HeroController heroController = HeroController.instance;
+            if (heroController == null)
+            {
+                SilksongAImod.Log.LogWarning("PlayerUtils.SetFullHP(): no HeroController.instance on scene");
+                return;
+            }
+            heroController.RefillSilkToMaxSilent();
+           
+        }
+
+        public static void RemoveCocoon()
+        {
+            HeroController heroController = HeroController.instance;
+            if (heroController == null)
+            {
+                SilksongAImod.Log.LogWarning("PlayerUtils.SetFullHP(): no HeroController.instance on scene");
+                return;
+            }
+            heroController.CocoonBroken();
+  
+        }
     }
 }

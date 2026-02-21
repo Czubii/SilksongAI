@@ -59,6 +59,7 @@ namespace SilksongAI
 
                 if (!TeleportUtils.TeleportInProgress && !_ArenaReloaded && TeleportUtils.CanPerformTeleportOperations())
                 {
+                    PlayerUtils.RemoveCocoon();
                     TargetBoss.SetDefeated(false);
                     TeleportUtils.TeleportTo(TargetBoss);
                     _ArenaReloaded = true;
@@ -66,7 +67,12 @@ namespace SilksongAI
                 if (!TeleportUtils.TeleportInProgress && _ArenaReloaded)
                 {
                     RemainingFights--;
-                    BossFightRecorder.StartRecording(TargetBoss); //TODO set full HP and silk 
+
+                    PlayerUtils.SetFullHP();
+                    PlayerUtils.SetFullSilk();
+                    
+
+                    BossFightRecorder.StartRecording(TargetBoss);
                     _ArenaReloaded = false;
                 }
             }
