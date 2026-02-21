@@ -61,6 +61,7 @@ namespace SilksongAI
                 {
                     PlayerUtils.RemoveCocoon();
                     TargetBoss.SetDefeated(false);
+
                     TeleportUtils.TeleportTo(TargetBoss);
                     _ArenaReloaded = true;
                 }
@@ -173,7 +174,7 @@ namespace SilksongAI
                     return;
                 }
                 
-                TrainingHeroData? heroData = GetDataUtils.getHeroData();
+                TrainingHeroData? heroData = GetDataUtils.GetHeroData();
                 if (heroData == null)
                 {
                     SilksongAImod.Log.LogError("BossFightRecorder: heroData missing. Stopping Recoroding");

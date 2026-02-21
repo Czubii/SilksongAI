@@ -165,7 +165,7 @@ namespace SilksongAI
             return output;
         }
 
-        public static TrainingHeroData? getHeroData()
+        public static TrainingHeroData? GetHeroData()
         {
             var hero = HeroController.instance;
             var rigidbody = hero.GetComponent<Rigidbody2D>();
