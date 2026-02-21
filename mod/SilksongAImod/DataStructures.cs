@@ -94,6 +94,8 @@ namespace SilksongAI
         public bool canTryHarpoon;
         [Key(15)]
         public bool canInput;
+        [Key(16)]
+        public bool canBackDash;
 
     }
     [MessagePackObject]

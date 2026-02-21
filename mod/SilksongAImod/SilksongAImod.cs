@@ -58,13 +58,7 @@ public class SilksongAImod : BaseUnityPlugin
     {
         if (Input.GetKeyDown(KeyCode.F11))
         {
-            //GameStateLogger.LogGameStateToFiles();//TODO remove or use lol
-            String logMsg = "";
-            foreach (var enemy in EnemyTracker.GetAll())
-            {
-                logMsg += enemy.Name + "  ";
-            }
-            Log.LogMessage(logMsg);
+            GameStateLogger.LogGameStateToFiles();
         }
         if (Input.GetKeyDown(KeyCode.F10))
         {

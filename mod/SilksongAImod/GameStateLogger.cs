@@ -22,11 +22,11 @@ namespace SilksongAI
             Directory.CreateDirectory(path);
 
             
-            var enemies = GetDataUtils.GetAllEnemies();
+            var enemies = EnemyTracker.GetAll();
             using (StreamWriter outputFile = new StreamWriter(Path.Combine(path, "Enemies.txt")))
             {
                 foreach (var enemy in enemies) 
-                    outputFile.WriteLine(enemy.name);
+                    outputFile.WriteLine(enemy.Name);
             }
 
             var damageSources = GetDataUtils.GetAllDamageSources();
