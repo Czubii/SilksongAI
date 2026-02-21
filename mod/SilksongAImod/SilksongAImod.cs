@@ -66,6 +66,10 @@ public class SilksongAImod : BaseUnityPlugin
             }
             Log.LogMessage(logMsg);
         }
+        if (Input.GetKeyDown(KeyCode.F10))
+        {
+            BossFightRecordingSession.StopRecording();
+        }
 
         BossFightRecordingSession.Update();
     }

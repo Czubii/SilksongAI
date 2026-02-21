@@ -11,13 +11,14 @@ using UnityEngine;
 using Steamworks;
 using System.Xml.Linq;
 using UnityEngine.Playables;
+using HutongGames.PlayMaker.Actions;
 
 namespace SilksongAI
 {
     public static class BossFightRecordingSession
     {
         public static int RemainingFights { get; private set; } = 0;
-        public static int Fights { get; private set; } = 0;
+        public static int TotalFights { get; private set; } = 0;
         public static bool SessionActive { get; private set; } = false;
 
         private static bool _ArenaReloaded = false;
@@ -36,7 +37,7 @@ namespace SilksongAI
             }
 
             RemainingFights = numFights;
-            Fights = numFights;
+            TotalFights = numFights;
 
             TargetBoss = boss;
 
@@ -53,7 +54,7 @@ namespace SilksongAI
             {
                 if (RemainingFights == 0)
                 {
-                    SessionActive = false;
+                    StopRecording();
                     return;
                 }
 
@@ -81,6 +82,21 @@ namespace SilksongAI
             {
                 BossFightRecorder.RecordFrame();
             }
+        }
+
+        public static void StopRecording()
+        {
+            if(!SessionActive) return;
+
+            RemainingFights = 0;
+            TotalFights = 0;
+            SessionActive = false;
+            BossFightRecorder.StopRecording();
+
+            TargetBoss.SetDefeated(true);
+            TeleportUtils.TeleportTo(TargetBoss);
+
+            TargetBoss = null;
         }
 
         private static class BossFightRecorder //TODO Force stop on keypress
@@ -244,9 +260,13 @@ namespace SilksongAI
                     var dataBinWithKeys = MessagePackSerializer.Serialize(_recordingInfo);
                     outputInfoFile.Write(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
                 }
-
-
             }
+
+            public static void StopRecording()
+            {
+                StopRecording(false);
+            }
+
         }
     }
     

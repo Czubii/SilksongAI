@@ -354,8 +354,8 @@ namespace SilksongAI
             if (BossFightRecordingSession.SessionActive)
             {
                 string BossName = BossFightRecordingSession.TargetBoss.DisplayName;
-                int RecordedFights = BossFightRecordingSession.Fights - BossFightRecordingSession.RemainingFights;
-                int TotalFights = BossFightRecordingSession.Fights;
+                int RecordedFights = BossFightRecordingSession.TotalFights - BossFightRecordingSession.RemainingFights;
+                int TotalFights = BossFightRecordingSession.TotalFights;
                 GUI.Label(labelrecordingInfoRect, $"Recording: {BossName} {RecordedFights}/{TotalFights}", labelStyle);
             }
             else
