@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using HutongGames.PlayMaker.Actions;
+using Steamworks;
 using System;
 using System.Linq;
 using TMProOld;
@@ -17,6 +18,7 @@ namespace SilksongAI
         private ConfigEntry<bool> getPositionButton;
         private ConfigEntry<bool> printEnemiesButton;
         private ConfigEntry<bool> godModeToggle;
+        private ConfigEntry<bool> showEnemiesToggle;
         private ConfigEntry<bool> fightSelectedBossButton;
         private ConfigEntry<bool> teleportToSelectedBossButton;
         private ConfigEntry<bool> recordSelectedBossButton;
@@ -53,6 +55,20 @@ namespace SilksongAI
                       {
                           IsAdvanced = false,
                           CustomDrawer = DrawGodModeToggle
+                      }
+                  ));
+
+            showEnemiesToggle = plugin.Config.Bind(
+                  "Debug",
+                  "Show Enemies On Scene",
+                  false,
+                  new ConfigDescription(
+                      "Press to Show Enemies On Scene",
+                      null,
+                      new ConfigurationManagerAttributes
+                      {
+                          IsAdvanced = false,
+                          CustomDrawer = DrawShowEnemiesToggle
                       }
                   ));
 
@@ -163,6 +179,13 @@ namespace SilksongAI
         private void DrawGodModeToggle(ConfigEntryBase entry)
         {
             GodModeEnabled = GUILayout.Toggle(GodModeEnabled, "GodMode");
+        }
+
+        private void DrawShowEnemiesToggle(ConfigEntryBase entry)
+        {
+            var config = (ConfigEntry<bool>)entry;
+
+            config.Value = GUILayout.Toggle(config.Value, "Show Enemies");
         }
 
         private void DrawPrintEnemiesButton(ConfigEntryBase entry)
@@ -314,12 +337,19 @@ namespace SilksongAI
         }
 
         
-        private static readonly GUIStyle labelStyle = new GUIStyle
+        private static readonly GUIStyle labelStyleRight = new GUIStyle
         {
             fontSize = 18,
             normal = {textColor = Color.white},
             alignment = TextAnchor.MiddleRight
             
+        };
+        private static readonly GUIStyle labelStyleLeft = new GUIStyle
+        {
+            fontSize = 18,
+            normal = { textColor = Color.white },
+            alignment = TextAnchor.MiddleLeft
+
         };
         public void OnGUIDrawStateLabel()
         {
@@ -333,34 +363,53 @@ namespace SilksongAI
             Rect labelrecordingInfoRect = new Rect(Screen.width - 200, 50,
                                   180, 9);
 
+            Rect labelEnemiesRect0 = new Rect(20, Screen.height - 200,
+                      180, 9);
+
 
             try // TODO look at this closer (can we check wether the instance exists?
             {
                 var Scene = SceneManager.GetActiveScene();
-                GUI.Label(labelSceneRect, $"Scene: {Scene.name}", labelStyle);
+                GUI.Label(labelSceneRect, $"Scene: {Scene.name}", labelStyleRight);
             }
             catch (Exception e)
             {
                 SilksongAImod.Log.LogError(e);
-                GUI.Label(labelSceneRect, $"Scene: {e.Message}", labelStyle);
+                GUI.Label(labelSceneRect, $"Scene: {e.Message}", labelStyleRight);
             }
 
             HeroController HC = HeroController.instance;
             if (HC != null)
-                GUI.Label(labelPosSceneRect, $"Pos: ({HC.transform.position.x,5:0.0}, {HC.transform.position.y,5:0.0})", labelStyle);
+                GUI.Label(labelPosSceneRect, $"Pos: ({HC.transform.position.x,5:0.0}, {HC.transform.position.y,5:0.0})", labelStyleRight);
             else
-                GUI.Label(labelPosSceneRect, "Pos: No Hero On Scene", labelStyle);
+                GUI.Label(labelPosSceneRect, "Pos: No Hero On Scene", labelStyleRight);
 
             if (BossFightRecordingSession.SessionActive)
             {
                 string BossName = BossFightRecordingSession.TargetBoss.DisplayName;
                 int RecordedFights = BossFightRecordingSession.TotalFights - BossFightRecordingSession.RemainingFights;
                 int TotalFights = BossFightRecordingSession.TotalFights;
-                GUI.Label(labelrecordingInfoRect, $"Recording: {BossName} {RecordedFights}/{TotalFights}", labelStyle);
+                GUI.Label(labelrecordingInfoRect, $"Recording: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
             }
             else
             {
-                GUI.Label(labelrecordingInfoRect, $"Recording: Not Recordnig", labelStyle);
+                GUI.Label(labelrecordingInfoRect, $"Recording: Not Recordnig", labelStyleRight);
+            }
+
+            if (showEnemiesToggle.Value)
+            {
+                GUI.Label(labelEnemiesRect0, $"Enemies: ", labelStyleLeft);
+
+                int y = 0;
+                foreach(var enemy in EnemyTracker.GetAll())
+                {
+                    y += 20;
+                    Rect rect = new Rect(labelEnemiesRect0);
+                    rect.y += y;
+
+                    GUI.Label(rect, $"{enemy.Name}", labelStyleLeft);
+                    
+                }
             }
         }
 
