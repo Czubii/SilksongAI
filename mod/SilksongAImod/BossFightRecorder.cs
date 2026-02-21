@@ -99,7 +99,7 @@ namespace SilksongAI
             TargetBoss = null;
         }
 
-        private static class BossFightRecorder //TODO Force stop on keypress
+        private static class BossFightRecorder 
         {
 
             public static bool IsRecording = false;
@@ -182,7 +182,7 @@ namespace SilksongAI
 
                 _frameCount++;
 
-                TrainingEnemyData? bossData = GetDataUtils.GetTrainingEnemyData(_boss.GameObject); // TODO make those three take the enemy etc. as an argument
+                TrainingEnemyData? bossData = GetDataUtils.GetTrainingEnemyData(_boss.GameObject);
                 if (bossData == null)
                 {
                     SilksongAImod.Log.LogError("BossFightRecorder: bossData missing. Stopping Recoroding");
