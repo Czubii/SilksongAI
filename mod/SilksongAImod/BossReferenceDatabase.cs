@@ -5,6 +5,7 @@ using UnityEngine;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq.Expressions;
+using GenericVariableExtension;
 
 namespace SilksongAI
 {
@@ -20,6 +21,40 @@ namespace SilksongAI
     }
     public static class BossReferenceDatabase
     {
+        private static void RemoveAllTools(string crestName)
+        {
+            var p = PlayerData.instance;
+
+            var crest = p.ToolEquips.GetData(crestName);
+
+            for (int i = 0; i < crest.Slots.Count; i++)
+            {
+                var slot = crest.Slots[i];
+                slot.EquippedTool = "";
+                crest.Slots[i] = slot;  
+            }
+        }
+        private static void PrintEquippedTools(string crestName)
+        {
+            var p = PlayerData.instance;
+
+            var crest = p.ToolEquips.GetData(crestName);
+
+            for (int i = 0; i < crest.Slots.Count; i++)
+            {
+                SilksongAImod.Log.LogMessage($"Slot {i}: {crest.Slots[i].EquippedTool}");
+            }
+        }
+        private static void HunterEquipSilkSpear()
+        {
+            var p = PlayerData.instance;
+
+            var crest = p.ToolEquips.GetData("Hunter");
+
+            var slot = crest.Slots[3];
+            slot.EquippedTool = "Silk Spear";
+            crest.Slots[3] = slot;
+        }
 
         public static readonly List<BossMetaData> All = new List<BossMetaData>
         {
@@ -32,6 +67,7 @@ namespace SilksongAI
                 SetDefeated = (val) => 
                 {
                     PlayerData.instance.defeatedMossMother = val;
+                    PlayerData.instance.spinnerDefeated = false;
                     SceneData.instance.PersistentBools.SetValue(new PersistentItemData<bool>
                     {
                         SceneName = "Tut_03",
@@ -41,7 +77,7 @@ namespace SilksongAI
                 },
                 SetExpectedPlayerResources = () =>
                 {
-                    //TODO add silkspear
+                    
                     var p = PlayerData.instance;
                     p.hasDash = false;
                     p.hasDoubleJump = false;
@@ -50,7 +86,12 @@ namespace SilksongAI
                     p.hasSuperJump = false;
                     p.hasBrolly = false;
                     p.hasChargeSlash = false;
-                    //p.silkRegenMax = 0;
+                    p.hasNeedleThrow = false; //silkspear
+                    
+                    p.CurrentCrestID = "Hunter"; 
+                    RemoveAllTools("Hunter");
+
+                    p.silkRegenMax = 0;
                 }
             },
             new BossMetaData
@@ -73,6 +114,13 @@ namespace SilksongAI
                     p.hasSuperJump = false;
                     p.hasBrolly = false;
                     p.hasChargeSlash = false;
+                    p.hasNeedleThrow = true; //silkspear
+                    
+                    p.CurrentCrestID = "Hunter";
+                    RemoveAllTools("Hunter");
+                    HunterEquipSilkSpear();
+
+                    p.silkRegenMax = 0;
 
                 }
             },
@@ -85,6 +133,25 @@ namespace SilksongAI
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.defeatedLace1 = val;
+                },
+                SetExpectedPlayerResources = () =>
+                {
+                    var p = PlayerData.instance;
+                    p.hasDash = true;
+                    p.hasDoubleJump = false;
+                    p.hasWalljump = false;
+                    p.hasHarpoonDash = false;
+                    p.hasSuperJump = false;
+                    p.hasBrolly = false;
+                    p.hasChargeSlash = false;
+                    p.hasNeedleThrow = true; //silkspear
+                    
+                    p.CurrentCrestID = "Hunter";
+                    RemoveAllTools("Hunter");
+                    HunterEquipSilkSpear();
+
+                    p.silkRegenMax = 0;
+
                 }
             },
             new BossMetaData
@@ -96,6 +163,25 @@ namespace SilksongAI
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.defeatedSongGolem = val;
+                },
+                SetExpectedPlayerResources = () =>
+                {
+                    var p = PlayerData.instance;
+                    p.hasDash = true;
+                    p.hasDoubleJump = false;
+                    p.hasWalljump = false;
+                    p.hasHarpoonDash = false;
+                    p.hasSuperJump = false;
+                    p.hasBrolly = true;
+                    p.hasChargeSlash = false;
+                    p.hasNeedleThrow = true; //silkspear
+                    
+                    p.CurrentCrestID = "Hunter";
+                    RemoveAllTools("Hunter");
+                    HunterEquipSilkSpear();
+
+                    p.silkRegenMax = 0;
+
                 }
             },
             new BossMetaData
@@ -107,6 +193,25 @@ namespace SilksongAI
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.defeatedVampireGnatBoss = val;
+                },
+                SetExpectedPlayerResources = () =>
+                {
+                    var p = PlayerData.instance;
+                    p.hasDash = true;
+                    p.hasDoubleJump = false;
+                    p.hasWalljump = false;
+                    p.hasHarpoonDash = false;
+                    p.hasSuperJump = false;
+                    p.hasBrolly = true;
+                    p.hasChargeSlash = false;
+                    p.hasNeedleThrow = true; //silkspear
+                    
+                    p.CurrentCrestID = "Hunter";
+                    RemoveAllTools("Hunter");
+                    HunterEquipSilkSpear();
+
+                    p.silkRegenMax = 0;
+
                 }
             },
             new BossMetaData
@@ -118,10 +223,29 @@ namespace SilksongAI
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.defeatedSplinterQueen = val;
+                },
+                SetExpectedPlayerResources = () =>
+                {
+                    var p = PlayerData.instance;
+                    p.hasDash = true;
+                    p.hasDoubleJump = false;
+                    p.hasWalljump = false;
+                    p.hasHarpoonDash = false;
+                    p.hasSuperJump = false;
+                    p.hasBrolly = true;
+                    p.hasChargeSlash = false;
+                    p.hasNeedleThrow = true; //silkspear
+                    
+                    p.CurrentCrestID = "Hunter";
+                    RemoveAllTools("Hunter");
+                    HunterEquipSilkSpear();
+
+                    p.silkRegenMax = 0;
+
                 }
             },
-            new BossMetaData //TODO fix bench when invoking fight from the same room
-            {
+            new BossMetaData    //TODO fix bench when invoking fight from the same room
+            {                   //TODO fix gui dissapearing after beating the boss whe recording session active
                 DisplayName = "Widow",
                 InternalName = "Spinner Boss",
                 ArenaMapName = "Belltown_Shrine",
@@ -138,6 +262,25 @@ namespace SilksongAI
                         Value = 0,
                         Mutator = 0
                     });
+                },
+                SetExpectedPlayerResources = () =>
+                {
+                    var p = PlayerData.instance;
+                    p.hasDash = true;
+                    p.hasDoubleJump = false;
+                    p.hasWalljump = true;
+                    p.hasHarpoonDash = false;
+                    p.hasSuperJump = false;
+                    p.hasBrolly = true;
+                    p.hasChargeSlash = false;
+                    p.hasNeedleThrow = true; //silkspear
+                    
+                    p.CurrentCrestID = "Hunter";
+                    RemoveAllTools("Hunter");
+                    HunterEquipSilkSpear();
+
+                    p.silkRegenMax = 0;
+
                 }
             }
 
