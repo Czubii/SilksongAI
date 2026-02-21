@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine;
 using HutongGames.PlayMaker.Actions;
 using System.Collections;
+using static UnityEngine.EventSystems.EventTrigger;
 
 namespace SilksongAI
 {
@@ -26,7 +27,7 @@ namespace SilksongAI
 
         private class CoroutineRunner : MonoBehaviour { }
 
-        public static void TeleportTo(BossReference boss)
+        public static void TeleportTo(BossMetaData boss)
         {
             TeleportTo(boss.ArenaMapName, boss.ArenaPosition);
         }
@@ -129,28 +130,36 @@ namespace SilksongAI
 
     public static class GetDataUtils
     {
-        public static TrainingEnemyData? getEnemyData(GameObject enemy)
+        public static TrainingEnemyData? GetTrainingEnemyData(GameObject enemy)
         {
+            if (enemy == null) return null;
 
             var hm = enemy.GetComponent<HealthManager>();
             if (hm == null) return null;
 
-            var fsm = enemy.GetComponent<PlayMakerFSM>();
-            if (fsm == null) return null;
+            var fsms = enemy.GetComponents<PlayMakerFSM>();
+            if (fsms == null) return null;
 
             var rigidbody = enemy.GetComponent<Rigidbody2D>();
             if (rigidbody == null) return null;
 
             TrainingEnemyData output = new TrainingEnemyData
             {
-
                 posX = enemy.transform.position.x,
                 posY = enemy.transform.position.y,
+                facing = (int)enemy.transform.GetScaleX(),
                 velX = rigidbody.linearVelocity.x,
                 velY = rigidbody.linearVelocity.y,
                 hp = hm.hp
-
             };
+
+            output.playMakers = new PlayMaker[fsms.Length];
+
+            for (int i = 0; i < fsms.Length; i++)
+            {
+                output.playMakers[i].Name = fsms[i].FsmName;
+                output.playMakers[i].StateName = fsms[i].ActiveStateName;
+            }
 
             return output;
         }
@@ -167,6 +176,7 @@ namespace SilksongAI
 
                 posX = hero.transform.position.x,
                 posY = hero.transform.position.y,
+                facing = (int)hero.transform.GetScaleX(),
                 velX = rigidbody.linearVelocity.x,
                 velY = rigidbody.linearVelocity.y,
                 hp = hero.playerData.health,
@@ -176,15 +186,6 @@ namespace SilksongAI
             };
 
             return output;
-        }
-
-
-        public static TrainingEnemyData? getEnemyData(string enemyName)
-        {
-            var enemy = GameObject.Find(enemyName);
-            if (enemy == null) return null;
-
-            return getEnemyData(enemy);
         }
 
         public static Vector3 GetEnemyPosition(string enemyName)

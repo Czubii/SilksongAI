@@ -9,7 +9,7 @@ using System.Linq.Expressions;
 namespace SilksongAI
 {
 
-    public class BossReference
+    public class BossMetaData
     {
         public string DisplayName;
         public string InternalName;
@@ -20,9 +20,9 @@ namespace SilksongAI
     public static class BossReferenceDatabase
     {
 
-        public static readonly List<BossReference> All = new List<BossReference>
+        public static readonly List<BossMetaData> All = new List<BossMetaData>
         {
-            new BossReference
+            new BossMetaData
             {
                 DisplayName = "Moss Mother",
                 InternalName = "Mossbone Mother",
@@ -39,7 +39,7 @@ namespace SilksongAI
                     });
                 }
             },
-            new BossReference
+            new BossMetaData
             {
                 DisplayName = "Bell Beast",
                 InternalName = "Bell Beast",
@@ -50,7 +50,7 @@ namespace SilksongAI
                     PlayerData.instance.defeatedBellBeast = val;
                 }
             },
-            new BossReference
+            new BossMetaData
             {
                 DisplayName = "Lace 1",
                 InternalName = "Lace Boss1",

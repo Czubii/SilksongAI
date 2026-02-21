@@ -152,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BossReferenceDatabase.cs" />
+    <Compile Include="EnemyTracker.cs" />
     <Compile Include="inputTracker.cs" />
     <Compile Include="DataStructures.cs" />
     <Compile Include="GameStateLogger.cs" />

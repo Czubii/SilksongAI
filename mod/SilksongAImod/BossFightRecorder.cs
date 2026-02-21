@@ -21,8 +21,8 @@ namespace SilksongAI
         public static bool SessionActive { get; private set; } = false;
 
         private static bool _ArenaReloaded = false;
-        public static BossReference TargetBoss { get; private set; }
-        public static void StartSession(BossReference boss, int numFights)
+        public static BossMetaData TargetBoss { get; private set; }
+        public static void StartSession(BossMetaData boss, int numFights)
         {
             if (SessionActive)
             {
@@ -66,7 +66,7 @@ namespace SilksongAI
                 if (!TeleportUtils.TeleportInProgress && _ArenaReloaded)
                 {
                     RemainingFights--;
-                    BossFightRecorder.StartRecording(TargetBoss);
+                    BossFightRecorder.StartRecording(TargetBoss); //TODO set full HP and silk 
                     _ArenaReloaded = false;
                 }
             }
@@ -76,18 +76,21 @@ namespace SilksongAI
             }
         }
 
-        private static class BossFightRecorder
+        private static class BossFightRecorder //TODO Force stop on keypress
         {
+
             public static bool IsRecording = false;
-            private static GameObject _bossGo = null;
-            private static HealthManager _bossHm = null;
+
+            private static Enemy _boss;
+            private static List<Enemy> _enemyList = new List<Enemy>(); // every enemy except boss present on scene
+
             private static StreamWriter _outputFileJSON;
             private static Stream _outputFileBIN;
             private static RecordingInfo _recordingInfo;
-            private static int _FrameCount = 0;
-            private static string _BaseFileName;
-            private static string _Path;
-            public static void StartRecording(BossReference boss)
+            private static int _frameCount = 0;
+            private static string _baseFileName;
+            private static string _path;
+            public static void StartRecording(BossMetaData bossMetaData)
             {
                 if (IsRecording)
                 {
@@ -95,29 +98,28 @@ namespace SilksongAI
                     return;
                 }
 
-                _bossGo = GameObject.Find(boss.InternalName);
-                if (_bossGo == null)
+                _enemyList.Clear();
+                _enemyList = EnemyTracker.GetAll().ToList();
+
+                _boss = _enemyList.FirstOrDefault(e => e.Name == bossMetaData.InternalName);
+                if (_boss == null)
                 {
-                    SilksongAImod.Log.LogError($"BossFightRecorder: Boss '{boss.InternalName}' not found in scene");
+                    SilksongAImod.Log.LogError($"BossFightRecorder: Boss '{bossMetaData.InternalName}' not found in scene");
                     return;
                 }
 
-                _bossHm = _bossGo.GetComponent<HealthManager>();
-                if (_bossHm == null)
-                {
-                    SilksongAImod.Log.LogError($"BossFightRecorder: Boss '{boss.InternalName}' game object does not contain HealthManager");
-                    return;
-                }
+                _enemyList.Remove( _boss );
+
 
                 _recordingInfo = new RecordingInfo()
                 {
-                    BossInternalName = boss.InternalName,
+                    BossInternalName = bossMetaData.InternalName,
                     PlayerName = SilksongAImod.SteamUserName
                 };
 
                 try
                 {
-                    var path = Path.Combine(Paths.PluginPath, "SilksongAI", "Recordings", boss.InternalName);
+                    var path = Path.Combine(Paths.PluginPath, "SilksongAI", "Recordings", bossMetaData.InternalName);
                     Directory.CreateDirectory(path);
 
                     var baseFileName = $"session_{DateTime.Now:yyyyMMdd_HHmmss}";
@@ -129,8 +131,8 @@ namespace SilksongAI
                         useAsync: false);
 
                     // Assign only after success
-                    _Path = path;
-                    _BaseFileName = baseFileName;
+                    _path = path;
+                    _baseFileName = baseFileName;
                     _outputFileJSON = json;
                     _outputFileBIN = bin;
                 }
@@ -144,7 +146,7 @@ namespace SilksongAI
                 }
 
                 IsRecording = true;
-                _FrameCount = 0;
+                _frameCount = 0;
             }
  
             public static void RecordFrame()
@@ -155,16 +157,16 @@ namespace SilksongAI
                     return;
                 }
 
-                _FrameCount++;
+                _frameCount++;
 
-                TrainingEnemyData? enemyData = GetDataUtils.getEnemyData(_bossGo); // TODO make those three take the enemy etc. as an argument
-                if (enemyData == null)
+                TrainingEnemyData? bossData = GetDataUtils.GetTrainingEnemyData(_boss.GameObject); // TODO make those three take the enemy etc. as an argument
+                if (bossData == null)
                 {
-                    SilksongAImod.Log.LogError("BossFightRecorder: enemyData missing. Stopping Recoroding");
+                    SilksongAImod.Log.LogError("BossFightRecorder: bossData missing. Stopping Recoroding");
                     StopRecording(false);
                     return;
                 }
-
+                
                 TrainingHeroData? heroData = GetDataUtils.getHeroData();
                 if (heroData == null)
                 {
@@ -184,18 +186,31 @@ namespace SilksongAI
 
                 TrainingFrameData frameData = new TrainingFrameData()
                 {
-                    enemy = (TrainingEnemyData)enemyData,
-                    hero = (TrainingHeroData)heroData,
-                    userInputs = userInputs
+                    Boss = (TrainingEnemyData)bossData,
+                    Hero = (TrainingHeroData)heroData,
+                    UserInputs = userInputs
                 };
+
+                frameData.Enemies = new TrainingEnemyData[_enemyList.Count];
+                for (int i = 0; i < _enemyList.Count; i++)
+                {
+                    TrainingEnemyData? enemyData = GetDataUtils.GetTrainingEnemyData(_enemyList[i].GameObject); // TODO make those three take the enemy etc. as an argument
+                    if (enemyData == null)
+                    {
+                        SilksongAImod.Log.LogWarning("BossFightRecorder: enemyData missing");
+                        continue;
+                    }
+
+                    frameData.Enemies[i] = (TrainingEnemyData)enemyData;
+                }
 
                 var dataBinWithKeys = MessagePackSerializer.Serialize(frameData, MessagePack.Resolvers.ContractlessStandardResolver.Options);
                 _outputFileJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
 
                 MessagePackSerializer.Serialize(_outputFileBIN, frameData); // save the binary frame data
-
-
-                if (_bossHm.isDead)
+                
+                var HM = _boss.GameObject.GetComponent<HealthManager>();
+                if (HM.isDead)
                 {
                     StopRecording(true);
                 }
@@ -215,9 +230,9 @@ namespace SilksongAI
                 _outputFileBIN.Dispose();
 
                 _recordingInfo.Success = success;
-                _recordingInfo.FrameCount = _FrameCount;
+                _recordingInfo.FrameCount = _frameCount;
 
-                using (StreamWriter outputInfoFile = new StreamWriter(Path.Combine(_Path, _BaseFileName + "_info.JSON")))
+                using (StreamWriter outputInfoFile = new StreamWriter(Path.Combine(_path, _baseFileName + "_info.JSON")))
                 {
                     var dataBinWithKeys = MessagePackSerializer.Serialize(_recordingInfo);
                     outputInfoFile.Write(MessagePackSerializer.ConvertToJson(dataBinWithKeys));

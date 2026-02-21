@@ -219,7 +219,7 @@ namespace SilksongAI
         private void DrawFightSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
-            BossReference bossReference = BossReferenceDatabase.All[bossIdx];
+            BossMetaData bossReference = BossReferenceDatabase.All[bossIdx];
 
 
             bool oldGUIenabled = GUI.enabled;
@@ -239,7 +239,7 @@ namespace SilksongAI
         private void DrawTeleportToSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
-            BossReference bossReference = BossReferenceDatabase.All[bossIdx];
+            BossMetaData bossReference = BossReferenceDatabase.All[bossIdx];
 
 
             bool oldGUIenabled = GUI.enabled;
@@ -260,7 +260,7 @@ namespace SilksongAI
         private void DrawRecordSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
-            BossReference bossReference = BossReferenceDatabase.All[bossIdx];
+            BossMetaData bossReference = BossReferenceDatabase.All[bossIdx];
 
 
             bool oldGUIenabled = GUI.enabled;

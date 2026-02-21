@@ -21,11 +21,13 @@ namespace SilksongAI
     public struct TrainingFrameData
     {
         [Key(0)]
-        public TrainingEnemyData enemy;
+        public TrainingEnemyData Boss;
         [Key(1)]
-        public TrainingHeroData hero;
+        public TrainingEnemyData[] Enemies;
         [Key(2)]
-        public TrainingUserInputs userInputs;
+        public TrainingHeroData Hero;
+        [Key(3)]
+        public TrainingUserInputs UserInputs;
 
     }
 
@@ -37,13 +39,26 @@ namespace SilksongAI
         [Key(1)]
         public float posY;
         [Key(2)]
-        public float velX;
+        public int facing; //(-1)->right (1)->left (based on transform scale.x_scale)
         [Key(3)]
-        public float velY;
+        public float velX;
         [Key(4)]
+        public float velY;
+        [Key(5)]
         public int hp;
+        [Key(6)]
+        public PlayMaker[] playMakers;
 
     }
+    [MessagePackObject]
+    public struct PlayMaker
+    {
+        [Key(0)]
+        public string Name; //PlayMakerFSM.FsmName
+        [Key(1)]
+        public string StateName; //PlayMakerFSM.ActiveStateName
+    }
+
     [MessagePackObject]
     public struct TrainingHeroData
     {
@@ -52,14 +67,16 @@ namespace SilksongAI
         [Key(1)]
         public float posY;
         [Key(2)]
-        public float velX;
+        public int facing; //(-1)->right (1)->left (based on transform scale.x_scale)
         [Key(3)]
-        public float velY;
+        public float velX;
         [Key(4)]
-        public int hp;
+        public float velY;
         [Key(5)]
-        public int silk;
+        public int hp;
         [Key(6)]
+        public int silk;
+        [Key(7)]
         public bool canJump;
     }
     [MessagePackObject]

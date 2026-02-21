@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using SilksongAI;
 using Steamworks;
+using HarmonyLib.Tools;
 
 [BepInPlugin("com.czubii.SilksongAImod", "Silksong AI mod", "1.0.0 ")]
 public class SilksongAImod : BaseUnityPlugin
@@ -26,9 +27,9 @@ public class SilksongAImod : BaseUnityPlugin
 
         gui = new ModGUI(this);
 
-
-
+        HarmonyFileLog.Enabled = true;
         Harmony.CreateAndPatchAll(typeof(SilksongAImod), null);
+        Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
 
     }
 
@@ -41,7 +42,7 @@ public class SilksongAImod : BaseUnityPlugin
             if (SteamAPI.IsSteamRunning())
             {
                 SteamUserName = SteamFriends.GetPersonaName();
-
+                SilksongAImod.Log.LogMessage($"Player name used for recording info: {SteamUserName}");
             }
         }
         catch (Exception e)
@@ -50,11 +51,20 @@ public class SilksongAImod : BaseUnityPlugin
         }
     }
 
+
+
+
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.F11))
         {
-            GameStateLogger.LogGameStateToFiles();
+            //GameStateLogger.LogGameStateToFiles();//TODO remove or use lol
+            String logMsg = "";
+            foreach (var enemy in EnemyTracker.GetAll())
+            {
+                logMsg += enemy.Name + "  ";
+            }
+            Log.LogMessage(logMsg);
         }
 
         BossFightRecordingSession.Update();

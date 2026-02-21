@@ -11,8 +11,7 @@ namespace SilksongAI
     public class Enemy
     {
         public string Name; 
-        public GameObject GO;
-        public HealthManager HM;
+        public GameObject GameObject;
 
     }
     public static class EnemyTracker
@@ -32,8 +31,7 @@ namespace SilksongAI
             _enemies[__instance.gameObject] = new Enemy
             {
                 Name = __instance.name,
-                GO = __instance.gameObject,
-                HM = __instance
+                GameObject = __instance.gameObject,
             };
         }
 
