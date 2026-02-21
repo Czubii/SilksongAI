@@ -59,6 +59,8 @@ namespace SilksongAI
             _ArenaReloaded = false;
 
             SessionActive = true;
+
+            TargetBoss.SetExpectedPlayerResources();
         }
         public static void Update()
         {
@@ -76,6 +78,7 @@ namespace SilksongAI
                 if (!TeleportUtils.TeleportInProgress && !_ArenaReloaded && TeleportUtils.CanPerformTeleportOperations())
                 {
                     PlayerUtils.RemoveCocoon();
+
                     TargetBoss.SetDefeated(false);
 
                     TeleportUtils.TeleportTo(TargetBoss);

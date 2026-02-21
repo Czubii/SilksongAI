@@ -16,6 +16,7 @@ namespace SilksongAI
         public string ArenaMapName;
         public Vector3 ArenaPosition;
         public Action<bool> SetDefeated = _ => SilksongAImod.Log.LogWarning("Trying to respawn a boss with undefined SetDefeated action!");
+        public Action SetExpectedPlayerResources = () => SilksongAImod.Log.LogWarning("Trying to set player state with undefined SetExpectedPlayerResources action!");
     }
     public static class BossReferenceDatabase
     {
@@ -37,17 +38,42 @@ namespace SilksongAI
                         ID = "Battle Scene",
                         Value = val
                     });
+                },
+                SetExpectedPlayerResources = () =>
+                {
+                    //TODO add silkspear
+                    var p = PlayerData.instance;
+                    p.hasDash = false;
+                    p.hasDoubleJump = false;
+                    p.hasWalljump = false;
+                    p.hasHarpoonDash = false;
+                    p.hasSuperJump = false;
+                    p.hasBrolly = false;
+                    p.hasChargeSlash = false;
+                    //p.silkRegenMax = 0;
                 }
             },
             new BossMetaData
             {
                 DisplayName = "Bell Beast",
-                InternalName = "Bell Beast",
+                InternalName = "Bone Beast",
                 ArenaMapName = "Bone_05",
                 ArenaPosition = new Vector3(78.59f, 3.57f, 0),
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.defeatedBellBeast = val;
+                },
+                SetExpectedPlayerResources = () =>
+                {
+                    var p = PlayerData.instance;
+                    p.hasDash = false;
+                    p.hasDoubleJump = false;
+                    p.hasWalljump = false;
+                    p.hasHarpoonDash = false;
+                    p.hasSuperJump = false;
+                    p.hasBrolly = false;
+                    p.hasChargeSlash = false;
+
                 }
             },
             new BossMetaData
@@ -94,7 +120,7 @@ namespace SilksongAI
                     PlayerData.instance.defeatedSplinterQueen = val;
                 }
             },
-            new BossMetaData
+            new BossMetaData //TODO fix bench when invoking fight from the same room
             {
                 DisplayName = "Widow",
                 InternalName = "Spinner Boss",
