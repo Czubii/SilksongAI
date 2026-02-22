@@ -55,7 +55,8 @@ namespace SilksongAI
                 HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
                 EntryDelay = 0f,
                 Visualization = GameManager.SceneLoadVisualizations.Default,
-                AlwaysUnloadUnusedAssets = true
+                AlwaysUnloadUnusedAssets = true,
+                WaitForSceneTransitionCameraFade = true,
             });
             EnsureRunner();
             Runner.StartCoroutine(TeleportHeroWhenPossible(pos));
@@ -63,22 +64,23 @@ namespace SilksongAI
 
         private static IEnumerator TeleportHeroWhenPossible(Vector3 pos)
         {
+
             yield return new WaitWhile(() =>
             {
 
-                var GM = GameManager.instance;
-                var HC = HeroController.instance;
+                var gm = GameManager.instance;
+                var hc = HeroController.instance;
 
-                if (GM == null || HC == null) return true;
+                if (gm == null || hc == null) return true;
 
-                return !HC.isHeroInPosition || HC.cState.transitioning || GM.IsInSceneTransition;
+                return !hc.isHeroInPosition || hc.cState.transitioning || gm.IsInSceneTransition;
 
             });
 
             yield return new WaitUntil(() =>
             {
-                var HC = HeroController.instance;
-                return HC != null && HC.CanInput();
+                var hc = HeroController.instance;
+                return hc != null && hc.CanInput();
             });
 
             TeleportHero(pos);
