@@ -60,7 +60,7 @@ namespace SilksongAI
 
             SessionActive = true;
 
-            TargetBoss.SetExpectedPlayerResources();
+            TargetBoss.SetExpectedPlayerAbilities();
         }
         public static void Update()
         {

@@ -17,11 +17,11 @@ namespace SilksongAI
         public string ArenaMapName;
         public Vector3 ArenaPosition;
         public Action<bool> SetDefeated = _ => SilksongAImod.Log.LogWarning("Trying to respawn a boss with undefined SetDefeated action!");
-        public Action SetExpectedPlayerResources = () => SilksongAImod.Log.LogWarning("Trying to set player state with undefined SetExpectedPlayerResources action!");
+        public Action SetExpectedPlayerAbilities = () => SilksongAImod.Log.LogWarning("Trying to set player state with undefined SetExpectedPlayerResources action!");
     }
     public static class BossReferenceDatabase
     {
-        private static void RemoveAllTools(string crestName)
+        private static void RemoveAllTools(string crestName) //TODO move to player utils
         {
             var p = PlayerData.instance;
 
@@ -34,7 +34,7 @@ namespace SilksongAI
                 crest.Slots[i] = slot;  
             }
         }
-        private static void PrintEquippedTools(string crestName)
+        private static void PrintEquippedTools(string crestName)//TODO move to player utils
         {
             var p = PlayerData.instance;
 
@@ -45,7 +45,7 @@ namespace SilksongAI
                 SilksongAImod.Log.LogMessage($"Slot {i}: {crest.Slots[i].EquippedTool}");
             }
         }
-        private static void HunterEquipSilkSpear()
+        private static void HunterEquipSilkSpear()//TODO move to player utils and make more usefill
         {
             var p = PlayerData.instance;
 
@@ -75,7 +75,7 @@ namespace SilksongAI
                         Value = val
                     });
                 },
-                SetExpectedPlayerResources = () =>
+                SetExpectedPlayerAbilities = () => //TODO rework this
                 {
                     
                     var p = PlayerData.instance;
@@ -104,7 +104,7 @@ namespace SilksongAI
                 {
                     PlayerData.instance.defeatedBellBeast = val;
                 },
-                SetExpectedPlayerResources = () =>
+                SetExpectedPlayerAbilities = () =>
                 {
                     var p = PlayerData.instance;
                     p.hasDash = false;
@@ -134,7 +134,7 @@ namespace SilksongAI
                 {
                     PlayerData.instance.defeatedLace1 = val;
                 },
-                SetExpectedPlayerResources = () =>
+                SetExpectedPlayerAbilities = () =>
                 {
                     var p = PlayerData.instance;
                     p.hasDash = true;
@@ -164,7 +164,7 @@ namespace SilksongAI
                 {
                     PlayerData.instance.defeatedSongGolem = val;
                 },
-                SetExpectedPlayerResources = () =>
+                SetExpectedPlayerAbilities = () =>
                 {
                     var p = PlayerData.instance;
                     p.hasDash = true;
@@ -194,7 +194,7 @@ namespace SilksongAI
                 {
                     PlayerData.instance.defeatedVampireGnatBoss = val;
                 },
-                SetExpectedPlayerResources = () =>
+                SetExpectedPlayerAbilities = () =>
                 {
                     var p = PlayerData.instance;
                     p.hasDash = true;
@@ -224,7 +224,7 @@ namespace SilksongAI
                 {
                     PlayerData.instance.defeatedSplinterQueen = val;
                 },
-                SetExpectedPlayerResources = () =>
+                SetExpectedPlayerAbilities = () =>
                 {
                     var p = PlayerData.instance;
                     p.hasDash = true;
@@ -263,7 +263,7 @@ namespace SilksongAI
                         Mutator = 0
                     });
                 },
-                SetExpectedPlayerResources = () =>
+                SetExpectedPlayerAbilities = () =>
                 {
                     var p = PlayerData.instance;
                     p.hasDash = true;
