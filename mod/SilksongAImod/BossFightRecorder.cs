@@ -24,12 +24,16 @@ namespace SilksongAI
         public static bool SessionActive { get; private set; } = false;
 
         private static bool _ArenaReloaded = false;
+        private static bool _heroDied;
+
         public static BossMetaData TargetBoss { get; private set; }
 
         private static bool _awaitingBoss = false;
         private static MonoBehaviour _runner;
 
         private static CustomRespawnPoint _spawnPoint;
+
+        
         
 
         private static void EnsureRunner()
@@ -63,7 +67,7 @@ namespace SilksongAI
             TargetBoss = boss;
 
             _ArenaReloaded = false;
-
+            _heroDied = false;
             SessionActive = true;
 
             TargetBoss.SetExpectedPlayerAbilities();
@@ -87,21 +91,25 @@ namespace SilksongAI
 
                 if (!TeleportUtils.TeleportInProgress && !_ArenaReloaded && TeleportUtils.CanPerformTeleportOperations())
                 {
-                    PlayerUtils.RemoveCocoon();
+                    PlayerUtils.RemoveCocoon(); // TODO: fix - propably the cocoon spawns after this is called as now we do not reload scene on death
+                    PlayerUtils.SetFullHP();
+                    PlayerUtils.SetFullSilk();
 
-                    TargetBoss.SetDefeated(false);
+                    _spawnPoint.UseAsTemporary(0);
 
-                    TeleportUtils.TeleportTo(TargetBoss);
+                    if (!_heroDied)
+                    {
+                        TargetBoss.SetDefeated(false);
+                        TeleportUtils.TeleportTo(TargetBoss);
+                    }
+
                     _ArenaReloaded = true;
                 }
                 if (!TeleportUtils.TeleportInProgress && _ArenaReloaded)
                 {
                     RemainingFights--;
 
-                    PlayerUtils.SetFullHP();
-                    PlayerUtils.SetFullSilk();
 
-                    _spawnPoint.UseAsTemporary(0);
 
                     _awaitingBoss = true;
                     EnsureRunner();
@@ -112,7 +120,7 @@ namespace SilksongAI
             }
             else
             {
-                BossFightRecorder.RecordFrame();
+                BossFightRecorder.RecordFrame(out _heroDied);
             }
         }
 
@@ -237,8 +245,10 @@ namespace SilksongAI
                 _frameCount = 0;
             }
  
-            public static void RecordFrame()
+            public static void RecordFrame(out bool HeroDied)
             {
+                HeroDied = false;
+
                 if (!IsRecording)
                 {
                     SilksongAImod.Log.LogWarning("BossFightRecorder: Cannot Record Frame because recording has not been started or already ended");
@@ -305,6 +315,7 @@ namespace SilksongAI
                 if (PlayerData.instance != null && PlayerData.instance.health <= 0)
                 {
                     StopRecording(false);
+                    HeroDied = true;
                 }
 
             }
