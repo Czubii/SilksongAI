@@ -51,6 +51,7 @@ namespace SilksongAI
             {
                 SceneName = sceneName,
                 EntryGateName = "left1",
+                EntrySkip = true,
                 HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
                 EntryDelay = 0f,
                 Visualization = GameManager.SceneLoadVisualizations.Default,
@@ -85,14 +86,25 @@ namespace SilksongAI
 
         private static void TeleportHero(Vector3 pos)
         {            
-            if (HeroController.instance == null)
+
+            var hc = HeroController.instance;
+            var gm = GameManager.instance;
+            
+            if (hc == null)
             {
-                SilksongAImod.Log.LogWarning("Cannot teleport, no HeroController.instance on scene");
+                SilksongAImod.Log.LogError("TeleportHero(): Cannot teleport, no HeroController.instance on scene");
+                TeleportInProgress = false;
+                return;
+            }
+            if (gm == null) {
+                SilksongAImod.Log.LogError("TeleportHero(): Cannot teleport, no GameManager.instance on scene");
                 TeleportInProgress = false;
                 return;
             }
 
-            HeroController.instance.transform.position = pos;
+
+            hc.transform.position = pos;
+            gm.cameraCtrl.PositionToHeroInstant(true);
 
             var HeroRigidbody2D = HeroController.instance.GetComponent<Rigidbody2D>();
             if (HeroRigidbody2D != null)
