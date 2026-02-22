@@ -13,6 +13,7 @@ using System.Xml.Linq;
 using UnityEngine.Playables;
 using HutongGames.PlayMaker.Actions;
 using System.Collections;
+using TeamCherry.SharedUtils;
 
 namespace SilksongAI
 {
@@ -26,14 +27,18 @@ namespace SilksongAI
         public static BossMetaData TargetBoss { get; private set; }
 
         private static bool _awaitingBoss = false;
-        private static MonoBehaviour Runner;
+        private static MonoBehaviour _runner;
+
+        private static CustomRespawnPoint _spawnPoint;
+        
+
         private static void EnsureRunner()
         {
-            if (Runner != null) return;
+            if (_runner != null) return;
 
-            var go = new GameObject("TeleportUtilsRunner");
+            var go = new GameObject("BossFightRecordingSessionRunner");
             UnityEngine.Object.DontDestroyOnLoad(go);
-            Runner = go.AddComponent<CoroutineRunner>();
+            _runner = go.AddComponent<CoroutineRunner>();
         }
 
         private class CoroutineRunner : MonoBehaviour { }
@@ -51,6 +56,7 @@ namespace SilksongAI
                 return;
             }
 
+
             RemainingFights = numFights;
             TotalFights = numFights;
 
@@ -61,7 +67,11 @@ namespace SilksongAI
             SessionActive = true;
 
             TargetBoss.SetExpectedPlayerAbilities();
+
+            _spawnPoint = new CustomRespawnPoint("BossFightRecordingSessionRespawn", TargetBoss.ArenaSceneName, TargetBoss.ArenaPosition);
+
         }
+
         public static void Update()
         {
             if (!SessionActive || _awaitingBoss) return;
@@ -91,9 +101,12 @@ namespace SilksongAI
                     PlayerUtils.SetFullHP();
                     PlayerUtils.SetFullSilk();
 
+                    _spawnPoint.UseAsTemporary(0);
+
                     _awaitingBoss = true;
                     EnsureRunner();
-                    Runner.StartCoroutine(AwaitBossAndStartRecording(TargetBoss.InternalName, 2500));
+                    _runner.StartCoroutine(
+                        AwaitBossAndStartRecording(TargetBoss.InternalName, 2500));
                     _ArenaReloaded = false;
                 }
             }
@@ -136,7 +149,7 @@ namespace SilksongAI
 
             if (_awaitingBoss)
             {
-                Runner.StopAllCoroutines();
+                _runner.StopAllCoroutines();
                 _awaitingBoss = false;
             }
 

@@ -9,6 +9,7 @@ using HutongGames.PlayMaker.Actions;
 using System.Collections;
 using static UnityEngine.EventSystems.EventTrigger;
 using Steamworks;
+using TeamCherry.SharedUtils;
 
 namespace SilksongAI
 {
@@ -30,7 +31,7 @@ namespace SilksongAI
 
         public static void TeleportTo(BossMetaData boss)
         {
-            TeleportTo(boss.ArenaMapName, boss.ArenaPosition);
+            TeleportTo(boss.ArenaSceneName, boss.ArenaPosition);
         }
         public static void TeleportTo(string sceneName, Vector3 pos)
         {
@@ -141,6 +142,51 @@ namespace SilksongAI
 
                 return true;
         }
+    }
+
+    public class CustomRespawnPoint
+    {
+        private RespawnMarker _marker;
+        private string _scene;
+
+        public CustomRespawnPoint(string name, string scene, Vector3 position) // TODO: add destrctor
+        {
+            _scene = scene;
+
+            var go = new GameObject(name);
+
+            UnityEngine.Object.DontDestroyOnLoad(go);
+
+            _marker = go.AddComponent<RespawnMarker>();
+
+            // Initialize minimal required fields
+            _marker.customWakeUp = false;
+            _marker.customFadeDuration = new OverrideFloat
+            {
+                Value = 0f,
+                IsEnabled = false
+            };
+
+            _marker.transform.position = position;
+
+            SceneTeleportMap.AddRespawnPoint(scene, name);
+        }
+
+        public void UseAsTemporary(int type = 0)
+        {
+            var pd = PlayerData.instance;
+            if (pd == null)
+            {
+                SilksongAImod.Log.LogError("CustomRespawnPoint.UseAsTemporary(): no PlayerData.instance");
+                return;
+            }
+
+            pd.tempRespawnMarker = _marker.name;
+            pd.tempRespawnScene = _scene;
+            pd.tempRespawnType = type;
+
+        }
+
     }
 
     public static class GetDataUtils

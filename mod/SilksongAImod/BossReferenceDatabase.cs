@@ -14,7 +14,7 @@ namespace SilksongAI
     {
         public string DisplayName;
         public string InternalName;
-        public string ArenaMapName;
+        public string ArenaSceneName;
         public Vector3 ArenaPosition;
         public Action<bool> SetDefeated = _ => SilksongAImod.Log.LogWarning("Trying to respawn a boss with undefined SetDefeated action!");
         public Action SetExpectedPlayerAbilities = () => SilksongAImod.Log.LogWarning("Trying to set player state with undefined SetExpectedPlayerResources action!");
@@ -62,7 +62,7 @@ namespace SilksongAI
             {
                 DisplayName = "Moss Mother", //TODO add fix for this one boss where it does not respaawn when teleporting from the same scene
                 InternalName = "Mossbone Mother",
-                ArenaMapName = "Tut_03",
+                ArenaSceneName = "Tut_03",
                 ArenaPosition = new Vector3(68f, 17.6f, 0),
                 SetDefeated = (val) => 
                 {
@@ -98,7 +98,7 @@ namespace SilksongAI
             {
                 DisplayName = "Bell Beast",
                 InternalName = "Bone Beast",
-                ArenaMapName = "Bone_05",
+                ArenaSceneName = "Bone_05",
                 ArenaPosition = new Vector3(78.59f, 3.57f, 0),
                 SetDefeated = (val) =>
                 {
@@ -128,7 +128,7 @@ namespace SilksongAI
             {
                 DisplayName = "Lace 1",
                 InternalName = "Lace Boss1",
-                ArenaMapName = "Bone_East_12",
+                ArenaSceneName = "Bone_East_12",
                 ArenaPosition = new Vector3(85f, 7.57f, 0),
                 SetDefeated = (val) =>
                 {
@@ -158,7 +158,7 @@ namespace SilksongAI
             {
                 DisplayName = "Fourth Chorus",
                 InternalName = "SG_head",
-                ArenaMapName = "Bone_East_08",
+                ArenaSceneName = "Bone_East_08",
                 ArenaPosition = new Vector3(80.4f, 7.1f, 0),
                 SetDefeated = (val) =>
                 {
@@ -188,7 +188,7 @@ namespace SilksongAI
             {
                 DisplayName = "Moorwing",
                 InternalName = "Vampire Gnat",
-                ArenaMapName = "Greymoor_08",
+                ArenaSceneName = "Greymoor_08",
                 ArenaPosition = new Vector3(40.5f, 4.7f, 0),
                 SetDefeated = (val) =>
                 {
@@ -218,7 +218,7 @@ namespace SilksongAI
             {
                 DisplayName = "Sister Splinter",
                 InternalName = "Splinter Queen",
-                ArenaMapName = "Shellwood_18",
+                ArenaSceneName = "Shellwood_18",
                 ArenaPosition = new Vector3(52f, 8.6f, 0),
                 SetDefeated = (val) =>
                 {
@@ -248,7 +248,7 @@ namespace SilksongAI
             {                   //TODO fix gui dissapearing after beating the boss whe recording session active
                 DisplayName = "Widow",
                 InternalName = "Spinner Boss",
-                ArenaMapName = "Belltown_Shrine",
+                ArenaSceneName = "Belltown_Shrine",
                 ArenaPosition = new Vector3(52.4f, 8.6f, 0),
                 SetDefeated = (val) =>
                 {

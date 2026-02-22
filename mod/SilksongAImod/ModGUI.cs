@@ -196,7 +196,7 @@ namespace SilksongAI
             {
                 bossReference.SetDefeated(false);
 
-                TeleportUtils.TeleportTo(bossReference.ArenaMapName, bossReference.ArenaPosition);
+                TeleportUtils.TeleportTo(bossReference.ArenaSceneName, bossReference.ArenaPosition);
             }
 
             GUI.enabled = oldGUIenabled;
@@ -215,7 +215,7 @@ namespace SilksongAI
             if (GUILayout.Button($"Teleport to {bossReference.DisplayName}"))
             {
                 bossReference.SetDefeated(true);
-                TeleportUtils.TeleportTo(bossReference.ArenaMapName, bossReference.ArenaPosition);
+                TeleportUtils.TeleportTo(bossReference.ArenaSceneName, bossReference.ArenaPosition);
             }
 
             GUI.enabled = oldGUIenabled;
