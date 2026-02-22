@@ -123,7 +123,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="TeamCherry.SharedUtils, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\TeamCherry.SharedUtils.dll</HintPath>
+      <HintPath>$(GameDir)\Hollow Knight Silksong_Data\Managed\TeamCherry.SharedUtils.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>$(GameDir)\Hollow Knight Silksong_Data\Managed\UnityEngine.dll</HintPath>
