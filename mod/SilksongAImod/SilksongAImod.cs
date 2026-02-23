@@ -62,7 +62,7 @@ public class SilksongAImod : BaseUnityPlugin
         }
         if (Input.GetKeyDown(KeyCode.F10))
         {
-            BossFightRecordingSession.StopRecording();
+            BossFightRecordingSession.StopRecordingSession();
         }
 
         BossFightRecordingSession.Update();

@@ -16,7 +16,8 @@ namespace SilksongAI
         public string InternalName;
         public string ArenaSceneName;
         public Vector3 ArenaPosition;
-        public bool RequireTeleportAfterDeath = false;
+        public bool CanRespawnOnArena = true; // TODO: implement (for example false for fouth chorus)
+        public bool RequireHardSceneReload = false;
         public Action<bool> SetDefeated = _ => SilksongAImod.Log.LogWarning("Trying to respawn a boss with undefined SetDefeated action!");
         public Action SetExpectedPlayerAbilities = () => SilksongAImod.Log.LogWarning("Trying to set player state with undefined SetExpectedPlayerResources action!");
     }
@@ -65,6 +66,7 @@ namespace SilksongAI
                 InternalName = "Mossbone Mother",
                 ArenaSceneName = "Tut_03",
                 ArenaPosition = new Vector3(68f, 17.6f, 0),
+                RequireHardSceneReload = true,
                 SetDefeated = (val) => 
                 {
                     PlayerData.instance.defeatedMossMother = val;
@@ -157,8 +159,7 @@ namespace SilksongAI
                 DisplayName = "Fourth Chorus",
                 InternalName = "SG_head",
                 ArenaSceneName = "Bone_East_08",
-                ArenaPosition = new Vector3(80.4f, 7.8f, 0),
-                RequireTeleportAfterDeath = true,
+                ArenaPosition = new Vector3(80.4f, 7.1f, 0),
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.defeatedSongGolem = val;

@@ -23,6 +23,7 @@ namespace SilksongAI
         public static int TotalFights { get; private set; } = 0;
         public static bool SessionActive { get; private set; } = false;
 
+        private static bool _arenaLoading = false;
         private static bool _arenaReloaded = false;
         private static bool _heroDied;
 
@@ -74,6 +75,8 @@ namespace SilksongAI
 
             _spawnPoint = new CustomRespawnPoint("BossFightRecordingSessionRespawn", TargetBoss.ArenaSceneName, TargetBoss.ArenaPosition);
 
+            PlayerUtils.RemoveCocoon();
+
         }
 
         public static void Update()
@@ -85,7 +88,7 @@ namespace SilksongAI
             {
                 if (RemainingFights == 0)
                 {
-                    StopRecording();
+                    StopRecordingSession();
                     return;
                 }
 
@@ -98,9 +101,9 @@ namespace SilksongAI
                     _spawnPoint.UseAsTemporary(0);
                     TargetBoss.SetDefeated(false);
 
-                    if (!_heroDied || TargetBoss.RequireTeleportAfterDeath)
+                    if (!_heroDied)
                     {
-                        TeleportUtils.TeleportTo(TargetBoss);
+                        TeleportUtils.TeleportTo(TargetBoss, true);
                     }
 
                     _arenaReloaded = true;
@@ -178,7 +181,7 @@ namespace SilksongAI
             BossFightRecorder.StartRecording(TargetBoss);
         }
 
-        public static void StopRecording()
+        public static void StopRecordingSession()
         {
             if(!SessionActive) return;
 
@@ -196,7 +199,7 @@ namespace SilksongAI
             BossFightRecorder.StopRecording();
 
             TargetBoss.SetDefeated(true);
-            TeleportUtils.TeleportTo(TargetBoss);
+            TeleportUtils.TeleportTo(TargetBoss, true);
 
             TargetBoss = null;
         }

@@ -10,6 +10,7 @@ using System.Collections;
 using static UnityEngine.EventSystems.EventTrigger;
 using Steamworks;
 using TeamCherry.SharedUtils;
+using static DamageReference;
 
 namespace SilksongAI
 {
@@ -29,11 +30,11 @@ namespace SilksongAI
 
         private class CoroutineRunner : MonoBehaviour { }
 
-        public static void TeleportTo(BossMetaData boss)
+        public static void TeleportTo(BossMetaData boss, bool requireSceneReload)
         {
-            TeleportTo(boss.ArenaSceneName, boss.ArenaPosition);
+            TeleportTo(boss.ArenaSceneName, boss.ArenaPosition, requireSceneReload);
         }
-        public static void TeleportTo(string sceneName, Vector3 pos)
+        public static void TeleportTo(string targetSceneName, Vector3 targetPos, bool requireSceneReload)
         {
             if (TeleportInProgress)
             {
@@ -48,9 +49,23 @@ namespace SilksongAI
 
             TeleportInProgress = true;
 
+            string currentSceneName = SceneManager.GetActiveScene().name;
+
+            if (currentSceneName != targetSceneName || requireSceneReload) // if we are not in the same scene or we do require reload
+            {
+                TeleportWithSceneTransition(targetSceneName, targetPos);
+            }
+            else // if we are in the same sceene and dont require reload
+            {
+                TeleportHeroSafe(targetPos);
+            }
+        }
+
+        private static void TeleportWithSceneTransition(string targetSceneName, Vector3 targetPos)
+        {
             GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo
             {
-                SceneName = sceneName,
+                SceneName = targetSceneName,
                 EntryGateName = "left1",
                 EntrySkip = true,
                 HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
@@ -59,13 +74,19 @@ namespace SilksongAI
                 AlwaysUnloadUnusedAssets = true,
                 WaitForSceneTransitionCameraFade = true,
             });
+
+            TeleportHeroSafe(targetPos);
+        }
+
+        private static void TeleportHeroSafe(Vector3 pos)
+        {
             EnsureRunner();
             Runner.StartCoroutine(TeleportHeroWhenPossible(pos));
         }
 
         private static IEnumerator TeleportHeroWhenPossible(Vector3 pos)
         {
-
+            yield return null;
             yield return new WaitWhile(() =>
             {
 
