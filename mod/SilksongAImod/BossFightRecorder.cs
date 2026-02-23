@@ -23,13 +23,12 @@ namespace SilksongAI
         public static int TotalFights { get; private set; } = 0;
         public static bool SessionActive { get; private set; } = false;
 
-        private static bool _arenaLoading = false;
-        private static bool _arenaReloaded = false;
+        private static bool _attemptStarting = false;
+
         private static bool _heroDied;
 
         public static BossMetaData TargetBoss { get; private set; }
 
-        private static bool _awaitingBoss = false;
         private static MonoBehaviour _runner;
 
         private static CustomRespawnPoint _spawnPoint;
@@ -67,13 +66,15 @@ namespace SilksongAI
 
             TargetBoss = boss;
 
-            _arenaReloaded = false;
+            _attemptStarting = false;
+
             _heroDied = false;
             SessionActive = true;
 
             TargetBoss.SetExpectedPlayerAbilities();
 
             _spawnPoint = new CustomRespawnPoint("BossFightRecordingSessionRespawn", TargetBoss.ArenaSceneName, TargetBoss.ArenaPosition);
+            _spawnPoint.UseAsTemporary(0);
 
             PlayerUtils.RemoveCocoon();
 
@@ -81,10 +82,10 @@ namespace SilksongAI
 
         public static void Update()
         {
-            if (!SessionActive || _awaitingBoss) return;
+            if (!SessionActive || _attemptStarting) return;
 
 
-            if (!BossFightRecorder.IsRecording)
+            if (!BossFightRecorder.IsRecording && !_attemptStarting)
             {
                 if (RemainingFights == 0)
                 {
@@ -92,34 +93,12 @@ namespace SilksongAI
                     return;
                 }
 
-                if (!TeleportUtils.TeleportInProgress && !_arenaReloaded && TeleportUtils.CanPerformTeleportOperations())
-                {
-                    PlayerUtils.SetFullHP();
-                    PlayerUtils.SetFullSilk();
-                    
+                RemainingFights--;
 
-                    _spawnPoint.UseAsTemporary(0);
-                    TargetBoss.SetDefeated(false);
+                _attemptStarting = true;
 
-                    if (!_heroDied)
-                    {
-                        TeleportUtils.TeleportTo(TargetBoss, true);
-                    }
-
-                    _arenaReloaded = true;
-                }
-                if (!TeleportUtils.TeleportInProgress && _arenaReloaded)
-                {
-                    RemainingFights--;
-
-                    GameCameras.instance.HUDIn(); // turn on HUD in case some boss disables it after death (for example widow does that)
-
-                    _awaitingBoss = true;
-                    EnsureRunner();
-                    _runner.StartCoroutine(
-                        AwaitBossAndStartRecording(TargetBoss.InternalName, 2500));
-                    _arenaReloaded = false;
-                }
+                EnsureRunner();
+                _runner.StartCoroutine(BeginNextAttempt());
             }
             else
             {
@@ -141,6 +120,57 @@ namespace SilksongAI
 
             }
         }
+        private static IEnumerator BeginNextAttempt()
+        {
+
+            if (!_heroDied)
+            {
+                PlayerUtils.SetFullHP();
+                PlayerUtils.SetFullSilk();
+
+                if (!TargetBoss.RequireHardSceneReload)
+                {
+                    TargetBoss.SetDefeated(false);
+                    TeleportUtils.TeleportTo(TargetBoss, true);
+
+                    yield return new WaitWhile(() =>
+                    {
+                        return TeleportUtils.TeleportInProgress;
+                    });
+                }
+                else
+                {
+                    TeleportUtils.TeleportTo("Tut_01", Vector3.zero, true);
+                    yield return new WaitWhile(() =>
+                    {
+                        return TeleportUtils.TeleportInProgress;
+                    });
+
+                    TargetBoss.SetDefeated(false);
+                    TeleportUtils.TeleportTo(TargetBoss, true);
+                    yield return new WaitWhile(() =>
+                    {
+                        return TeleportUtils.TeleportInProgress;
+                    });
+                }
+            }
+            else
+            {
+                _spawnPoint.UseAsTemporary(0); // refresh spawnpoint
+                yield return new WaitUntil(() =>
+                {
+                    return TeleportUtils.CanPerformTeleportOperations(); // even though we won't be teleporting this is a good thing to wait for
+                });
+                PlayerUtils.SetFullHP();
+                PlayerUtils.SetFullSilk();
+            }
+
+            GameCameras.instance.HUDIn(); // turn on HUD in case some boss disables it after death (for example widow does that)
+            EnsureRunner();
+            _runner.StartCoroutine(
+                AwaitBossAndStartAttempt(TargetBoss.InternalName, 2500));
+
+        }
         private static IEnumerator AwaitCocoonAndRemove()
         {
             yield return new WaitUntil(() =>
@@ -154,7 +184,7 @@ namespace SilksongAI
 
             PlayerUtils.RemoveCocoon();
         }
-        private static IEnumerator AwaitBossAndStartRecording(string awaitedEnemyName, int timeoutFrames)
+        private static IEnumerator AwaitBossAndStartAttempt(string awaitedEnemyName, int timeoutFrames)
         {
             int i = 0;
             yield return new WaitUntil(() =>
@@ -177,7 +207,7 @@ namespace SilksongAI
                 return boss != null;
             });
 
-            _awaitingBoss = false;
+            _attemptStarting = false;
             BossFightRecorder.StartRecording(TargetBoss);
         }
 
@@ -185,11 +215,7 @@ namespace SilksongAI
         {
             if(!SessionActive) return;
 
-            if (_awaitingBoss)
-            {
-                _runner.StopAllCoroutines();
-                _awaitingBoss = false;
-            }
+            _runner.StopAllCoroutines();
 
             CustomRespawnPoint.ResetTemporary();
 
@@ -198,8 +224,8 @@ namespace SilksongAI
             SessionActive = false;
             BossFightRecorder.StopRecording();
 
-            TargetBoss.SetDefeated(true);
-            TeleportUtils.TeleportTo(TargetBoss, true);
+            TargetBoss.SetDefeated(true);//TODO add pre boss recording game state tracking
+            TeleportUtils.TeleportTo(TargetBoss, true); //TODO teleport to last bench instead
 
             TargetBoss = null;
         }

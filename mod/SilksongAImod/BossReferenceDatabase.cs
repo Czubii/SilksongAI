@@ -70,7 +70,7 @@ namespace SilksongAI
                 SetDefeated = (val) => 
                 {
                     PlayerData.instance.defeatedMossMother = val;
-                    PlayerData.instance.spinnerDefeated = false;
+                    PlayerData.instance.spinnerDefeated = false; // otherwise the chapel maid may show up in the arena if we have beaten the widow
                     SceneData.instance.PersistentBools.SetValue(new PersistentItemData<bool>
                     {
                         SceneName = "Tut_03",
@@ -241,12 +241,13 @@ namespace SilksongAI
 
                 }
             },
-            new BossMetaData    //TODO fix bench when invoking fight from the same room
+            new BossMetaData
             {                   
                 DisplayName = "Widow",
                 InternalName = "Spinner Boss",
                 ArenaSceneName = "Belltown_Shrine",
                 ArenaPosition = new Vector3(52.4f, 8.6f, 0),
+                RequireHardSceneReload = true,
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.spinnerDefeated = val;
