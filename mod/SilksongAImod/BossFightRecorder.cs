@@ -307,7 +307,7 @@ namespace SilksongAI
 
                     var baseFileName = $"session_{DateTime.Now:yyyyMMdd_HHmmss}";
 
-                    var json = new StreamWriter(Path.Combine(path, baseFileName + ".JSON")); //TODO: remove the JSON once no longer needed for debuging
+                    var json = new StreamWriter(Path.Combine(path, baseFileName + ".json")); //TODO: remove the JSON once no longer needed for debuging
                     var bin = new FileStream(Path.Combine(path, baseFileName), 
                         FileMode.Create, FileAccess.Write, FileShare.Read, 
                         bufferSize: 64 * 1024,
@@ -423,7 +423,7 @@ namespace SilksongAI
                 _recordingInfo.Success = success;
                 _recordingInfo.FrameCount = _frameCount;
 
-                using (StreamWriter outputInfoFile = new StreamWriter(Path.Combine(_path, _baseFileName + "_info.JSON")))
+                using (StreamWriter outputInfoFile = new StreamWriter(Path.Combine(_path, _baseFileName + "_info.json")))
                 {
                     var dataBinWithKeys = MessagePackSerializer.Serialize(_recordingInfo);
                     outputInfoFile.Write(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
