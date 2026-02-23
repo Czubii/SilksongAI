@@ -77,7 +77,7 @@ namespace SilksongAI
             TargetBoss.SetExpectedPlayerAbilities();
 
             _spawnPoint?.Dispose();
-            _spawnPoint = new CustomRespawnPoint("BossFightRecordingSessionRespawn", TargetBoss.ArenaSceneName, TargetBoss.ArenaPosition);
+            _spawnPoint = new CustomRespawnPoint("BossFightRecordingSessionRespawn"+TargetBoss.InternalName, TargetBoss.ArenaSceneName, TargetBoss.ArenaPosition);
             _spawnPoint.UseAsTemporary(0);
 
             PlayerUtils.RemoveCocoon();

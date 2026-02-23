@@ -278,7 +278,7 @@ namespace SilksongAI
         private RespawnMarker _marker;
         private string _scene;
         private GameObject _go;
-
+        private bool _disposed;
         public CustomRespawnPoint(string name, string scene, Vector3 position) 
         {
             _scene = scene;
@@ -300,12 +300,19 @@ namespace SilksongAI
 
         public void Dispose()
         {
-            _go.DestroyAll();
-        }
+            if (_disposed) return;
+            _disposed = true;
 
-        ~CustomRespawnPoint()
-        {
-            Dispose();
+            ResetTemporary();
+
+            if (_go != null)
+            {
+                UnityEngine.Object.Destroy(_go);
+                _go = null;
+            }
+
+            _marker = null;
+
         }
 
         public void UseAsTemporary(int type = 0)
