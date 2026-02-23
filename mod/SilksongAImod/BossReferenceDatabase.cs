@@ -62,7 +62,7 @@ namespace SilksongAI
         {
             new BossMetaData
             {
-                DisplayName = "Moss Mother", //TODO add fix for this one boss where it does not respaawn when teleporting from the same scene
+                DisplayName = "Moss Mother",
                 InternalName = "Mossbone Mother",
                 ArenaSceneName = "Tut_03",
                 ArenaPosition = new Vector3(68f, 17.6f, 0),

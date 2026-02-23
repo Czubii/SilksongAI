@@ -169,16 +169,17 @@ namespace SilksongAI
     {
         private RespawnMarker _marker;
         private string _scene;
+        private GameObject _go;
 
         public CustomRespawnPoint(string name, string scene, Vector3 position) // TODO: add destrctor
         {
             _scene = scene;
 
-            var go = new GameObject(name);
+            _go = new GameObject(name);
 
-            UnityEngine.Object.DontDestroyOnLoad(go);
+            UnityEngine.Object.DontDestroyOnLoad(_go);
 
-            _marker = go.AddComponent<RespawnMarker>();
+            _marker = _go.AddComponent<RespawnMarker>();
 
             // Initialize minimal required fields
             _marker.customWakeUp = false;
@@ -191,6 +192,16 @@ namespace SilksongAI
             _marker.transform.position = position;
 
             SceneTeleportMap.AddRespawnPoint(scene, name);
+        }
+
+        public void Dispose()
+        {
+            _go.DestroyAll();
+        }
+
+        ~CustomRespawnPoint()
+        {
+            Dispose();
         }
 
         public void UseAsTemporary(int type = 0)
@@ -207,6 +218,7 @@ namespace SilksongAI
             pd.tempRespawnType = type;
 
         }
+
 
         public static void ResetTemporary()
         {
