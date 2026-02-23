@@ -16,6 +16,7 @@ namespace SilksongAI
         public string InternalName;
         public string ArenaSceneName;
         public Vector3 ArenaPosition;
+        public bool RequireTeleportAfterRespawn = false;
         public Action<bool> SetDefeated = _ => SilksongAImod.Log.LogWarning("Trying to respawn a boss with undefined SetDefeated action!");
         public Action SetExpectedPlayerAbilities = () => SilksongAImod.Log.LogWarning("Trying to set player state with undefined SetExpectedPlayerResources action!");
     }
@@ -86,7 +87,6 @@ namespace SilksongAI
                     p.hasSuperJump = false;
                     p.hasBrolly = false;
                     p.hasChargeSlash = false;
-                    p.hasNeedleThrow = false; //silkspear
                     
                     p.CurrentCrestID = "Hunter"; 
                     RemoveAllTools("Hunter");
@@ -114,7 +114,6 @@ namespace SilksongAI
                     p.hasSuperJump = false;
                     p.hasBrolly = false;
                     p.hasChargeSlash = false;
-                    p.hasNeedleThrow = true; //silkspear
                     
                     p.CurrentCrestID = "Hunter";
                     RemoveAllTools("Hunter");
@@ -144,7 +143,6 @@ namespace SilksongAI
                     p.hasSuperJump = false;
                     p.hasBrolly = false;
                     p.hasChargeSlash = false;
-                    p.hasNeedleThrow = true; //silkspear
                     
                     p.CurrentCrestID = "Hunter";
                     RemoveAllTools("Hunter");
@@ -159,7 +157,8 @@ namespace SilksongAI
                 DisplayName = "Fourth Chorus",
                 InternalName = "SG_head",
                 ArenaSceneName = "Bone_East_08",
-                ArenaPosition = new Vector3(80.4f, 7.1f, 0),
+                ArenaPosition = new Vector3(80.4f, 7.8f, 0),
+                RequireTeleportAfterRespawn = true,
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.defeatedSongGolem = val;
@@ -174,7 +173,6 @@ namespace SilksongAI
                     p.hasSuperJump = false;
                     p.hasBrolly = true;
                     p.hasChargeSlash = false;
-                    p.hasNeedleThrow = true; //silkspear
                     
                     p.CurrentCrestID = "Hunter";
                     RemoveAllTools("Hunter");
@@ -204,7 +202,6 @@ namespace SilksongAI
                     p.hasSuperJump = false;
                     p.hasBrolly = true;
                     p.hasChargeSlash = false;
-                    p.hasNeedleThrow = true; //silkspear
                     
                     p.CurrentCrestID = "Hunter";
                     RemoveAllTools("Hunter");
@@ -234,7 +231,6 @@ namespace SilksongAI
                     p.hasSuperJump = false;
                     p.hasBrolly = true;
                     p.hasChargeSlash = false;
-                    p.hasNeedleThrow = true; //silkspear
                     
                     p.CurrentCrestID = "Hunter";
                     RemoveAllTools("Hunter");
@@ -245,7 +241,7 @@ namespace SilksongAI
                 }
             },
             new BossMetaData    //TODO fix bench when invoking fight from the same room
-            {                   //TODO fix gui dissapearing after beating the boss whe recording session active
+            {                   
                 DisplayName = "Widow",
                 InternalName = "Spinner Boss",
                 ArenaSceneName = "Belltown_Shrine",
@@ -273,7 +269,6 @@ namespace SilksongAI
                     p.hasSuperJump = false;
                     p.hasBrolly = true;
                     p.hasChargeSlash = false;
-                    p.hasNeedleThrow = true; //silkspear
                     
                     p.CurrentCrestID = "Hunter";
                     RemoveAllTools("Hunter");
