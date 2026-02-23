@@ -25,19 +25,15 @@ namespace SilksongAI
         public static bool SessionActive { get; private set; } = false;
 
         private static bool _attemptStarting = false;
+
         private static bool _stopCorutinesSafe = false;
 
         private static bool _heroDied;
-
         public static BossMetaData TargetBoss { get; private set; }
 
         private static MonoBehaviour _runner;
 
         private static CustomRespawnPoint _spawnPoint;
-
-        
-        
-
         private static void EnsureRunner()
         {
             if (_runner != null) return;
@@ -81,9 +77,7 @@ namespace SilksongAI
             _spawnPoint.UseAsTemporary(0);
 
             PlayerUtils.RemoveCocoon();
-
         }
-
         public static void Update()
         {
             if (!SessionActive || _attemptStarting || _stopCorutinesSafe) return;
@@ -98,7 +92,7 @@ namespace SilksongAI
                 EnsureRunner();
                 _runner.StartCoroutine(BeginNextAttempt());
             }
-            else
+            else if(!GameManager.instance?.IsGamePaused() ?? false)
             {
                 bool recordingJustEnded = BossFightRecorder.RecordFrame();
 
@@ -114,7 +108,6 @@ namespace SilksongAI
                     {
                         _heroDied = false;
                     }
-
                     if (RemainingFights == 0)
                     {
                         RecordingSessionFinished();
@@ -343,7 +336,7 @@ namespace SilksongAI
                     SilksongAImod.Log.LogWarning("BossFightRecorder: Cannot Record Frame because recording has not been started or already ended");
                     return true;
                 }
-
+                SilksongAImod.Log.LogMessage($"Frame: {_frameCount}");
                 _frameCount++;
 
                 TrainingEnemyData? bossData = GetDataUtils.GetTrainingEnemyData(_boss.GameObject);
