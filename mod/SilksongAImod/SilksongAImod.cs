@@ -54,11 +54,12 @@ public class SilksongAImod : BaseUnityPlugin
 
 
 
+
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.F11))
         {
-            GameStateLogger.LogGameStateToFiles();
+            //GameStateLogger.LogGameStateToFiles();
         }
         if (Input.GetKeyDown(KeyCode.F10))
         {

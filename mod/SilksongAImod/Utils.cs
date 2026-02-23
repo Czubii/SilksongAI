@@ -12,6 +12,7 @@ using Steamworks;
 using TeamCherry.SharedUtils;
 using static DamageReference;
 using static GameManager;
+using InControl;
 
 namespace SilksongAI
 {
@@ -54,7 +55,9 @@ namespace SilksongAI
 
             if (currentSceneName != targetSceneName || requireSceneReload) // if we are not in the same scene or we do require reload
             {
+                EnsureRunner();
                 TeleportWithSceneTransition(targetSceneName, targetPos);
+
             }
             else // if we are in the same sceene and dont require reload
             {
@@ -68,7 +71,7 @@ namespace SilksongAI
             {
                 SceneName = targetSceneName,
                 EntryGateName = "left1",
-                EntrySkip = true,
+                EntrySkip = CanSkipEntry(),
                 HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
                 EntryDelay = 0f,
                 Visualization = GameManager.SceneLoadVisualizations.Default,
@@ -77,6 +80,17 @@ namespace SilksongAI
             });
 
             TeleportHeroSafe(targetPos);
+        }
+
+        private static bool CanSkipEntry()
+        {
+            HeroController hc = HeroController.instance;
+            if (hc == null) return false;
+
+            if (hc.cState.dashing || hc.cState.isSprinting || hc.sprintFSM.GetFsmBoolIfExists("Is Sprinting"))
+                return false;
+
+            return true;
         }
 
         private static void TeleportHeroSafe(Vector3 pos)
@@ -158,11 +172,14 @@ namespace SilksongAI
 
             gm.RespawningHero = true;
             GetRespawnInfo(out var scene, out var marker);
+
+            HeroController.instance.IgnoreInput();
+
             gm.BeginSceneTransition(new SceneLoadInfo
             {
                 SceneName = scene,
                 EntryGateName = marker,
-                EntrySkip = true,
+                EntrySkip = CanSkipEntry(),
                 HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
                 EntryDelay = 0f,
                 Visualization = SceneLoadVisualizations.Default,
@@ -172,6 +189,7 @@ namespace SilksongAI
 
             yield return AwaitTransitionFinished();
 
+            HeroController.instance.acceptingInput = true;
             TeleportInProgress = false;
         }
 
@@ -196,20 +214,27 @@ namespace SilksongAI
 
             yield return AwaitTransitionFinished();
 
-            yield return new WaitUntil(() =>
-            {
-                var hc = HeroController.instance;
-                return hc != null && hc.CanInput();
-            });
-
             TeleportHero(pos);
+
+            var gm = GameManager.instance;
+            if (gm == null)
+            {
+                SilksongAImod.Log.LogError("TeleportHero(): Cannot teleport, no GameManager.instance on scene");
+                TeleportInProgress = false;
+                yield break;
+            }
+            for (int i = 0; i < 10; i++) // this is needed as in some larger rooms the camera would not teleport if there was no delay 
+            {
+                yield return null;
+            }
+            gm.cameraCtrl.PositionToHeroInstant(false);
         }
 
         private static void TeleportHero(Vector3 pos)
         {            
 
             var hc = HeroController.instance;
-            var gm = GameManager.instance;
+            
             
             if (hc == null)
             {
@@ -217,15 +242,10 @@ namespace SilksongAI
                 TeleportInProgress = false;
                 return;
             }
-            if (gm == null) {
-                SilksongAImod.Log.LogError("TeleportHero(): Cannot teleport, no GameManager.instance on scene");
-                TeleportInProgress = false;
-                return;
-            }
 
 
             hc.transform.position = pos;
-            gm.cameraCtrl.PositionToHeroInstant(true);
+            
 
             var HeroRigidbody2D = HeroController.instance.GetComponent<Rigidbody2D>();
             if (HeroRigidbody2D != null)
@@ -241,6 +261,8 @@ namespace SilksongAI
 
             TeleportInProgress = false;
         }
+
+
 
         public static IEnumerator AwaitCanTeleport(Func<bool> cancel = null)
         {

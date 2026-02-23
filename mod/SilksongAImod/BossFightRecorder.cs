@@ -85,6 +85,12 @@ namespace SilksongAI
 
             if (!BossFightRecorder.IsRecording)
             {
+                if (RemainingFights <= 0)
+                {
+                    RecordingSessionFinished();
+                    return;
+                }
+
                 RemainingFights--;
 
                 _attemptStarting = true;
@@ -107,11 +113,6 @@ namespace SilksongAI
                     else
                     {
                         _heroDied = false;
-                    }
-                    if (RemainingFights == 0)
-                    {
-                        RecordingSessionFinished();
-                        return;
                     }
                 }
 
@@ -336,7 +337,7 @@ namespace SilksongAI
                     SilksongAImod.Log.LogWarning("BossFightRecorder: Cannot Record Frame because recording has not been started or already ended");
                     return true;
                 }
-                SilksongAImod.Log.LogMessage($"Frame: {_frameCount}");
+
                 _frameCount++;
 
                 TrainingEnemyData? bossData = GetDataUtils.GetTrainingEnemyData(_boss.GameObject);
