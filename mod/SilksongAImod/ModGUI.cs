@@ -272,7 +272,7 @@ namespace SilksongAI
 
         private bool CanUseTeleportButton()
         {
-            if(!TeleportUtils.CanPerformTeleportOperations() || BossFightRecordingSession.SessionActive)
+            if(!TeleportUtils.CanTeleport() || BossFightRecordingSession.SessionActive)
                 return false;
             
             return true;

@@ -11,21 +11,22 @@ using static UnityEngine.EventSystems.EventTrigger;
 using Steamworks;
 using TeamCherry.SharedUtils;
 using static DamageReference;
+using static GameManager;
 
 namespace SilksongAI
 {
     public static class TeleportUtils
     {
         public static bool TeleportInProgress { get; private set; }
-        private static MonoBehaviour Runner;
+        private static MonoBehaviour _runner;
 
         private static void EnsureRunner()
         {
-            if (Runner != null) return;
+            if (_runner != null) return;
 
             var go = new GameObject("TeleportUtilsRunner");
             UnityEngine.Object.DontDestroyOnLoad(go);
-            Runner = go.AddComponent<CoroutineRunner>();
+            _runner = go.AddComponent<CoroutineRunner>();
         }
 
         private class CoroutineRunner : MonoBehaviour { }
@@ -41,7 +42,7 @@ namespace SilksongAI
                 SilksongAImod.Log.LogWarning("Cannot teleport, the old one is still in progress");
                 return;
             }
-            if(!CanPerformTeleportOperations())
+            if(!CanTeleport())
             {
                 SilksongAImod.Log.LogWarning("Cannot teleport.");
                 return;
@@ -81,12 +82,101 @@ namespace SilksongAI
         private static void TeleportHeroSafe(Vector3 pos)
         {
             EnsureRunner();
-            Runner.StartCoroutine(TeleportHeroWhenPossible(pos));
+            _runner.StartCoroutine(TeleportHeroWhenPossible(pos));
         }
 
-        private static IEnumerator TeleportHeroWhenPossible(Vector3 pos)
+        public static void TeleportToBench()
         {
-            yield return null;
+            if (TeleportInProgress)
+            {
+                SilksongAImod.Log.LogWarning("Cannot teleport, the old one is still in progress");
+                return;
+            }
+            if (!CanTeleport())
+            {
+                SilksongAImod.Log.LogWarning("Cannot teleport.");
+                return;
+            }
+            TeleportInProgress = true;
+
+            EnsureRunner();
+            _runner.StartCoroutine(TeleportToBenchRutine());
+        }
+        private static void GetRespawnInfo(out string scene, out string marker)
+        {
+            var playerData = PlayerData.instance;
+            string savedRespawnScene;
+            string savedRespawnMarker;
+            if (!string.IsNullOrEmpty(playerData.tempRespawnScene))
+            {
+                savedRespawnScene = playerData.tempRespawnScene;
+                savedRespawnMarker = playerData.tempRespawnMarker;
+            }
+            else
+            {
+                savedRespawnScene = playerData.respawnScene;
+                savedRespawnMarker = playerData.respawnMarkerName;
+            }
+
+            Dictionary<string, SceneTeleportMap.SceneInfo> teleportMap = SceneTeleportMap.GetTeleportMap();
+            if (Application.isEditor)
+            {
+                scene = savedRespawnScene;
+                marker = savedRespawnMarker;
+                if (teleportMap.TryGetValue(savedRespawnScene, out var value) && !value.RespawnPoints.Contains(savedRespawnMarker))
+                {
+                    teleportMap.Where((KeyValuePair<string, SceneTeleportMap.SceneInfo> kvp) => kvp.Key.StartsWith(savedRespawnScene)).Any((KeyValuePair<string, SceneTeleportMap.SceneInfo> kvp) => kvp.Value.RespawnPoints.Contains(savedRespawnMarker));
+                }
+
+                return;
+            }
+
+            if (teleportMap.TryGetValue(savedRespawnScene, out var value2))
+            {
+                if (value2.RespawnPoints.Contains(savedRespawnMarker))
+                {
+                    scene = savedRespawnScene;
+                    marker = savedRespawnMarker;
+                    return;
+                }
+
+                if (teleportMap.Where((KeyValuePair<string, SceneTeleportMap.SceneInfo> kvp) => kvp.Key.StartsWith(savedRespawnScene)).Any((KeyValuePair<string, SceneTeleportMap.SceneInfo> kvp) => kvp.Value.RespawnPoints.Contains(savedRespawnMarker)))
+                {
+                    scene = savedRespawnScene;
+                    marker = savedRespawnMarker;
+                    return;
+                }
+            }
+
+            scene = "Tut_01";
+            marker = "Death Respawn Marker Init";
+            playerData.ResetTempRespawn();
+        }
+        private static IEnumerator TeleportToBenchRutine()
+        {
+            var gm = GameManager.instance;
+
+            gm.RespawningHero = true;
+            GetRespawnInfo(out var scene, out var marker);
+            gm.BeginSceneTransition(new SceneLoadInfo
+            {
+                SceneName = scene,
+                EntryGateName = marker,
+                EntrySkip = true,
+                HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
+                EntryDelay = 0f,
+                Visualization = SceneLoadVisualizations.Default,
+                AlwaysUnloadUnusedAssets = true,
+                WaitForSceneTransitionCameraFade = true,
+            });
+
+            yield return AwaitTransitionFinished();
+
+            TeleportInProgress = false;
+        }
+
+        private static IEnumerator AwaitTransitionFinished()
+        {
             yield return new WaitWhile(() =>
             {
 
@@ -98,6 +188,13 @@ namespace SilksongAI
                 return !hc.isHeroInPosition || hc.cState.transitioning || gm.IsInSceneTransition;
 
             });
+        }
+
+        private static IEnumerator TeleportHeroWhenPossible(Vector3 pos)
+        {
+            yield return null;
+
+            yield return AwaitTransitionFinished();
 
             yield return new WaitUntil(() =>
             {
@@ -145,9 +242,20 @@ namespace SilksongAI
             TeleportInProgress = false;
         }
 
-
-        public static bool CanPerformTeleportOperations()
+        public static IEnumerator AwaitCanTeleport(Func<bool> cancel = null)
         {
+            yield return new WaitUntil(() =>
+            {
+                if (cancel != null && cancel())
+                    return true;
+                return CanTeleport();
+            });
+        }
+
+        public static bool CanTeleport()
+        {
+                if (TeleportInProgress)
+                    return false;
 
                 if (PlayerData.instance != null && PlayerData.instance.health <= 0)
                     return false;
@@ -171,14 +279,11 @@ namespace SilksongAI
         private string _scene;
         private GameObject _go;
 
-        public CustomRespawnPoint(string name, string scene, Vector3 position) // TODO: add destrctor
+        public CustomRespawnPoint(string name, string scene, Vector3 position) 
         {
             _scene = scene;
-
             _go = new GameObject(name);
-
             UnityEngine.Object.DontDestroyOnLoad(_go);
-
             _marker = _go.AddComponent<RespawnMarker>();
 
             // Initialize minimal required fields
@@ -190,7 +295,6 @@ namespace SilksongAI
             };
 
             _marker.transform.position = position;
-
             SceneTeleportMap.AddRespawnPoint(scene, name);
         }
 
