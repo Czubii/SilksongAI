@@ -98,7 +98,7 @@ namespace SilksongAI
                     _spawnPoint.UseAsTemporary(0);
                     TargetBoss.SetDefeated(false);
 
-                    if (!_heroDied || TargetBoss.RequireTeleportAfterRespawn)
+                    if (!_heroDied || TargetBoss.RequireTeleportAfterDeath)
                     {
                         TeleportUtils.TeleportTo(TargetBoss);
                     }

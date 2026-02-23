@@ -16,7 +16,7 @@ namespace SilksongAI
         public string InternalName;
         public string ArenaSceneName;
         public Vector3 ArenaPosition;
-        public bool RequireTeleportAfterRespawn = false;
+        public bool RequireTeleportAfterDeath = false;
         public Action<bool> SetDefeated = _ => SilksongAImod.Log.LogWarning("Trying to respawn a boss with undefined SetDefeated action!");
         public Action SetExpectedPlayerAbilities = () => SilksongAImod.Log.LogWarning("Trying to set player state with undefined SetExpectedPlayerResources action!");
     }
@@ -158,7 +158,7 @@ namespace SilksongAI
                 InternalName = "SG_head",
                 ArenaSceneName = "Bone_East_08",
                 ArenaPosition = new Vector3(80.4f, 7.8f, 0),
-                RequireTeleportAfterRespawn = true,
+                RequireTeleportAfterDeath = true,
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.defeatedSongGolem = val;
