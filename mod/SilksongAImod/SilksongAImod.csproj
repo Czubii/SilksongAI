@@ -121,6 +121,10 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="TeamCherry.SharedUtils, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(GameDir)\Hollow Knight Silksong_Data\Managed\TeamCherry.SharedUtils.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>$(GameDir)\Hollow Knight Silksong_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
