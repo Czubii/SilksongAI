@@ -187,6 +187,19 @@ namespace SilksongAI
 
         }
 
+        public static void ResetTemporary()
+        {
+            var pd = PlayerData.instance;
+            if (pd == null)
+            {
+                SilksongAImod.Log.LogError("CustomRespawnPoint.ResetTemporary(): no PlayerData.instance");
+                return;
+            }
+
+            pd.ResetTempRespawn();
+
+        }
+
     }
 
     public static class GetDataUtils

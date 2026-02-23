@@ -65,6 +65,12 @@ public class SilksongAImod : BaseUnityPlugin
             BossFightRecordingSession.StopRecording();
         }
 
+        var pd = PlayerData.instance;
+        if (pd != null)
+        {
+            Log.LogMessage(pd.HeroCorpseScene);
+        }
+
         BossFightRecordingSession.Update();
     }
 

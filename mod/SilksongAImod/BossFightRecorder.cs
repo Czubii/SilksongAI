@@ -23,7 +23,7 @@ namespace SilksongAI
         public static int TotalFights { get; private set; } = 0;
         public static bool SessionActive { get; private set; } = false;
 
-        private static bool _ArenaReloaded = false;
+        private static bool _arenaReloaded = false;
         private static bool _heroDied;
 
         public static BossMetaData TargetBoss { get; private set; }
@@ -66,7 +66,7 @@ namespace SilksongAI
 
             TargetBoss = boss;
 
-            _ArenaReloaded = false;
+            _arenaReloaded = false;
             _heroDied = false;
             SessionActive = true;
 
@@ -89,11 +89,11 @@ namespace SilksongAI
                     return;
                 }
 
-                if (!TeleportUtils.TeleportInProgress && !_ArenaReloaded && TeleportUtils.CanPerformTeleportOperations())
+                if (!TeleportUtils.TeleportInProgress && !_arenaReloaded && TeleportUtils.CanPerformTeleportOperations())
                 {
-                    PlayerUtils.RemoveCocoon(); // TODO: fix - propably the cocoon spawns after this is called as now we do not reload scene on death
                     PlayerUtils.SetFullHP();
                     PlayerUtils.SetFullSilk();
+                    
 
                     _spawnPoint.UseAsTemporary(0);
 
@@ -103,27 +103,54 @@ namespace SilksongAI
                         TeleportUtils.TeleportTo(TargetBoss);
                     }
 
-                    _ArenaReloaded = true;
+                    _arenaReloaded = true;
                 }
-                if (!TeleportUtils.TeleportInProgress && _ArenaReloaded)
+                if (!TeleportUtils.TeleportInProgress && _arenaReloaded)
                 {
                     RemainingFights--;
 
-
+                    GameCameras.instance.HUDIn(); // turn on HUD in case some boss disables it after death (for example widow does that)
 
                     _awaitingBoss = true;
                     EnsureRunner();
                     _runner.StartCoroutine(
                         AwaitBossAndStartRecording(TargetBoss.InternalName, 2500));
-                    _ArenaReloaded = false;
+                    _arenaReloaded = false;
                 }
             }
             else
             {
-                BossFightRecorder.RecordFrame(out _heroDied);
+                bool recordingJustEnded = BossFightRecorder.RecordFrame();
+
+                if (recordingJustEnded) 
+                {
+                    if (PlayerData.instance != null && PlayerData.instance.health <= 0)
+                    {
+                        _heroDied = true;
+                        _runner.StartCoroutine(
+                            AwaitCocoonAndRemove());
+                    }
+                    else
+                    {
+                        _heroDied = false;
+                    }
+                }
+
             }
         }
+        private static IEnumerator AwaitCocoonAndRemove()
+        {
+            yield return new WaitUntil(() =>
+            {
+                var pd = PlayerData.instance;
 
+                if(pd == null) return false;
+
+                return pd.HeroCorpseMarkerGuid != null; 
+            });
+
+            PlayerUtils.RemoveCocoon();
+        }
         private static IEnumerator AwaitBossAndStartRecording(string awaitedEnemyName, int timeoutFrames)
         {
             int i = 0;
@@ -160,6 +187,8 @@ namespace SilksongAI
                 _runner.StopAllCoroutines();
                 _awaitingBoss = false;
             }
+
+            CustomRespawnPoint.ResetTemporary();
 
             RemainingFights = 0;
             TotalFights = 0;
@@ -244,15 +273,17 @@ namespace SilksongAI
                 IsRecording = true;
                 _frameCount = 0;
             }
- 
-            public static void RecordFrame(out bool HeroDied)
+    
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <returns>true if the recording has been stopped this frame</returns>
+            public static bool RecordFrame()
             {
-                HeroDied = false;
-
                 if (!IsRecording)
                 {
                     SilksongAImod.Log.LogWarning("BossFightRecorder: Cannot Record Frame because recording has not been started or already ended");
-                    return;
+                    return true;
                 }
 
                 _frameCount++;
@@ -262,7 +293,7 @@ namespace SilksongAI
                 {
                     SilksongAImod.Log.LogError("BossFightRecorder: bossData missing. Stopping Recoroding");
                     StopRecording(false);
-                    return;
+                    return true;
                 }
                 
                 TrainingHeroData? heroData = GetDataUtils.GetHeroData();
@@ -270,7 +301,7 @@ namespace SilksongAI
                 {
                     SilksongAImod.Log.LogError("BossFightRecorder: heroData missing. Stopping Recoroding");
                     StopRecording(false);
-                    return;
+                    return true;
                 }
 
                 var IH = InputHandler.Instance;
@@ -278,7 +309,7 @@ namespace SilksongAI
                 {
                     SilksongAImod.Log.LogError("BossFightRecorder: InputHandler.Instance missing. Stopping Recoroding");
                     StopRecording(false);
-                    return;
+                    return true;
                 }
                 TrainingUserInputs userInputs = inputTracker.GetInputs(IH);
 
@@ -311,12 +342,15 @@ namespace SilksongAI
                 if (HM.isDead)
                 {
                     StopRecording(true);
+                    return true;
                 }
                 if (PlayerData.instance != null && PlayerData.instance.health <= 0)
                 {
                     StopRecording(false);
-                    HeroDied = true;
+                    return true;
                 }
+
+                return false;
 
             }
 
