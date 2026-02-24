@@ -39,7 +39,7 @@ namespace SilksongAI
             JSON,
             BIN
         }
-        private OutputType _outputType;
+        private OutputType _outputType = OutputType.JSON; // TODO change to BIN when ready
 
         private bool _sessionActive = false;
         public RecordingState State {  get; private set; } = RecordingState.Idle;
@@ -219,7 +219,7 @@ namespace SilksongAI
         }
         private void Update()
         {
-            if (State != RecordingState.Recording) return;
+            if (State != RecordingState.Recording) return; //TODO: game paused check
 
             RecordFrame();
         }

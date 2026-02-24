@@ -33,6 +33,7 @@ public class SilksongAImod : BaseUnityPlugin
 
         TeleportService.EnsureExists();
         BossFightSession.EnsureExists();
+        BossFightRecorder.EnsureExists();
     }
 
     [HarmonyPostfix]
