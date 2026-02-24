@@ -68,8 +68,6 @@ public class SilksongAImod : BaseUnityPlugin
             //BossFightRecordingSession.ForceStopRecordingSession();
             BossFightSession.instance.StopSession();
         }
-
-        BossFightRecordingSession.Update();
     }
 
     private void OnGUI()

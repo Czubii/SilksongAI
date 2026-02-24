@@ -63,10 +63,10 @@ namespace SilksongAI
         }
         public readonly struct FightResults
         {
-            public readonly bool HeroDied;
-            public FightResults(bool heroDied)
+            public readonly bool Success;
+            public FightResults(bool success)
             {
-                HeroDied = heroDied;
+                Success = success;
             }
         }
         public static event Action<SessionInfo> OnSessionStarted;
@@ -141,6 +141,7 @@ namespace SilksongAI
         }
         private IEnumerator SessionLoop()
         {
+            PlayerUtils.RemoveCocoon();
             _heroDied = false;
 
             while (RemainingFights > 0 && !IsStopping())
@@ -173,8 +174,8 @@ namespace SilksongAI
 
                 OnFightStarted?.Invoke();
                 yield return WaitForAttemptFinished();
-                OnFightFinished?.Invoke(new FightResults(_heroDied));
-                if(_heroDied ) StartCoroutine(AwaitCocoonAndRemove());
+                OnFightFinished?.Invoke(new FightResults(!_heroDied));
+                if(_heroDied) StartCoroutine(AwaitCocoonAndRemove());
 
                 SilksongAImod.Log.LogDebug($"BossFightSession: Attempt Ended, hero died: {_heroDied}");
 
@@ -305,7 +306,7 @@ namespace SilksongAI
                 return false;
             });
         }
-        private static IEnumerator AwaitCocoonAndRemove() // TODO add some timeout
+        private static IEnumerator AwaitCocoonAndRemove() // TODO add some timeout //TODO move ot PlayerUtils or something better
         {
             yield return new WaitUntil(() =>
             {
@@ -315,7 +316,7 @@ namespace SilksongAI
 
                 return pd.HeroCorpseMarkerGuid != null;
             });
-
+            SilksongAImod.Log.LogDebug("REMOVING COCOON");
             PlayerUtils.RemoveCocoon();
         }
         private bool IsStopping()

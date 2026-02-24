@@ -16,6 +16,7 @@ using InControl;
 
 namespace SilksongAI
 {
+    //TODO get rid of all of this by moving to some better places
     public class CustomRespawnPoint
     {
         private RespawnMarker _marker;
