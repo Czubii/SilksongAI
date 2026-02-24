@@ -22,7 +22,7 @@ namespace SilksongAI
         private string _scene;
         private GameObject _go;
         private bool _disposed;
-        public CustomRespawnPoint(string name, string scene, Vector3 position) 
+        public CustomRespawnPoint(string name, string scene, Vector3 position)
         {
             _scene = scene;
             _go = new GameObject(name);
@@ -40,7 +40,6 @@ namespace SilksongAI
             _marker.transform.position = position;
             SceneTeleportMap.AddRespawnPoint(scene, name);
         }
-
         public void Dispose()
         {
             if (_disposed) return;
@@ -57,7 +56,6 @@ namespace SilksongAI
             _marker = null;
 
         }
-
         public void UseAsTemporary(int type = 0)
         {
             var pd = PlayerData.instance;
@@ -72,8 +70,6 @@ namespace SilksongAI
             pd.tempRespawnType = type;
 
         }
-
-
         public static void ResetTemporary()
         {
             var pd = PlayerData.instance;
@@ -86,7 +82,6 @@ namespace SilksongAI
             pd.ResetTempRespawn();
 
         }
-
     }
 
     public static class GetDataUtils
