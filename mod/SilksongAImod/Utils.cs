@@ -38,50 +38,162 @@ namespace SilksongAI
         }
         public static void TeleportTo(string targetSceneName, Vector3 targetPos, bool requireSceneReload)
         {
-            if (TeleportInProgress)
+            if (!TryStartTeleport()) return;
+
+            TeleportInProgress = true;
+            EnsureRunner();
+            _runner.StartCoroutine(TeleportRutine(targetSceneName, targetPos, requireSceneReload));
+        }
+        private static IEnumerator TeleportRutine(string targetSceneName, Vector3 targetPos, bool requireSceneReload)
+        {
+            try
             {
-                SilksongAImod.Log.LogWarning("Cannot teleport, the old one is still in progress");
+                string currentSceneName = SceneManager.GetActiveScene().name;
+
+                if (currentSceneName != targetSceneName || requireSceneReload) // if we are not in the same scene or we do require reload
+                {
+                    GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo // change the scene
+                    {
+                        SceneName = targetSceneName,
+                        EntryGateName = "left1",
+                        EntrySkip = CanSkipEntry(),
+                        HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
+                        EntryDelay = 0f,
+                        Visualization = GameManager.SceneLoadVisualizations.Default,
+                        AlwaysUnloadUnusedAssets = true,
+                        WaitForSceneTransitionCameraFade = true,
+                    });
+                    yield return null; // Wait one frame so GameManager sets transition flags internally
+                }
+
+                yield return AwaitTransitionFinished(); // Make sure we are ready to teleport hero
+
+                TeleportHero(targetPos);
+
+                var gm = GameManager.instance;
+
+                if (gm == null) yield break;
+
+                for (int i = 0; i < 10; i++) // this delay is needed as in some larger rooms the camera would not snap to player if there was no delay 
+                {
+                    yield return null;
+                }
+                gm.cameraCtrl.PositionToHeroInstant(true);
+
+            }
+            finally { TeleportInProgress = false; }
+        }
+        private static void TeleportHero(Vector3 pos)
+        {
+            var hc = HeroController.instance;
+            if (hc == null)
+            {
+                SilksongAImod.Log.LogError("TeleportHero(): Cannot teleport, no HeroController.instance on scene");
                 return;
             }
-            if(!CanTeleport())
+            hc.transform.position = pos;
+            var HeroRigidbody2D = HeroController.instance.GetComponent<Rigidbody2D>();
+            if (HeroRigidbody2D != null)
             {
-                SilksongAImod.Log.LogWarning("Cannot teleport.");
-                return;
+                HeroRigidbody2D.linearVelocity = Vector2.zero;
             }
+            if (HeroController.instance.cState != null)
+            {
+                HeroController.instance.cState.recoiling = false;
+                HeroController.instance.cState.transitioning = false;
+            }
+        }
+        public static void TeleportToBench()
+        {
+            if (!TryStartTeleport()) return;
 
             TeleportInProgress = true;
 
-            string currentSceneName = SceneManager.GetActiveScene().name;
-
-            if (currentSceneName != targetSceneName || requireSceneReload) // if we are not in the same scene or we do require reload
-            {
-                EnsureRunner();
-                TeleportWithSceneTransition(targetSceneName, targetPos);
-
-            }
-            else // if we are in the same sceene and dont require reload
-            {
-                TeleportHeroSafe(targetPos);
-            }
+            EnsureRunner();
+            _runner.StartCoroutine(TeleportToBenchRutine());
         }
-
-        private static void TeleportWithSceneTransition(string targetSceneName, Vector3 targetPos)
+        
+        private static IEnumerator TeleportToBenchRutine()
         {
-            GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo
+            try
             {
-                SceneName = targetSceneName,
-                EntryGateName = "left1",
-                EntrySkip = CanSkipEntry(),
-                HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
-                EntryDelay = 0f,
-                Visualization = GameManager.SceneLoadVisualizations.Default,
-                AlwaysUnloadUnusedAssets = true,
-                WaitForSceneTransitionCameraFade = true,
-            });
+                var gm = GameManager.instance;
 
-            TeleportHeroSafe(targetPos);
+                gm.RespawningHero = true;
+                GetRespawnInfo(out var scene, out var marker);
+
+                gm.BeginSceneTransition(new SceneLoadInfo
+                {
+                    SceneName = scene,
+                    EntryGateName = marker,
+                    EntrySkip = CanSkipEntry(),
+                    HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
+                    EntryDelay = 0f,
+                    Visualization = SceneLoadVisualizations.Default,
+                    AlwaysUnloadUnusedAssets = true,
+                    WaitForSceneTransitionCameraFade = true,
+                });
+
+                yield return AwaitTransitionFinished();
+            }
+            finally { TeleportInProgress = false; }
         }
+        private static bool TryStartTeleport()
+        {
+            if (TeleportInProgress)
+            {
+                SilksongAImod.Log.LogWarning("Cannot teleport, the old one is still in progress");
+                return false;
+            }
+            if (!CanTeleport())
+            {
+                SilksongAImod.Log.LogWarning("Cannot teleport.");
+                return false;
+            }
+            return true;
+        }
+        private static IEnumerator AwaitTransitionFinished()
+        {
+            yield return new WaitWhile(() =>
+            {
 
+                var gm = GameManager.instance;
+                var hc = HeroController.instance;
+
+                if (gm == null || hc == null) return true;
+
+                return !hc.isHeroInPosition || hc.cState.transitioning || gm.IsInSceneTransition;
+
+            });
+        }
+        public static IEnumerator AwaitCanTeleport(Func<bool> cancel = null)
+        {
+            yield return new WaitUntil(() =>
+            {
+                if (cancel != null && cancel())
+                    return true;
+                return CanTeleport();
+            });
+        }
+        public static bool CanTeleport()
+        {
+                if (TeleportInProgress)
+                    return false;
+
+                if (PlayerData.instance != null && PlayerData.instance.health <= 0)
+                    return false;
+                
+                if (PlayerData.instance != null && PlayerData.instance.atBench)
+                    return false;
+                
+                if (PlayerData.instance != null && !PlayerData.instance.bindCutscenePlayed)
+                    return false;
+                
+                if (GameManager.instance != null && GameManager.instance.RespawningHero)
+                    return false;
+
+                return true;
+        }
         private static bool CanSkipEntry()
         {
             HeroController hc = HeroController.instance;
@@ -91,30 +203,6 @@ namespace SilksongAI
                 return false;
 
             return true;
-        }
-
-        private static void TeleportHeroSafe(Vector3 pos)
-        {
-            EnsureRunner();
-            _runner.StartCoroutine(TeleportHeroWhenPossible(pos));
-        }
-
-        public static void TeleportToBench()
-        {
-            if (TeleportInProgress)
-            {
-                SilksongAImod.Log.LogWarning("Cannot teleport, the old one is still in progress");
-                return;
-            }
-            if (!CanTeleport())
-            {
-                SilksongAImod.Log.LogWarning("Cannot teleport.");
-                return;
-            }
-            TeleportInProgress = true;
-
-            EnsureRunner();
-            _runner.StartCoroutine(TeleportToBenchRutine());
         }
         private static void GetRespawnInfo(out string scene, out string marker)
         {
@@ -165,133 +253,6 @@ namespace SilksongAI
             scene = "Tut_01";
             marker = "Death Respawn Marker Init";
             playerData.ResetTempRespawn();
-        }
-        private static IEnumerator TeleportToBenchRutine()
-        {
-            var gm = GameManager.instance;
-
-            gm.RespawningHero = true;
-            GetRespawnInfo(out var scene, out var marker);
-
-            HeroController.instance.IgnoreInput();
-
-            gm.BeginSceneTransition(new SceneLoadInfo
-            {
-                SceneName = scene,
-                EntryGateName = marker,
-                EntrySkip = CanSkipEntry(),
-                HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
-                EntryDelay = 0f,
-                Visualization = SceneLoadVisualizations.Default,
-                AlwaysUnloadUnusedAssets = true,
-                WaitForSceneTransitionCameraFade = true,
-            });
-
-            yield return AwaitTransitionFinished();
-
-            HeroController.instance.acceptingInput = true;
-            TeleportInProgress = false;
-        }
-
-        private static IEnumerator AwaitTransitionFinished()
-        {
-            yield return new WaitWhile(() =>
-            {
-
-                var gm = GameManager.instance;
-                var hc = HeroController.instance;
-
-                if (gm == null || hc == null) return true;
-
-                return !hc.isHeroInPosition || hc.cState.transitioning || gm.IsInSceneTransition;
-
-            });
-        }
-
-        private static IEnumerator TeleportHeroWhenPossible(Vector3 pos)
-        {
-            yield return null;
-
-            yield return AwaitTransitionFinished();
-
-            TeleportHero(pos);
-
-            var gm = GameManager.instance;
-            if (gm == null)
-            {
-                SilksongAImod.Log.LogError("TeleportHero(): Cannot teleport, no GameManager.instance on scene");
-                TeleportInProgress = false;
-                yield break;
-            }
-            for (int i = 0; i < 10; i++) // this is needed as in some larger rooms the camera would not teleport if there was no delay 
-            {
-                yield return null;
-            }
-            gm.cameraCtrl.PositionToHeroInstant(false);
-        }
-
-        private static void TeleportHero(Vector3 pos)
-        {            
-
-            var hc = HeroController.instance;
-            
-            
-            if (hc == null)
-            {
-                SilksongAImod.Log.LogError("TeleportHero(): Cannot teleport, no HeroController.instance on scene");
-                TeleportInProgress = false;
-                return;
-            }
-
-
-            hc.transform.position = pos;
-            
-
-            var HeroRigidbody2D = HeroController.instance.GetComponent<Rigidbody2D>();
-            if (HeroRigidbody2D != null)
-            {
-                HeroRigidbody2D.linearVelocity = Vector2.zero;
-            }
-
-            if (HeroController.instance.cState != null)
-            {
-                HeroController.instance.cState.recoiling = false;
-                HeroController.instance.cState.transitioning = false;
-            }
-
-            TeleportInProgress = false;
-        }
-
-
-
-        public static IEnumerator AwaitCanTeleport(Func<bool> cancel = null)
-        {
-            yield return new WaitUntil(() =>
-            {
-                if (cancel != null && cancel())
-                    return true;
-                return CanTeleport();
-            });
-        }
-
-        public static bool CanTeleport()
-        {
-                if (TeleportInProgress)
-                    return false;
-
-                if (PlayerData.instance != null && PlayerData.instance.health <= 0)
-                    return false;
-                
-                if (PlayerData.instance != null && PlayerData.instance.atBench)
-                    return false;
-                
-                if (PlayerData.instance != null && !PlayerData.instance.bindCutscenePlayed)
-                    return false;
-                
-                if (GameManager.instance != null && GameManager.instance.RespawningHero)
-                    return false;
-
-                return true;
         }
     }
 
