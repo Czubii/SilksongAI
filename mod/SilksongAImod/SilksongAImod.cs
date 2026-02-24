@@ -32,6 +32,7 @@ public class SilksongAImod : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
 
         TeleportService.EnsureExists();
+        BossFightSession.EnsureExists();
     }
 
     [HarmonyPostfix]
@@ -64,7 +65,8 @@ public class SilksongAImod : BaseUnityPlugin
         }
         if (Input.GetKeyDown(KeyCode.F10))
         {
-            BossFightRecordingSession.ForceStopRecordingSession();
+            //BossFightRecordingSession.ForceStopRecordingSession();
+            BossFightSession.instance.StopSession();
         }
 
         BossFightRecordingSession.Update();

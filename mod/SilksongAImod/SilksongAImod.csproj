@@ -155,6 +155,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BossFightSession.cs" />
     <Compile Include="BossReferenceDatabase.cs" />
     <Compile Include="EnemyTracker.cs" />
     <Compile Include="inputTracker.cs" />

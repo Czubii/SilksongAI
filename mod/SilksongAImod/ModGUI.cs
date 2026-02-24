@@ -237,7 +237,8 @@ namespace SilksongAI
 
             if (GUILayout.Button($"Record {bossReference.DisplayName} Fight"))
             {
-               BossFightRecordingSession.StartSession(bossReference, _numRecordings);
+                BossFightSession.instance.StartSession(bossReference, _numRecordings);
+               //BossFightRecordingSession.StartSession(bossReference, _numRecordings);
             }
 
             GUI.enabled = oldGUIenabled;
@@ -319,16 +320,32 @@ namespace SilksongAI
 
             rect0.y += GUILabelOffsetY;
 
-            if (BossFightRecordingSession.SessionActive)
+            var bf = BossFightSession.instance;
+            if (bf.State != BossFightSession.SessionState.Idle)
             {
-                string BossName = BossFightRecordingSession.TargetBoss.DisplayName;
-                int RecordedFights = BossFightRecordingSession.TotalFights - BossFightRecordingSession.RemainingFights;
-                int TotalFights = BossFightRecordingSession.TotalFights;
-                GUI.Label(rect0, $"Recording: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
+                string BossName = bf.TargetBoss.DisplayName;
+                int RecordedFights = bf.TotalFights - bf.RemainingFights;
+                int TotalFights = bf.TotalFights;
+                switch (bf.State)
+                {
+                    case BossFightSession.SessionState.StartingNewFight:
+                        GUI.Label(rect0, $"Starting fight: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
+                        break;
+                    case BossFightSession.SessionState.AwaitingBoss:
+                        GUI.Label(rect0, $"Awating boss: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
+                        break;
+                    case BossFightSession.SessionState.Fighting:
+                        GUI.Label(rect0, $"Fighting: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
+                        break;
+                    case BossFightSession.SessionState.Stopping:
+                        GUI.Label(rect0, $"Stopping fight: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
+                        break;
+                };
+                
             }
             else
             {
-                GUI.Label(rect0, $"Recording: Not Recordnig", labelStyleRight);
+                GUI.Label(rect0, $"Fighting Session: Not Fighting", labelStyleRight);
             }
 
 
