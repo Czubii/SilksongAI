@@ -31,6 +31,7 @@ public class SilksongAImod : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(SilksongAImod), null);
         Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
 
+        TeleportService.EnsureExists();
     }
 
     [HarmonyPostfix]

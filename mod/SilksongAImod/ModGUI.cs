@@ -196,7 +196,7 @@ namespace SilksongAI
             {
                 bossReference.SetDefeated(false);
 
-                TeleportUtils.TeleportTo(bossReference, true);
+                TeleportService.instance.TeleportTo(bossReference, true);
             }
 
             GUI.enabled = oldGUIenabled;
@@ -215,7 +215,7 @@ namespace SilksongAI
             if (GUILayout.Button($"Teleport to {bossReference.DisplayName}"))
             {
                 bossReference.SetDefeated(true);
-                TeleportUtils.TeleportTo(bossReference, true);
+                TeleportService.instance.TeleportTo(bossReference, true);
             }
 
             GUI.enabled = oldGUIenabled;
@@ -272,7 +272,7 @@ namespace SilksongAI
 
         private bool CanUseTeleportButton()
         {
-            if(!TeleportUtils.CanTeleport() || BossFightRecordingSession.SessionActive)
+            if(!TeleportService.instance.CanTeleport() || BossFightRecordingSession.SessionActive)
                 return false;
             
             return true;

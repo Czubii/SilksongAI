@@ -122,7 +122,9 @@ namespace SilksongAI
         {
             try
             {
-                yield return TeleportUtils.AwaitCanTeleport(() => _stopCorutinesSafe);
+                var ts = TeleportService.instance;
+
+                yield return ts.AwaitCanTeleport(() => _stopCorutinesSafe);
 
                 if (_stopCorutinesSafe)
                     yield break;
@@ -135,18 +137,18 @@ namespace SilksongAI
                     if (!TargetBoss.RequireHardSceneReload)
                     {
                         TargetBoss.SetDefeated(false);
-                        
-                        TeleportUtils.TeleportTo(TargetBoss, true);
-                        yield return TeleportUtils.AwaitCanTeleport();
+
+                        ts.TeleportTo(TargetBoss, true);
+                        yield return ts.AwaitCanTeleport();
                     }
                     else
                     {
-                        TeleportUtils.TeleportTo("Tut_01", Vector3.zero, true); // any room different than the bossfight would do
-                        yield return TeleportUtils.AwaitCanTeleport();
+                        ts.TeleportTo("Tut_01", Vector3.zero, true); // any room different than the bossfight would do
+                        yield return ts.AwaitCanTeleport();
 
                         TargetBoss.SetDefeated(false);
-                        TeleportUtils.TeleportTo(TargetBoss, true);
-                        yield return TeleportUtils.AwaitCanTeleport();
+                        ts.TeleportTo(TargetBoss, true);
+                        yield return ts.AwaitCanTeleport();
                     }
                 }
                 else
@@ -219,7 +221,7 @@ namespace SilksongAI
             TotalFights = 0;
             SessionActive = false;
 
-            TeleportUtils.TeleportToBench();
+            TeleportService.instance.TeleportToBench();
         }
         public static void ForceStopRecordingSession()
         {
@@ -232,25 +234,31 @@ namespace SilksongAI
 
         private static IEnumerator StopSessionGracefully()
         {
-            TargetBoss.SetDefeated(true);//TODO add pre boss recording game state tracking
-
-            BossFightRecorder.StopRecording();
-
-            yield return new WaitWhile(() =>
+            try
             {
-                return TeleportUtils.TeleportInProgress || _attemptStarting || BossFightRecorder.IsRecording;
-            });
+                var ts = TeleportService.instance;
+                TargetBoss.SetDefeated(true);//TODO add pre boss recording game state tracking
 
-            yield return TeleportUtils.AwaitCanTeleport();
+                BossFightRecorder.StopRecording();
 
-            CustomRespawnPoint.ResetTemporary();
-            _spawnPoint?.Dispose(); // remove it after the _attemptStarting is false in case we were just teleporting to it which would freeze the game
-            
-            TeleportUtils.TeleportToBench();
+                yield return new WaitWhile(() =>
+                {
+                    return ts.TeleportInProgress || _attemptStarting || BossFightRecorder.IsRecording;
+                });
 
-            RemainingFights = 0;
-            TotalFights = 0;
-            SessionActive = false;
+                yield return ts.AwaitCanTeleport();
+
+                CustomRespawnPoint.ResetTemporary();
+                _spawnPoint?.Dispose(); // remove it after the _attemptStarting is false in case we were just teleporting to it which would freeze the game
+
+                ts.TeleportToBench();
+            }
+            finally
+            {
+                RemainingFights = 0;
+                TotalFights = 0;
+                SessionActive = false;
+            }
         }
 
         private static class BossFightRecorder 
