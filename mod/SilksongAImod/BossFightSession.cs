@@ -39,6 +39,8 @@ namespace SilksongAI
 
         public int TotalFights { get; private set; } = 0;
 
+        public int AwaitBossTimeoutFrames = 2500;
+
         private CustomRespawnPoint _spawnPoint;
 
         public SessionState State { get; private set; } = SessionState.Idle;
@@ -155,7 +157,7 @@ namespace SilksongAI
                 State = SessionState.AwaitingBoss;
                 SilksongAImod.Log.LogDebug($"BossFightSession: Awaiting boss");
                 _bossFound = false;
-                yield return AwaitBoss(2500);
+                yield return AwaitBoss();
                 if (IsStopping()) break;
 
                 if (_bossFound)
@@ -172,6 +174,7 @@ namespace SilksongAI
                 OnFightStarted?.Invoke();
                 yield return WaitForAttemptFinished();
                 OnFightFinished?.Invoke(new FightResults(_heroDied));
+                if(_heroDied ) StartCoroutine(AwaitCocoonAndRemove());
 
                 SilksongAImod.Log.LogDebug($"BossFightSession: Attempt Ended, hero died: {_heroDied}");
 
@@ -239,7 +242,7 @@ namespace SilksongAI
             GameCameras.instance.HUDIn(); // turn on HUD in case some boss disables it after death (for example widow does that)
         }
 
-        private IEnumerator AwaitBoss(int timeoutFrames)
+        private IEnumerator AwaitBoss()
         {
             int i = 0;
             yield return new WaitUntil(() =>
@@ -249,9 +252,10 @@ namespace SilksongAI
                     _bossFound = false;
                     return true;
                 }
-                if (i >= timeoutFrames)
+                if (i >= AwaitBossTimeoutFrames)
                 {
-                    SilksongAImod.Log.LogWarning($"AwaitBossAndStartRecording(): Timeout hit when awaiting {TargetBoss.InternalName}");
+                    SilksongAImod.Log.LogWarning($"AwaitBossAndStartRecording(): Timeout hit when awaiting {TargetBoss.InternalName} " +
+                        $"(timeout frames setting: {AwaitBossTimeoutFrames} ");
                     _bossFound = false;
                     return true;
                 }
@@ -300,6 +304,19 @@ namespace SilksongAI
                 }
                 return false;
             });
+        }
+        private static IEnumerator AwaitCocoonAndRemove() // TODO add some timeout
+        {
+            yield return new WaitUntil(() =>
+            {
+                var pd = PlayerData.instance;
+
+                if (pd == null) return false;
+
+                return pd.HeroCorpseMarkerGuid != null;
+            });
+
+            PlayerUtils.RemoveCocoon();
         }
         private bool IsStopping()
         {
