@@ -12,7 +12,7 @@ using static SilksongAImod;
 
 namespace SilksongAI
 {
-    public class ModGUI
+    public class ModGUI // TODO make a singleton // TODO make this modUI and add input handling here?? as well as event system to controll the mod?
     {
 
         private ConfigEntry<bool> godModeToggle;
@@ -22,7 +22,7 @@ namespace SilksongAI
         private ConfigEntry<bool> recordSelectedBossButton;
         private ConfigEntry<int> bossSelectionDropdown;
 
-        private SilksongAImod plugin;
+        private SilksongAImod plugin; //TODO remove the need of this
 
         public ModGUI(SilksongAImod plugin)
         {
