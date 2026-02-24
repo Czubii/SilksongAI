@@ -9,8 +9,9 @@ using UnityEngine;
 namespace SilksongAI
 {
     public class BossFightSession : MonoBehaviour
-    {
+    {   
         public static BossFightSession instance;
+
         public enum SessionState
         {
             Idle,
@@ -19,7 +20,8 @@ namespace SilksongAI
             Fighting,
             Stopping
         }
-        public class SessionSettings
+
+        public class SessionSettings // TODO connect somehow with FightInfo
         {
             public bool keepAbilities;
             public bool keepTools;
@@ -30,14 +32,46 @@ namespace SilksongAI
                 keepTools = false;
             }
         }
+
         public BossMetaData TargetBoss { get; private set; }
+
         public int RemainingFights { get; private set; } = 0;
+
         public int TotalFights { get; private set; } = 0;
+
         private CustomRespawnPoint _spawnPoint;
+
         public SessionState State { get; private set; } = SessionState.Idle;
+
         private bool _bossFound;
+
         private bool _heroDied;
+
         private bool _forceStopFlag;
+        public readonly struct SessionInfo
+        {
+            public readonly BossMetaData TargetBoss;
+            public readonly int TotalFights;
+
+            public SessionInfo(BossMetaData boss, int totalFights)
+            {
+                TargetBoss = boss;
+                TotalFights = totalFights;
+            }
+        }
+        public readonly struct FightResults
+        {
+            public readonly bool HeroDied;
+            public FightResults(bool heroDied)
+            {
+                HeroDied = heroDied;
+            }
+        }
+        public static event Action<SessionInfo> OnSessionStarted;
+        public static event Action<bool> OnSessionStopped; // <bool> - was the session stopped forcibly (true - yes, false - no)
+        public static event Action OnFightStarted;
+        public static event Action<FightResults> OnFightFinished;
+
         private void Awake()
         {
             if (instance != null)
@@ -71,6 +105,8 @@ namespace SilksongAI
             }
 
             State = SessionState.StartingNewFight;
+
+            OnSessionStarted?.Invoke(new SessionInfo(boss, numFights));
 
             RemainingFights = numFights;
             TotalFights = numFights;
@@ -133,7 +169,9 @@ namespace SilksongAI
                     continue;
                 }
 
+                OnFightStarted?.Invoke();
                 yield return WaitForAttemptFinished();
+                OnFightFinished?.Invoke(new FightResults(_heroDied));
 
                 SilksongAImod.Log.LogDebug($"BossFightSession: Attempt Ended, hero died: {_heroDied}");
 
@@ -142,6 +180,7 @@ namespace SilksongAI
             SilksongAImod.Log.LogDebug($"BossFightSession: Finalizing Session");
             yield return FinalizeSession();
             State = SessionState.Idle;
+            OnSessionStopped?.Invoke(_forceStopFlag);
         }
         private IEnumerator FinalizeSession()
         {
@@ -240,6 +279,11 @@ namespace SilksongAI
 
             yield return new WaitUntil(() =>
             {
+                if (boss == null || hm == null)
+                {
+                    _heroDied = false;
+                    return true;
+                }
                 if (hm.isDead)
                 {
                     _heroDied = false;
@@ -257,11 +301,9 @@ namespace SilksongAI
                 return false;
             });
         }
-
         private bool IsStopping()
         {
             return (_forceStopFlag);
         }
-
     }
 }
