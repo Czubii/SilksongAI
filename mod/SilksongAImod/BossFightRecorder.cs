@@ -219,7 +219,8 @@ namespace SilksongAI
         }
         private void Update()
         {
-            if (State != RecordingState.Recording) return; //TODO: game paused check
+            if (State != RecordingState.Recording 
+                || (GameManager.instance?.IsGamePaused() ?? true)) return; 
 
             RecordFrame();
         }
