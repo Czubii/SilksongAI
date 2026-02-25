@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace SilksongAI
+namespace AIPlugin
 {
     public static class inputTracker
     {
-        public static SilksongAI.TrainingUserInputs GetInputs(InputHandler IH)
+        public static global::AIPlugin.TrainingUserInputs GetInputs(InputHandler IH)
         {
             
 

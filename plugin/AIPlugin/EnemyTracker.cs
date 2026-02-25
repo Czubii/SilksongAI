@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace SilksongAI
+namespace AIPlugin
 {
-    public class Enemy
+    public class EnemyInstance
     {
         public string Name; 
         public GameObject GameObject;
@@ -16,14 +16,14 @@ namespace SilksongAI
     }
     public static class EnemyTracker
     {
-        private static Dictionary<GameObject, Enemy> _enemies = 
-            new Dictionary<GameObject, Enemy>();
+        private static Dictionary<GameObject, EnemyInstance> _enemies = 
+            new Dictionary<GameObject, EnemyInstance>();
 
         public static int GetCount()
         {
             return _enemies.Count;
         }
-        public static IEnumerable<Enemy> GetAll()
+        public static IEnumerable<EnemyInstance> GetAll()
         {
             return _enemies.Values;
         }
@@ -32,7 +32,7 @@ namespace SilksongAI
         [HarmonyPatch(typeof(HealthManager), "OnEnable")]
         private static void EnemyEnabled(HealthManager __instance)
         {
-            _enemies[__instance.gameObject] = new Enemy
+            _enemies[__instance.gameObject] = new EnemyInstance
             {
                 Name = __instance.name,
                 GameObject = __instance.gameObject,

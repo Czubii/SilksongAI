@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SilksongAI
+namespace AIPlugin
 {
     public static class GameStateLogger
     {

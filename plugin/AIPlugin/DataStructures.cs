@@ -1,11 +1,13 @@
 ﻿using MessagePack;
 
 
-namespace SilksongAI
+namespace AIPlugin
 {
     [MessagePackObject]
-    public struct RecordingInfo
+    public class RecordingInfo
     {
+        [Key("Format Version")]
+        public int FormatVersion = 1;
         [Key("FrameCount")]
         public int FrameCount;
         [Key("Success")]
