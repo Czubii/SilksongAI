@@ -12,7 +12,7 @@ namespace AIPlugin
     public class AIPlugin : BaseUnityPlugin
     {
         private ModGUI gui;
-        public static ManualLogSource Log;
+        public static ManualLogSource Log { get; private set; }
         public static string SteamUserName = "Unknown";
         public static bool GodModeEnabled { get; set; } = false;
         private void Awake()

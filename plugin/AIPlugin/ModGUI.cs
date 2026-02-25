@@ -10,22 +10,18 @@ using UnityEngine.SceneManagement;
 
 namespace AIPlugin
 {
-    public class ModGUI // TODO make a singleton // TODO make this modUI and add input handling here?? as well as event system to controll the mod?
+    public class ModGUI
     {
-
         private ConfigEntry<bool> godModeToggle;
         private ConfigEntry<bool> showEnemiesToggle;
         private ConfigEntry<bool> fightSelectedBossButton;
         private ConfigEntry<bool> teleportToSelectedBossButton;
         private ConfigEntry<bool> recordSelectedBossButton;
         private ConfigEntry<int> bossSelectionDropdown;
-
-        private AIPlugin plugin; //TODO remove the need of this
-
+        private int _numSessionFights = 1;
+        private static readonly int _GUILabelOffsetY = 20;
         public ModGUI(AIPlugin plugin)
         {
-            this.plugin = plugin;
-
             godModeToggle = plugin.Config.Bind(
                   "General",
                   "Enable god mode",
@@ -39,7 +35,6 @@ namespace AIPlugin
                           CustomDrawer = DrawGodModeToggle
                       }
                   ));
-
             showEnemiesToggle = plugin.Config.Bind(
                   "Debug",
                   "Show Enemies On Scene",
@@ -53,9 +48,6 @@ namespace AIPlugin
                           CustomDrawer = DrawShowEnemiesToggle
                       }
                   ));
-
-
-
             bossSelectionDropdown = plugin.Config.Bind(
                   "Bosses",
                   "Boss selection",
@@ -70,9 +62,6 @@ namespace AIPlugin
 
                       }
                   ));
-                
-
-
             fightSelectedBossButton = plugin.Config.Bind(
                   "Bosses",
                   "Fight selected boss",
@@ -87,7 +76,6 @@ namespace AIPlugin
 
                       }
                   ));
-
             teleportToSelectedBossButton = plugin.Config.Bind(
                   "Bosses",
                   "Teleport to selected boss",
@@ -102,7 +90,6 @@ namespace AIPlugin
 
                       }
                   ));
-
             recordSelectedBossButton = plugin.Config.Bind(
                   "Bosses",
                   "Record the selected boss fight",
@@ -117,27 +104,22 @@ namespace AIPlugin
 
                       }
                   ));
-
         }
-
         public class ConfigurationManagerAttributes
         {
             public bool? IsAdvanced = null;
             public Action<ConfigEntryBase> CustomDrawer = null;
         }
-
         private void DrawGodModeToggle(ConfigEntryBase entry)
         {
             //GodModeEnabled = GUILayout.Toggle(GodModeEnabled, "GodMode");
         }
-
         private void DrawShowEnemiesToggle(ConfigEntryBase entry)
         {
             var config = (ConfigEntry<bool>)entry;
 
             config.Value = GUILayout.Toggle(config.Value, "Show Enemies");
         }
-
         private bool _showBossDropdown;
         private Vector2 _bossScroll;
         private void DrawBossSelectionDropdown(ConfigEntryBase entry)
@@ -178,7 +160,6 @@ namespace AIPlugin
             }
 
         }
-
         private void DrawFightSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
@@ -218,8 +199,6 @@ namespace AIPlugin
 
             GUI.enabled = oldGUIenabled;
         }
-
-        private int _numRecordings = 1;
         private void DrawRecordSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
@@ -230,45 +209,35 @@ namespace AIPlugin
 
             GUILayout.BeginHorizontal();
 
-            if (!CanUseTeleportButton() || _numRecordings == 0)
+            if (!CanUseTeleportButton() || _numSessionFights == 0)
                 GUI.enabled = false;
 
             if (GUILayout.Button($"Record {bossReference.DisplayName} Fight"))
             {
-                BossFightSession.instance.StartSession(bossReference, _numRecordings);
-               //BossFightRecordingSession.StartSession(bossReference, _numRecordings);
+                BossFightSession.instance.StartSession(bossReference, _numSessionFights);
             }
 
             GUI.enabled = oldGUIenabled;
 
-
             string _numRecordingsStr = "";
-
-            if (_numRecordings != 0)
-                _numRecordingsStr = _numRecordings.ToString();
-
+            if (_numSessionFights != 0)
+                _numRecordingsStr = _numSessionFights.ToString();
             _numRecordingsStr = GUILayout.TextField(_numRecordingsStr, 3, GUILayout.Width(35));
-
             _numRecordingsStr = RemoveNonNumberChar(_numRecordingsStr);
 
             if (_numRecordingsStr.Length > 0)
-                _numRecordings = int.Parse(_numRecordingsStr, System.Globalization.NumberStyles.Integer);
-            else
-                _numRecordings = 0;
+                _numSessionFights = int.Parse(_numRecordingsStr, System.Globalization.NumberStyles.Integer);
+            else _numSessionFights = 0;
 
-            _numRecordings = Math.Abs(_numRecordings);
-
+            _numSessionFights = Math.Abs(_numSessionFights);
 
             GUILayout.EndHorizontal();
-
-            
         }
 
         private static string RemoveNonNumberChar(string input)
         {
             return new string(input.Where(c => char.IsDigit(c)).ToArray());
         }
-
         private bool CanUseTeleportButton()
         {
             if(!TeleportService.instance.CanTeleport() || 
@@ -277,8 +246,6 @@ namespace AIPlugin
             
             return true;
         }
-
-        
         private static readonly GUIStyle labelStyleRight = new GUIStyle
         {
             fontSize = 18,
@@ -293,8 +260,6 @@ namespace AIPlugin
             alignment = TextAnchor.MiddleLeft
 
         };
-
-        private static readonly int GUILabelOffsetY = 20;
         public void OnGUIDrawStateLabel()
         {
 
@@ -304,7 +269,7 @@ namespace AIPlugin
             {
                 var Scene = SceneManager.GetActiveScene();
                 GUI.Label(rect0, $"Scene: {Scene.name}", labelStyleRight);
-                rect0.y += GUILabelOffsetY;
+                rect0.y += _GUILabelOffsetY;
             }
             catch (Exception e)
             {
@@ -317,7 +282,7 @@ namespace AIPlugin
             else
                 GUI.Label(rect0, "Pos: No Hero On Scene", labelStyleRight);
 
-            rect0.y += GUILabelOffsetY;
+            rect0.y += _GUILabelOffsetY;
 
             var bf = BossFightSession.instance;
             if (bf.State != BossFightSession.SessionState.Idle)
@@ -349,7 +314,7 @@ namespace AIPlugin
 
 
             int numEnemies = EnemyTracker.GetCount();
-            int labelEnemiesStartY = Screen.height - ((numEnemies + 2) * GUILabelOffsetY);
+            int labelEnemiesStartY = Screen.height - ((numEnemies + 2) * _GUILabelOffsetY);
             Rect labelEnemiesRect0 = new Rect(20, labelEnemiesStartY, 180, 9);
 
             if (showEnemiesToggle.Value)
@@ -362,7 +327,7 @@ namespace AIPlugin
                 int y = 0;
                 foreach(var enemy in EnemyTracker.GetAll())
                 {
-                    labelEnemiesRect0.y += GUILabelOffsetY;
+                    labelEnemiesRect0.y += _GUILabelOffsetY;
 
                     GUI.Label(labelEnemiesRect0, $"{enemy.Name}", labelStyleLeft);
                     
