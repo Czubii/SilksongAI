@@ -70,7 +70,6 @@ namespace AIPlugin
             if (GodModeEnabled)
             {
                 __instance.health = __instance.maxHealth;
-                PlayerUtils.SetFullHP();
             }
         }
     }
