@@ -210,50 +210,13 @@ namespace AIPlugin
         {
             _frameCount++;
 
-            TrainingEnemyData? bossData = GetDataUtils.GetTrainingEnemyData(_boss.GameObject);
-            if (bossData == null)
+            FrameData? frameData = FrameDataCollector.GetAll(_boss, _enemies);
+
+            if (frameData == null)
             {
-                AIPlugin.Log.LogError("BossFightRecorder: bossData missing. Stopping Recoroding");
+                AIPlugin.Log.LogError("BossFightRecorder: No frame data. Stoping Recording");
                 StopRecordingPrematurely();
                 return;
-            }
-
-            TrainingHeroData? heroData = GetDataUtils.GetHeroData();
-            if (heroData == null)
-            {
-                AIPlugin.Log.LogError("BossFightRecorder: heroData missing. Stopping Recoroding");
-                StopRecordingPrematurely();
-                return;
-            }
-
-            var IH = InputHandler.Instance;
-            if (IH == null)
-            {
-                AIPlugin.Log.LogError("BossFightRecorder: InputHandler.Instance missing. Stopping Recoroding");
-                StopRecordingPrematurely();
-                return;
-            }
-
-            TrainingUserInputs userInputs = inputTracker.GetInputs(IH);
-
-            TrainingFrameData frameData = new TrainingFrameData()
-            {
-                Boss = (TrainingEnemyData)bossData,
-                Hero = (TrainingHeroData)heroData,
-                UserInputs = userInputs
-            };
-
-            frameData.Enemies = new TrainingEnemyData[_enemies.Count];
-            for (int i = 0; i < _enemies.Count; i++)
-            {
-                TrainingEnemyData? enemyData = GetDataUtils.GetTrainingEnemyData(_enemies[i].GameObject);
-                if (enemyData == null)
-                {
-                    AIPlugin.Log.LogWarning("BossFightRecorder: enemyData missing");
-                    continue;
-                }
-
-                frameData.Enemies[i] = (TrainingEnemyData)enemyData;
             }
 
             if (_outputType == OutputType.JSON)

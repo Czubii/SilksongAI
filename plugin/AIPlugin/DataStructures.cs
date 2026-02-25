@@ -20,21 +20,21 @@ namespace AIPlugin
     }
 
     [MessagePackObject]
-    public struct TrainingFrameData
+    public struct FrameData // try to make this class to avoid copying per frame
     {
         [Key(0)]
-        public TrainingEnemyData Boss;
+        public FrameEnemyData Boss;
         [Key(1)]
-        public TrainingEnemyData[] Enemies;
+        public FrameEnemyData[] Enemies;
         [Key(2)]
-        public TrainingHeroData Hero;
+        public FrameHeroData Hero;
         [Key(3)]
-        public TrainingUserInputs UserInputs;
+        public FrameUserInputs UserInputs;
 
     }
 
     [MessagePackObject]
-    public struct TrainingEnemyData
+    public struct FrameEnemyData
     {
         [Key(0)]
         public float posX;
@@ -62,7 +62,7 @@ namespace AIPlugin
     }
 
     [MessagePackObject]
-    public struct TrainingHeroData
+    public struct FrameHeroData
     {
         [Key(0)]
         public float posX;
@@ -101,7 +101,7 @@ namespace AIPlugin
 
     }
     [MessagePackObject]
-    public struct TrainingUserInputs
+    public struct FrameUserInputs
     {
         // Movement:
         [Key(0)]
