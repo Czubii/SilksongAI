@@ -163,7 +163,7 @@
     <Compile Include="GameStateLogger.cs" />
     <Compile Include="ModGUI.cs" />
     <Compile Include="BossFightRecorder.cs" />
-    <Compile Include="SilksongAImod.cs" />
+    <Compile Include="AIPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TeleportService.cs" />
     <Compile Include="Utils.cs" />

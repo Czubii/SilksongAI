@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Linq.Expressions;
 using GenericVariableExtension;
 
-namespace SilksongAI
+namespace AIPlugin
 {
 
     public class BossMetaData
@@ -18,8 +18,8 @@ namespace SilksongAI
         public Vector3 ArenaPosition;
         public bool CanRespawnOnArena = true; // TODO: implement (for example false for fouth chorus)
         public bool RequireHardSceneReload = false;
-        public Action<bool> SetDefeated = _ => SilksongAImod.Log.LogWarning("Trying to respawn a boss with undefined SetDefeated action!");
-        public Action SetExpectedPlayerAbilities = () => SilksongAImod.Log.LogWarning("Trying to set player state with undefined SetExpectedPlayerResources action!");
+        public Action<bool> SetDefeated = _ => AIPlugin.Log.LogWarning("Trying to respawn a boss with undefined SetDefeated action!");
+        public Action SetExpectedPlayerAbilities = () => AIPlugin.Log.LogWarning("Trying to set player state with undefined SetExpectedPlayerResources action!");
     }
     public static class BossReferenceDatabase
     {
@@ -44,7 +44,7 @@ namespace SilksongAI
 
             for (int i = 0; i < crest.Slots.Count; i++)
             {
-                SilksongAImod.Log.LogMessage($"Slot {i}: {crest.Slots[i].EquippedTool}");
+                AIPlugin.Log.LogMessage($"Slot {i}: {crest.Slots[i].EquippedTool}");
             }
         }
         private static void HunterEquipSilkSpear()//TODO move to player utils and make more usefill

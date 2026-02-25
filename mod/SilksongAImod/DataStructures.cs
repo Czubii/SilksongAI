@@ -1,7 +1,7 @@
 ﻿using MessagePack;
 
 
-namespace SilksongAI
+namespace AIPlugin
 {
     [MessagePackObject]
     public class RecordingInfo

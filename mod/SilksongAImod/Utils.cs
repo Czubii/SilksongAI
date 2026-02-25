@@ -14,7 +14,7 @@ using static DamageReference;
 using static GameManager;
 using InControl;
 
-namespace SilksongAI
+namespace AIPlugin
 {
     //TODO get rid of all of this by moving to some better places
     public class CustomRespawnPoint
@@ -62,7 +62,7 @@ namespace SilksongAI
             var pd = PlayerData.instance;
             if (pd == null)
             {
-                SilksongAImod.Log.LogError("CustomRespawnPoint.UseAsTemporary(): no PlayerData.instance");
+                AIPlugin.Log.LogError("CustomRespawnPoint.UseAsTemporary(): no PlayerData.instance");
                 return;
             }
 
@@ -76,7 +76,7 @@ namespace SilksongAI
             var pd = PlayerData.instance;
             if (pd == null)
             {
-                SilksongAImod.Log.LogError("CustomRespawnPoint.ResetTemporary(): no PlayerData.instance");
+                AIPlugin.Log.LogError("CustomRespawnPoint.ResetTemporary(): no PlayerData.instance");
                 return;
             }
 
@@ -170,9 +170,9 @@ namespace SilksongAI
             var obj = GameObject.Find(gameObjectName);
             if (obj == null) return;
             int numComponentes = obj.GetComponentCount();
-            SilksongAImod.Log.LogInfo($"Num components: {numComponentes}");
+            AIPlugin.Log.LogInfo($"Num components: {numComponentes}");
             for (int i = 0; i < numComponentes; i++)
-                SilksongAImod.Log.LogInfo(obj.GetComponentAtIndex(i));
+                AIPlugin.Log.LogInfo(obj.GetComponentAtIndex(i));
         }
 
         public static PlayMakerFSM[] GetEnemyFSM(string enemyName)
@@ -224,7 +224,7 @@ namespace SilksongAI
             HeroController heroController = HeroController.instance;
             if (heroController == null)
             {
-                SilksongAImod.Log.LogWarning("PlayerUtils.SetFullHP(): no HeroController.instance on scene");
+                AIPlugin.Log.LogWarning("PlayerUtils.SetFullHP(): no HeroController.instance on scene");
                 return;
             }
             heroController.RefillHealthToMax();
@@ -235,7 +235,7 @@ namespace SilksongAI
             HeroController heroController = HeroController.instance;
             if (heroController == null)
             {
-                SilksongAImod.Log.LogWarning("PlayerUtils.SetFullHP(): no HeroController.instance on scene");
+                AIPlugin.Log.LogWarning("PlayerUtils.SetFullHP(): no HeroController.instance on scene");
                 return;
             }
             heroController.RefillSilkToMaxSilent();
@@ -247,7 +247,7 @@ namespace SilksongAI
             HeroController heroController = HeroController.instance;
             if (heroController == null)
             {
-                SilksongAImod.Log.LogWarning("PlayerUtils.SetFullHP(): no HeroController.instance on scene");
+                AIPlugin.Log.LogWarning("PlayerUtils.SetFullHP(): no HeroController.instance on scene");
                 return;
             }
             heroController.CocoonBroken();

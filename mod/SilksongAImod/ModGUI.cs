@@ -8,9 +8,7 @@ using TMProOld;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-using static SilksongAImod;
-
-namespace SilksongAI
+namespace AIPlugin
 {
     public class ModGUI // TODO make a singleton // TODO make this modUI and add input handling here?? as well as event system to controll the mod?
     {
@@ -22,9 +20,9 @@ namespace SilksongAI
         private ConfigEntry<bool> recordSelectedBossButton;
         private ConfigEntry<int> bossSelectionDropdown;
 
-        private SilksongAImod plugin; //TODO remove the need of this
+        private AIPlugin plugin; //TODO remove the need of this
 
-        public ModGUI(SilksongAImod plugin)
+        public ModGUI(AIPlugin plugin)
         {
             this.plugin = plugin;
 
@@ -130,7 +128,7 @@ namespace SilksongAI
 
         private void DrawGodModeToggle(ConfigEntryBase entry)
         {
-            GodModeEnabled = GUILayout.Toggle(GodModeEnabled, "GodMode");
+            //GodModeEnabled = GUILayout.Toggle(GodModeEnabled, "GodMode");
         }
 
         private void DrawShowEnemiesToggle(ConfigEntryBase entry)
@@ -310,7 +308,7 @@ namespace SilksongAI
             }
             catch (Exception e)
             {
-                SilksongAImod.Log.LogError($"OnGUIDrawStateLabel(): {e}");
+                AIPlugin.Log.LogError($"OnGUIDrawStateLabel(): {e}");
             }
 
             HeroController HC = HeroController.instance;

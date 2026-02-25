@@ -24,7 +24,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
-namespace SilksongAI
+namespace AIPlugin
 {
     public class BossFightRecorder : MonoBehaviour
     {
@@ -151,7 +151,7 @@ namespace SilksongAI
                 _outputBIN?.Dispose();
                 _outputJSON?.Dispose();
 
-                SilksongAImod.Log.LogError($"Error: BossFightRecorder.StartRecording(): {ex}");
+                AIPlugin.Log.LogError($"Error: BossFightRecorder.StartRecording(): {ex}");
                 return;
             }
 
@@ -161,7 +161,7 @@ namespace SilksongAI
             _boss = _enemies.FirstOrDefault(e => e.Name == _bossMetaData.InternalName);
             if (_boss == null)
             {
-                SilksongAImod.Log.LogError($"BossFightRecorder(): Boss '{_bossMetaData.InternalName}' not found in scene");
+                AIPlugin.Log.LogError($"BossFightRecorder(): Boss '{_bossMetaData.InternalName}' not found in scene");
                 return;
             }
 
@@ -170,7 +170,7 @@ namespace SilksongAI
             _recordingInfo = new RecordingInfo()
             {
                 BossInternalName = _bossMetaData.InternalName,
-                PlayerName = SilksongAImod.SteamUserName
+                PlayerName = AIPlugin.SteamUserName
             };
 
             _frameCount = 0;
@@ -231,7 +231,7 @@ namespace SilksongAI
             TrainingEnemyData? bossData = GetDataUtils.GetTrainingEnemyData(_boss.GameObject);
             if (bossData == null)
             {
-                SilksongAImod.Log.LogError("BossFightRecorder: bossData missing. Stopping Recoroding");
+                AIPlugin.Log.LogError("BossFightRecorder: bossData missing. Stopping Recoroding");
                 StopRecordingPrematurely();
                 return;
             }
@@ -239,7 +239,7 @@ namespace SilksongAI
             TrainingHeroData? heroData = GetDataUtils.GetHeroData();
             if (heroData == null)
             {
-                SilksongAImod.Log.LogError("BossFightRecorder: heroData missing. Stopping Recoroding");
+                AIPlugin.Log.LogError("BossFightRecorder: heroData missing. Stopping Recoroding");
                 StopRecordingPrematurely();
                 return;
             }
@@ -247,7 +247,7 @@ namespace SilksongAI
             var IH = InputHandler.Instance;
             if (IH == null)
             {
-                SilksongAImod.Log.LogError("BossFightRecorder: InputHandler.Instance missing. Stopping Recoroding");
+                AIPlugin.Log.LogError("BossFightRecorder: InputHandler.Instance missing. Stopping Recoroding");
                 StopRecordingPrematurely();
                 return;
             }
@@ -267,7 +267,7 @@ namespace SilksongAI
                 TrainingEnemyData? enemyData = GetDataUtils.GetTrainingEnemyData(_enemies[i].GameObject);
                 if (enemyData == null)
                 {
-                    SilksongAImod.Log.LogWarning("BossFightRecorder: enemyData missing");
+                    AIPlugin.Log.LogWarning("BossFightRecorder: enemyData missing");
                     continue;
                 }
 
@@ -290,7 +290,7 @@ namespace SilksongAI
         {
             if(State != RecordingState.Idle || _sessionActive)
             {
-                SilksongAImod.Log.LogError("BossFightRecorder.SetOutputType(): Cannot change the output type while recording");
+                AIPlugin.Log.LogError("BossFightRecorder.SetOutputType(): Cannot change the output type while recording");
                 return;
             }
             _outputType = type;

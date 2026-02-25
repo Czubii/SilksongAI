@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace SilksongAI
+namespace AIPlugin
 {
     public class BossFightSession : MonoBehaviour
     {   
@@ -97,12 +97,12 @@ namespace SilksongAI
         {
             if (State != SessionState.Idle)
             {
-                SilksongAImod.Log.LogWarning("Cannot Start Recording Session! One is still running");
+                AIPlugin.Log.LogWarning("Cannot Start Recording Session! One is still running");
                 return;
             }
             if (numFights <= 0)
             {
-                SilksongAImod.Log.LogError("BossFightSession.StartSession(): numFights has to be positive");
+                AIPlugin.Log.LogError("BossFightSession.StartSession(): numFights has to be positive");
                 return;
             }
 
@@ -128,7 +128,7 @@ namespace SilksongAI
                 TargetBoss.ArenaSceneName, 
                 TargetBoss.ArenaPosition);
 
-            SilksongAImod.Log.LogDebug($"BossFightSession: Starting new bossfight session, target: {TargetBoss.DisplayName}");
+            AIPlugin.Log.LogDebug($"BossFightSession: Starting new bossfight session, target: {TargetBoss.DisplayName}");
             StartCoroutine(SessionLoop());
         }
         public void StopSession()
@@ -150,13 +150,13 @@ namespace SilksongAI
                 RemainingFights--;
                 
                 State = SessionState.StartingNewFight;
-                SilksongAImod.Log.LogDebug($"BossFightSession: Starting new fight");
+                AIPlugin.Log.LogDebug($"BossFightSession: Starting new fight");
                 yield return PrepareHero();
                 _heroDied = false;
                 if (IsStopping()) break;
 
                 State = SessionState.AwaitingBoss;
-                SilksongAImod.Log.LogDebug($"BossFightSession: Awaiting boss");
+                AIPlugin.Log.LogDebug($"BossFightSession: Awaiting boss");
                 _bossFound = false;
                 yield return AwaitBoss();
                 if (IsStopping()) break;
@@ -164,11 +164,11 @@ namespace SilksongAI
                 if (_bossFound)
                 {
                     State = SessionState.Fighting;
-                    SilksongAImod.Log.LogDebug($"BossFightSession: Fighting");
+                    AIPlugin.Log.LogDebug($"BossFightSession: Fighting");
                 }
                 else
                 {
-                    SilksongAImod.Log.LogDebug($"BossFightSession: Boss not found. Retrying");
+                    AIPlugin.Log.LogDebug($"BossFightSession: Boss not found. Retrying");
                     continue;
                 }
 
@@ -177,11 +177,11 @@ namespace SilksongAI
                 OnFightFinished?.Invoke(new FightResults(!_heroDied));
                 if(_heroDied) StartCoroutine(AwaitCocoonAndRemove());
 
-                SilksongAImod.Log.LogDebug($"BossFightSession: Attempt Ended, hero died: {_heroDied}");
+                AIPlugin.Log.LogDebug($"BossFightSession: Attempt Ended, hero died: {_heroDied}");
 
             }
             State = SessionState.Stopping;
-            SilksongAImod.Log.LogDebug($"BossFightSession: Finalizing Session");
+            AIPlugin.Log.LogDebug($"BossFightSession: Finalizing Session");
             yield return FinalizeSession();
             State = SessionState.Idle;
             OnSessionStopped?.Invoke(_forceStopFlag);
@@ -255,7 +255,7 @@ namespace SilksongAI
                 }
                 if (i >= AwaitBossTimeoutFrames)
                 {
-                    SilksongAImod.Log.LogWarning($"AwaitBossAndStartRecording(): Timeout hit when awaiting {TargetBoss.InternalName} " +
+                    AIPlugin.Log.LogWarning($"AwaitBossAndStartRecording(): Timeout hit when awaiting {TargetBoss.InternalName} " +
                         $"(timeout frames setting: {AwaitBossTimeoutFrames} ");
                     _bossFound = false;
                     return true;
@@ -316,7 +316,7 @@ namespace SilksongAI
 
                 return pd.HeroCorpseMarkerGuid != null;
             });
-            SilksongAImod.Log.LogDebug("REMOVING COCOON");
+            AIPlugin.Log.LogDebug("REMOVING COCOON");
             PlayerUtils.RemoveCocoon();
         }
         private bool IsStopping()

@@ -6,7 +6,7 @@ using static GameManager;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 
-namespace SilksongAI
+namespace AIPlugin
 {
     public class TeleportService : MonoBehaviour
     {
@@ -117,7 +117,7 @@ namespace SilksongAI
             var hc = HeroController.instance;
             if (hc == null)
             {
-                SilksongAImod.Log.LogError("TeleportHero(): Cannot teleport, no HeroController.instance on scene");
+                AIPlugin.Log.LogError("TeleportHero(): Cannot teleport, no HeroController.instance on scene");
                 return;
             }
             hc.transform.position = pos;
@@ -136,12 +136,12 @@ namespace SilksongAI
         {
             if (TeleportInProgress)
             {
-                SilksongAImod.Log.LogWarning("Cannot teleport, the old one is still in progress");
+                AIPlugin.Log.LogWarning("Cannot teleport, the old one is still in progress");
                 return false;
             }
             if (!CanTeleport())
             {
-                SilksongAImod.Log.LogWarning("Cannot teleport.");
+                AIPlugin.Log.LogWarning("Cannot teleport.");
                 return false;
             }
             return true;
