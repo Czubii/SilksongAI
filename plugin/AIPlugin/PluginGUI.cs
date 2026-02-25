@@ -112,7 +112,7 @@ namespace AIPlugin
             AIPlugin.GodModeEnabled = GUILayout.Toggle(AIPlugin.GodModeEnabled, "GodMode");
 
             if (prev == false && AIPlugin.GodModeEnabled == true)
-                PlayerUtils.SetFullHP();
+                GameStateController.SetFullHP();
         }
         private void DrawShowEnemiesToggle(ConfigEntryBase entry)
         {

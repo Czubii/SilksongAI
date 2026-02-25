@@ -141,7 +141,7 @@ namespace AIPlugin
         }
         private IEnumerator SessionLoop()
         {
-            PlayerUtils.RemoveCocoon();
+            GameStateController.RemoveCocoon();
             _heroDied = false;
 
             while (RemainingFights > 0 && !IsStopping())
@@ -214,8 +214,8 @@ namespace AIPlugin
 
             if (!_heroDied)
             {
-                PlayerUtils.SetFullHP();
-                PlayerUtils.SetFullSilk();
+                GameStateController.SetFullHP();
+                GameStateController.SetFullSilk();
 
                 if (!TargetBoss.RequireHardSceneReload)
                 {
@@ -236,8 +236,8 @@ namespace AIPlugin
             }
             else
             {
-                PlayerUtils.SetFullHP();
-                PlayerUtils.SetFullSilk();
+                GameStateController.SetFullHP();
+                GameStateController.SetFullSilk();
 
                 yield return new WaitUntil(() => // wait untill can input or stop flag
                 {
@@ -327,7 +327,7 @@ namespace AIPlugin
                 return pd.HeroCorpseMarkerGuid != null;
             });
             AIPlugin.Log.LogDebug("REMOVING COCOON");
-            PlayerUtils.RemoveCocoon();
+            GameStateController.RemoveCocoon();
         }
         private bool IsStopping()
         {
