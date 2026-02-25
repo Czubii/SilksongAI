@@ -11,7 +11,7 @@ namespace AIPlugin
     [BepInPlugin("com.czubii.AIPlugin", "AI Plugin", "1.0.0")]
     public class AIPlugin : BaseUnityPlugin
     {
-        private ModGUI gui;
+        private PluginGUI gui;
         public static ManualLogSource Log { get; private set; }
         public static string SteamUserName = "Unknown";
         public static bool GodModeEnabled { get; set; } = false;
@@ -20,7 +20,7 @@ namespace AIPlugin
             Log = Logger;
             Log.LogInfo("Plugin loaded and initialized");
 
-            gui = new ModGUI(this);
+            gui = new PluginGUI(this);
 
             HarmonyFileLog.Enabled = true;
             Harmony.CreateAndPatchAll(typeof(AIPlugin), null);

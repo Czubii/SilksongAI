@@ -10,7 +10,7 @@ using UnityEngine.SceneManagement;
 
 namespace AIPlugin
 {
-    public class ModGUI
+    public class PluginGUI
     {
         private ConfigEntry<bool> godModeToggle;
         private ConfigEntry<bool> showEnemiesToggle;
@@ -20,7 +20,7 @@ namespace AIPlugin
         private ConfigEntry<int> bossSelectionDropdown;
         private int _numSessionFights = 1;
         private static readonly int _GUILabelOffsetY = 20;
-        public ModGUI(AIPlugin plugin)
+        public PluginGUI(AIPlugin plugin)
         {
             godModeToggle = plugin.Config.Bind(
                   "General",
