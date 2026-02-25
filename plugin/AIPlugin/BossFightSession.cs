@@ -238,6 +238,16 @@ namespace AIPlugin
             {
                 PlayerUtils.SetFullHP();
                 PlayerUtils.SetFullSilk();
+
+                yield return new WaitUntil(() => // wait untill can input or stop flag
+                {
+                    if (IsStopping()) return true;
+
+                    if (HeroController.instance == null)
+                        return false;
+
+                    return HeroController.instance.acceptingInput;
+                });
             }
 
             GameCameras.instance.HUDIn(); // turn on HUD in case some boss disables it after death (for example widow does that)
