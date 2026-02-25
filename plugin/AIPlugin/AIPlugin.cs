@@ -8,7 +8,7 @@ using HarmonyLib.Tools;
 
 namespace AIPlugin
 {
-    [BepInPlugin("com.czubii.SilksongAImod", "Silksong AI mod", "1.0.0")]
+    [BepInPlugin("com.czubii.AIPlugin", "AI Plugin", "1.0.0")]
     public class AIPlugin : BaseUnityPlugin
     {
         private ModGUI gui;
