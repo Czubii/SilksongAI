@@ -1,24 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.SceneManagement;
-using UnityEngine;
-using HutongGames.PlayMaker.Actions;
-using System.Collections;
-using static UnityEngine.EventSystems.EventTrigger;
-using Steamworks;
-using TeamCherry.SharedUtils;
-using static DamageReference;
-using static GameManager;
-using InControl;
+﻿using UnityEngine;
 
 namespace AIPlugin
 {
     //TODO get rid of all of this by moving to some better places
-   
-
     public static class GetDataUtils
     {
 
