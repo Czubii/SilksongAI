@@ -20,7 +20,7 @@ namespace AIPlugin
             Log = Logger;
             Log.LogInfo("Plugin loaded and initialized");
 
-            gui = new PluginGUI(this);
+            gui = new PluginGUI(Config);
 
             HarmonyFileLog.Enabled = true;
             Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
@@ -70,6 +70,7 @@ namespace AIPlugin
             if (GodModeEnabled)
             {
                 __instance.health = __instance.maxHealth;
+                PlayerUtils.SetFullHP();
             }
         }
     }

@@ -20,9 +20,9 @@ namespace AIPlugin
         private ConfigEntry<int> bossSelectionDropdown;
         private int _numSessionFights = 1;
         private static readonly int _GUILabelOffsetY = 20;
-        public PluginGUI(AIPlugin plugin)
+        public PluginGUI(ConfigFile config)
         {
-            godModeToggle = plugin.Config.Bind(
+            godModeToggle = config.Bind(
                   "General",
                   "Enable god mode",
                   false,
@@ -35,7 +35,7 @@ namespace AIPlugin
                           CustomDrawer = DrawGodModeToggle
                       }
                   ));
-            showEnemiesToggle = plugin.Config.Bind(
+            showEnemiesToggle = config.Bind(
                   "Debug",
                   "Show Enemies On Scene",
                   false,
@@ -48,7 +48,7 @@ namespace AIPlugin
                           CustomDrawer = DrawShowEnemiesToggle
                       }
                   ));
-            bossSelectionDropdown = plugin.Config.Bind(
+            bossSelectionDropdown = config.Bind(
                   "Bosses",
                   "Boss selection",
                   0,
@@ -62,7 +62,7 @@ namespace AIPlugin
 
                       }
                   ));
-            fightSelectedBossButton = plugin.Config.Bind(
+            fightSelectedBossButton = config.Bind(
                   "Bosses",
                   "Fight selected boss",
                   false,
@@ -76,7 +76,7 @@ namespace AIPlugin
 
                       }
                   ));
-            teleportToSelectedBossButton = plugin.Config.Bind(
+            teleportToSelectedBossButton = config.Bind(
                   "Bosses",
                   "Teleport to selected boss",
                   false,
@@ -90,7 +90,7 @@ namespace AIPlugin
 
                       }
                   ));
-            recordSelectedBossButton = plugin.Config.Bind(
+            recordSelectedBossButton = config.Bind(
                   "Bosses",
                   "Record the selected boss fight",
                   false,
@@ -112,7 +112,7 @@ namespace AIPlugin
         }
         private void DrawGodModeToggle(ConfigEntryBase entry)
         {
-            //GodModeEnabled = GUILayout.Toggle(GodModeEnabled, "GodMode");
+            AIPlugin.GodModeEnabled = GUILayout.Toggle(AIPlugin.GodModeEnabled, "GodMode");
         }
         private void DrawShowEnemiesToggle(ConfigEntryBase entry)
         {

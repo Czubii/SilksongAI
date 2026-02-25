@@ -161,7 +161,7 @@
     <Compile Include="inputTracker.cs" />
     <Compile Include="DataStructures.cs" />
     <Compile Include="GameStateLogger.cs" />
-    <Compile Include="ModGUI.cs" />
+    <Compile Include="PluginGUI.cs" />
     <Compile Include="BossFightRecorder.cs" />
     <Compile Include="AIPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
