@@ -1,10 +1,6 @@
-﻿using BepInEx;
-using BepInEx.Configuration;
-using HutongGames.PlayMaker.Actions;
-using Steamworks;
+﻿using BepInEx.Configuration;
 using System;
 using System.Linq;
-using TMProOld;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -328,7 +324,6 @@ namespace AIPlugin
                 else
                     GUI.Label(labelEnemiesRect0, $"Enemies: None", labelStyleLeft);
 
-                int y = 0;
                 foreach(var enemy in EnemyTracker.GetAll())
                 {
                     labelEnemiesRect0.y += _GUILabelOffsetY;

@@ -9,7 +9,7 @@ namespace AIPlugin
 {
     public static class FrameDataCollector
     {
-        public static FrameData? GetAll(EnemyInstance boss, List<EnemyInstance> enemies)
+        public static FrameData GetAll(EnemyInstance boss, List<EnemyInstance> enemies)
         {
             FrameEnemyData? bossData = GetEnemyData(boss.GameObject);
             if (bossData == null)
@@ -73,7 +73,7 @@ namespace AIPlugin
             {
                 posX = enemy.transform.position.x,
                 posY = enemy.transform.position.y,
-                facing = (int)enemy.transform.GetScaleX(),
+                facing = enemy.transform.localScale.x >= 0.0 ? 1 : -1,
                 velX = rigidbody.linearVelocity.x,
                 velY = rigidbody.linearVelocity.y,
                 hp = hm.hp
@@ -83,8 +83,11 @@ namespace AIPlugin
 
             for (int i = 0; i < fsms.Length; i++)
             {
-                output.playMakers[i].Name = fsms[i].FsmName;
-                output.playMakers[i].StateName = fsms[i].ActiveStateName;
+                output.playMakers[i] = new PlayMaker
+                {
+                    Name = fsms[i].FsmName,
+                    StateName = fsms[i].ActiveStateName
+                };
             }
 
             return output;

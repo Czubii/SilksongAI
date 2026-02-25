@@ -210,7 +210,7 @@ namespace AIPlugin
         {
             _frameCount++;
 
-            FrameData? frameData = FrameDataCollector.GetAll(_boss, _enemies);
+            FrameData frameData = FrameDataCollector.GetAll(_boss, _enemies);
 
             if (frameData == null)
             {

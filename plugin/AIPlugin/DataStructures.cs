@@ -20,7 +20,7 @@ namespace AIPlugin
     }
 
     [MessagePackObject]
-    public struct FrameData // try to make this class to avoid copying per frame
+    public class FrameData
     {
         [Key(0)]
         public FrameEnemyData Boss;
@@ -53,7 +53,7 @@ namespace AIPlugin
 
     }
     [MessagePackObject]
-    public struct PlayMaker
+    public struct PlayMaker // TODO make this store some integer ID-s and add the names to RecordingInfo
     {
         [Key(0)]
         public string Name; //PlayMakerFSM.FsmName
@@ -62,7 +62,7 @@ namespace AIPlugin
     }
 
     [MessagePackObject]
-    public struct FrameHeroData
+    public struct FrameHeroData // Add position relative to boss
     {
         [Key(0)]
         public float posX;
