@@ -8,7 +8,9 @@ namespace AIPlugin
     {
         public string Name; 
         public GameObject GameObject;
-
+        public HealthManager HealthManager;
+        public Rigidbody2D Rigidbody2D;
+        public PlayMakerFSM[] PlayMakers;
     }
     public static class EnemyTracker
     {
@@ -32,6 +34,9 @@ namespace AIPlugin
             {
                 Name = __instance.name,
                 GameObject = __instance.gameObject,
+                HealthManager = __instance.gameObject.GetComponent<HealthManager>(),
+                Rigidbody2D = __instance.gameObject.GetComponent<Rigidbody2D>(),
+                PlayMakers = __instance.gameObject.GetComponents<PlayMakerFSM>(),
             };
         }
 

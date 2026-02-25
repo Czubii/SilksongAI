@@ -7,7 +7,7 @@ namespace AIPlugin
     {
         public static FrameData GetAll(EnemyInstance boss, List<EnemyInstance> enemies)
         {
-            FrameEnemyData? bossData = GetEnemyData(boss.GameObject);
+            FrameEnemyData? bossData = GetEnemyData(boss);
             if (bossData == null)
             {
                 AIPlugin.Log.LogError("FrameDataCollector: bossData missing.");
@@ -40,7 +40,7 @@ namespace AIPlugin
             frameData.Enemies = new FrameEnemyData[enemies.Count];
             for (int i = 0; i < enemies.Count; i++)
             {
-                FrameEnemyData? enemyData = GetEnemyData(enemies[i].GameObject);
+                FrameEnemyData? enemyData = GetEnemyData(enemies[i]);
                 if (enemyData == null)
                 {
                     AIPlugin.Log.LogWarning("BossFightRecorder: enemyData missing");
@@ -52,37 +52,31 @@ namespace AIPlugin
 
             return frameData;
         }
-        public static FrameEnemyData? GetEnemyData(GameObject enemy)
+        public static FrameEnemyData? GetEnemyData(EnemyInstance enemy)
         {
             if (enemy == null) return null;
-
-            var hm = enemy.GetComponent<HealthManager>();
-            if (hm == null) return null;
-
-            var fsms = enemy.GetComponents<PlayMakerFSM>();
-            if (fsms == null) return null;
-
-            var rigidbody = enemy.GetComponent<Rigidbody2D>();
-            if (rigidbody == null) return null;
+            if (enemy.GameObject == null) return null;
+            if (enemy.HealthManager == null) return null;
+            if (enemy.PlayMakers == null) return null;
+            if (enemy.Rigidbody2D == null) return null;
 
             FrameEnemyData output = new FrameEnemyData
             {
-                posX = enemy.transform.position.x,
-                posY = enemy.transform.position.y,
-                facing = enemy.transform.localScale.x >= 0.0 ? 1 : -1,
-                velX = rigidbody.linearVelocity.x,
-                velY = rigidbody.linearVelocity.y,
-                hp = hm.hp
+                posX = enemy.GameObject.transform.position.x,
+                posY = enemy.GameObject.transform.position.y,
+                facing = enemy.GameObject.transform.localScale.x >= 0.0 ? 1 : -1,
+                velX = enemy.Rigidbody2D.linearVelocity.x,
+                velY = enemy.Rigidbody2D.linearVelocity.y,
+                hp = enemy.HealthManager.hp
             };
 
-            output.playMakers = new PlayMaker[fsms.Length];
-
-            for (int i = 0; i < fsms.Length; i++)
+            output.playMakers = new PlayMakerData[enemy.PlayMakers.Length];
+            for (int i = 0; i < enemy.PlayMakers.Length; i++)
             {
-                output.playMakers[i] = new PlayMaker
+                output.playMakers[i] = new PlayMakerData
                 {
-                    Name = fsms[i].FsmName,
-                    StateName = fsms[i].ActiveStateName
+                    Name = enemy.PlayMakers[i].FsmName,
+                    StateName = enemy.PlayMakers[i].ActiveStateName
                 };
             }
 

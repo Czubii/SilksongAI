@@ -49,11 +49,11 @@ namespace AIPlugin
         [Key(5)]
         public int hp;
         [Key(6)]
-        public PlayMaker[] playMakers;
+        public PlayMakerData[] playMakers;
 
     }
     [MessagePackObject]
-    public struct PlayMaker // TODO make this store some integer ID-s and add the names to RecordingInfo
+    public struct PlayMakerData // TODO make this store some integer ID-s and add the names to RecordingInfo
     {
         [Key(0)]
         public string Name; //PlayMakerFSM.FsmName
