@@ -13,59 +13,65 @@ from Layout import *
 
 
 @dataclass
-class DatasetFiles:
-    data_filename: str
+class DatasetFile:
+    filename: str
     info: dict
 
 class RawDatasetReader:
-    def __init__(self, data_path: str):
+    def __init__(self, data_path: str, target_boss: str):
         self._data_path = data_path
         self.usable_files = self.get_filtered_dataset_files()
+        self.target_boss = target_boss
 
-    def get_filtered_dataset_files(self) -> list[DatasetFiles]:
-        files = [f for f in listdir(self._data_path) if isfile(join(self._data_path, f))]
+    def get_filtered_dataset_files(self) -> list[DatasetFile]:
+        filenames = [f for f in listdir(self._data_path) if isfile(join(self._data_path, f))]
+
+        dataset_files: list[DatasetFile] = []
         # group the info and data files together, make sure we have both .info and .msgpack files:
-        data_files = {}
-        for f in files:
-            if f.endswith(".msgpack"):
-                base = f[:-8]
-                data_files.setdefault(base, {})["data"] = f
+        for filename in filenames:
+            if not filename.endswith(".msgpack"): continue
 
-            elif f.endswith(".info.json"):
-                base = f[:-10]
-                data_files.setdefault(base, {})["info"] = f
-        paired = [
-            v for v in data_files.values()
-            if "data" in v and "info" in v
-        ]
-        dataset_files: list[DatasetFiles] = []
-        # filter the data
-        for i in range(len(paired)):
-            info_file = paired[i]["info"]
-
-            with open(join(self._data_path, info_file), "r") as f:
-                info = json.load(f)
-                if info["Format Version"] != Layout.SUPPORTED_FORMAT_VERSION: continue
-
-                dataset_files.append(DatasetFiles(info=info,
-                                                  data_filename=paired[i]["data"]))
-
-        return dataset_files
-
-    def iterate_frames(self, require_success) -> Iterable[Tuple[list[any], list[str]]]:
-        for data_files in self.usable_files:
-            if require_success and data_files.info["Success"] != True: continue
-
-            with open(join(self._data_path, data_files.data_filename), "rb") as f:
+            with (open(join(self._data_path, filename), "rb") as f):
                 unpacker = msgpack.Unpacker(f, raw=False)
                 try:
                     header = next(unpacker)
                 except StopIteration:
                     continue
-                enemy_names = header.get("EnemyNames", [])
+                format_version = header.get("Format Version", int)
 
+                if format_version != Layout.SUPPORTED_FORMAT_VERSION or header.get("BossName") != self.target_boss:
+                    continue
+                #TODO: add some checking whether in all recordings the number of enemies is constant!!!!
+                footer = None
+                for obj in unpacker:
+                    footer = obj
+
+                info = dict(header)
+                info.update(footer)
+
+                dataset_files.append(DatasetFile(
+                    filename=filename,
+                    info=info,
+                ))
+
+        return dataset_files
+
+    def iterate_frames(self, require_success) -> Iterable[Tuple[list[any], dict]]:
+        for data_file in self.usable_files:
+            if require_success and data_file.info["Success"] != True: continue
+
+            with open(join(self._data_path, data_file.filename), "rb") as f:
+                unpacker = msgpack.Unpacker(f, raw=False)
+                try:
+                    header = next(unpacker)
+                except StopIteration:
+                    continue
+
+                prev_frame = None
                 for frame in unpacker:
-                    yield frame, enemy_names
+                    if prev_frame is not None:
+                        yield prev_frame, data_file.info
+                    prev_frame = frame
 
 
 class PlaymakerIndexer: #TODO: add _dictionary saving
@@ -98,12 +104,12 @@ class PlaymakerIndexer: #TODO: add _dictionary saving
         self._indexed = True
 
     def _get_playmaker_pairs_per_enemy(self) -> Iterable[tuple[str, str, str]]:
-        for frame, enemy_names in self._reader.iterate_frames(require_success=False):
+        for frame, recording_info in self._reader.iterate_frames(require_success=False):
             enemy_list = frame[Layout.Frame.ENEMIES]
             if not enemy_list:
                 continue
 
-            for enemy_data, enemy_name in zip(enemy_list, enemy_names):
+            for enemy_data, enemy_name in zip(enemy_list, recording_info["EnemyNames"]):
                 if enemy_data is None:
                     continue
 
@@ -171,14 +177,14 @@ class Preprocessor:
         return std
 
     def run(self, output: str):
-        for frame, enemy_names in self._reader.iterate_frames(self._require_success):
+        for frame, recording_info in self._reader.iterate_frames(self._require_success):
 
             cont = np.divide(self._build_continuous_vector(frame) - self._mean, self._std)
-            fsm = self._build_playmaker_vector(frame, enemy_names)
+            fsm = self._build_playmaker_vector(frame, recording_info["EnemyNames"])
 
             inputs = np.array(frame[Layout.Frame.INPUTS], dtype=np.float32)
 
-            if inputs[3] > 0.3221 and inputs[3] < 0.3229:
+            if inputs[3] > 0.32 and inputs[3] < 0.34:
                 print(np.divide(cont - self._mean, self._std))
                 print(fsm)
                 print(inputs)

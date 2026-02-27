@@ -14,7 +14,7 @@ from typing import List
 @dataclass
 class Layout:
 
-    SUPPORTED_FORMAT_VERSION: int = 2
+    SUPPORTED_FORMAT_VERSION: int = 3
 
     @dataclass
     class Frame:
