@@ -3,13 +3,12 @@ from typing import List
 
 ###------------------------------------------------------------------------------------------###
 #
-#   If you plan to add or remove some data in plugin's recorder remember to add them here. Also, the order must match 100%
+#   If you plan to add or remove some data in plugin's recorder remember to add them here and always increment
+#   SUPPORTED_FORMAT_VERSION (also, the order must match 100%)
 #   For string variables (like playmakers) it's not that simple as they must be indexed before we can pass them to neural network.
 #   For that to work you will likely need to make some adjustments to Preprocessor class inside Preprocessing.py
 #
 ###------------------------------------------------------------------------------------------###
-
-# The current version of the data structure this script supports
 
 @dataclass
 class Layout:
@@ -18,6 +17,7 @@ class Layout:
 
     @dataclass
     class Frame:
+        num_elements: int = 3
         HERO: int = 0
         ENEMIES: int = 1
         INPUTS: int = 2
@@ -57,6 +57,7 @@ class Layout:
 
     @dataclass
     class Inputs:
+        num_elements: int = 10
         JUMP: int = 0
 
         LEFT: int = 1
@@ -72,5 +73,6 @@ class Layout:
 
     @dataclass
     class Playmaker:
+        num_elements: int = 2
         NAME: int = 0
         STATE_NAME: int = 1
