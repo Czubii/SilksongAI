@@ -20,8 +20,10 @@ class DatasetFile:
 class RawDatasetReader:
     def __init__(self, data_path: str, target_boss: str):
         self._data_path = data_path
-        self.usable_files = self.get_filtered_dataset_files()
         self.target_boss = target_boss
+        self.usable_files = self.get_filtered_dataset_files()
+        if len(self.usable_files) == 0: raise Exception("No Usable Files Found!!!")
+
 
     def get_filtered_dataset_files(self) -> list[DatasetFile]:
         filenames = [f for f in listdir(self._data_path) if isfile(join(self._data_path, f))]
@@ -55,6 +57,9 @@ class RawDatasetReader:
                 ))
 
         return dataset_files
+
+    def get_enemy_count(self) -> int:
+        return len(self.usable_files[0].info["EnemyNames"])
 
     def iterate_frames(self, require_success) -> Iterable[Tuple[list[any], dict]]:
         for data_file in self.usable_files:
