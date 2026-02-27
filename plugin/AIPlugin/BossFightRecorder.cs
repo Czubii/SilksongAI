@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Playables;
+using static AIPlugin.BossFightSession;
 
 namespace AIPlugin
 {
@@ -39,11 +40,11 @@ namespace AIPlugin
 
         private Stream _outputBIN;
 
-        private string _path;
+        private string _directory;
 
         private string _baseFileName;
 
-        private RecordingInfo _recordingInfo;
+        private string _tempFilePath;
 
         private int _frameCount = 0;
 
@@ -93,7 +94,7 @@ namespace AIPlugin
             if(!_sessionActive) return;
             if(State == RecordingState.Recording) StopRecordingPrematurely();
 
-            _path = null;
+            _directory = null;
             _baseFileName = null;
 
             _sessionActive = false;
@@ -109,16 +110,21 @@ namespace AIPlugin
             {
                 Directory.CreateDirectory(path);
 
+                _tempFilePath = Path.Combine(path, baseFilename + ".tmp");
+
+                if (File.Exists(_tempFilePath))
+                    File.Delete(_tempFilePath);
+
                 if (_outputType == OutputType.JSON)
                 {
-                    var json = new StreamWriter(Path.Combine(path, baseFilename + ".json")); //TODO: remove the JSON once no longer needed for debuging
+                    var json = new StreamWriter(_tempFilePath);
 
                     _outputJSON = json;
                     _outputBIN = null;
                 }
                 else if (_outputType == OutputType.MSGPACK)
                 {
-                    var bin = new FileStream(Path.Combine(path, baseFilename + ".msgpack"),
+                    var bin = new FileStream(_tempFilePath,
                     FileMode.Create, FileAccess.Write, FileShare.Read,
                     bufferSize: 64 * 1024,
                     useAsync: false);
@@ -150,12 +156,6 @@ namespace AIPlugin
 
             _enemies.Remove(_boss);
 
-            _recordingInfo = new RecordingInfo()
-            {
-                BossInternalName = _bossMetaData.InternalName,
-                PlayerName = AIPlugin.SteamUserName
-            };
-
             WriteHeader();
 
             _frameCount = 0;
@@ -164,7 +164,11 @@ namespace AIPlugin
 
         private void WriteHeader()
         {
-            RecordingHeader header = new RecordingHeader();
+            RecordingHeader header = new RecordingHeader 
+            { 
+                PlayerName = AIPlugin.SteamUserName,
+                BossName = _bossMetaData.InternalName,
+            };
 
             header.EnemyNames = new string[_enemies.Count + 1];
             header.EnemyNames[0] = _boss.Name;
@@ -186,27 +190,55 @@ namespace AIPlugin
             }
         }
 
-        private void StopRecording(BossFightSession.FightResults fightResults) // close files write the info about recording
+        private void WriteFooter(FightResults fightResults)
+        {
+            RecordingFooter footer = new RecordingFooter
+            {
+                Success = fightResults.Success,
+                FrameCount = _frameCount
+            };
+
+            // Write the footer:
+            if (_outputType == OutputType.JSON)
+            {
+                var dataBinWithKeys = MessagePackSerializer.Serialize(footer, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+                _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
+            }
+            else if (_outputType == OutputType.MSGPACK)
+            {
+                MessagePackSerializer.Serialize(_outputBIN, footer); // save the binary frame data
+            }
+        }
+
+        private void StopRecording(FightResults fightResults) // close files write the info about recording
         {
             if (!_sessionActive || State != RecordingState.Recording) return;
+
+            WriteFooter(fightResults);
 
             State = RecordingState.Idle;
 
             _outputJSON?.Dispose();
             _outputBIN?.Dispose();
 
-            _recordingInfo.Success = fightResults.Success;
-            _recordingInfo.FrameCount = _frameCount;
+            // rename the output:
 
             var path = GetOutputPath();
-            var baseFileName = GetBaseOutputFilename();
+            var baseFilename = GetBaseOutputFilename();
 
-            using (StreamWriter outputInfoFile = new StreamWriter(Path.Combine(path, baseFileName + ".info.json")))
+            string newPath = "";
+
+            if (_outputType == OutputType.JSON)
+                newPath = Path.Combine(path, baseFilename + ".json");
+            else
+                newPath = Path.Combine(path, baseFilename + ".msgpack");
+
+            if (File.Exists(_tempFilePath))
             {
-                var dataBinWithKeys = MessagePackSerializer.Serialize(_recordingInfo);
-                outputInfoFile.Write(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
+                File.Move(_tempFilePath, newPath);
             }
 
+            _tempFilePath = null;
             _baseFileName = null;
         }
         private void StopRecordingPrematurely()
@@ -215,10 +247,10 @@ namespace AIPlugin
         }
         private string GetOutputPath()
         {
-            if (_path == null)
-                _path = Path.Combine(Paths.PluginPath, "SilksongAI", "Recordings", _bossMetaData.InternalName);
+            if (_directory == null)
+                _directory = Path.Combine(Paths.PluginPath, "SilksongAI", "Recordings", _bossMetaData.InternalName);
 
-            return _path;
+            return _directory;
         }
         private string GetBaseOutputFilename()
         {

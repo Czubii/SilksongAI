@@ -5,25 +5,24 @@ namespace AIPlugin
 {
 
     [MessagePackObject]
-    public class RecordingInfo
-    {
-        [Key("Format Version")]
-        public int FormatVersion = 2;
-        [Key("FrameCount")]
-        public int FrameCount;
-        [Key("Success")]
-        public bool Success;
-        [Key("PlayerName")]
-        public string PlayerName;
-        [Key("BossInternalName")]
-        public string BossInternalName;
-    }
-
-    [MessagePackObject]
     public class RecordingHeader
     {
+        [Key("Format Version")]
+        public int FormatVersion = 3;
+        [Key("BossName")]
+        public string BossName;
         [Key("EnemyNames")]
         public string[] EnemyNames;
+        [Key("PlayerName")]
+        public string PlayerName;
+    }
+    [MessagePackObject]
+    public class RecordingFooter
+    {
+        [Key("Success")]
+        public bool Success;
+        [Key("FrameCount")]
+        public int FrameCount;
     }
 
     [MessagePackObject]
