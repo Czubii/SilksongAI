@@ -9,3 +9,5 @@ obj/
 config.env
 temp/
 packages/
+datasets/
+__pycache__/

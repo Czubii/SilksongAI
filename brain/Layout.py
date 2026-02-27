@@ -4,92 +4,73 @@ from typing import List
 ###------------------------------------------------------------------------------------------###
 #
 #   If you plan to add or remove some data in plugin's recorder remember to add them here. Also, the order must match 100%
-#   For string variables (like playmakers) it's not that simple as they must be indexed before we can pass them to neural network
+#   For string variables (like playmakers) it's not that simple as they must be indexed before we can pass them to neural network.
+#   For that to work you will likely need to make some adjustments to Preprocessor class inside Preprocessing.py
 #
 ###------------------------------------------------------------------------------------------###
 
 # The current version of the data structure this script supports
-SUPPORTED_FORMAT_VERSION: int = 1
 
 @dataclass
-class PlayMakerData:
-    name: str
-    state_name: str
+class Layout:
 
-    @classmethod
-    def from_raw(cls, raw):
-        return cls(*raw)
+    SUPPORTED_FORMAT_VERSION: int = 2
 
-@dataclass
-class FrameEnemyData:
-    pos_x: float
-    pos_y: float
-    facing: int
-    vel_x: float
-    vel_y: float
-    hp: int
-    playmakers: List[PlayMakerData]
+    @dataclass
+    class Frame:
+        HERO: int = 0
+        ENEMIES: int = 1
+        INPUTS: int = 2
 
-    @classmethod
-    def from_raw(cls, raw):
-        return cls(
-            *raw[:6],
-            playmakers=[PlayMakerData.from_raw(pm) for pm in raw[6]]
-        )
+    @dataclass
+    class Hero:
+        num_elements = 17
+        POS_X: int = 0
+        POS_Y: int = 1
+        FACING: int = 2
+        VEL_X: int = 3
+        VEL_Y: int = 4
+        HP: int = 5
+        SILK: int = 6
+        CAN_JUMP: int = 7
+        CAN_DOUBLE_JUMP: int = 8
+        CAN_ATTACK: int = 9
+        CAN_SPRINT: int = 10
+        CAN_BIND: int = 11
+        CAN_CAST: int = 12
+        CAN_NAIL_ART: int = 13
+        CAN_TRY_HARPOON: int = 14
+        CAN_INPUT: int = 15
+        CAN_BACK_DASH: int = 16
 
-@dataclass
-class FrameHeroData:
-    pos_x: float
-    pos_y: float
-    facing: int
-    vel_x: float
-    vel_y: float
-    hp: int
-    silk: int
-    can_jump: bool
-    can_double_jump: bool
-    can_attack: bool
-    can_sprint: bool
-    can_bind: bool
-    can_cast: bool
-    can_nail_art: bool
-    can_try_harpoon: bool
-    can_input: bool
-    can_back_dash: bool
+    @dataclass
+    class Enemy:
+        num_elements = 7
+        POS_X: int = 0
+        POS_Y: int = 1
+        FACING: int = 2
+        VEL_X: int = 3
+        VEL_Y: int = 4
+        HP: int = 5
+        PLAY_MAKERS: int = 6 # Very important - this has to ALWAYS be last !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    @classmethod
-    def from_raw(cls, raw):
-        return cls(*raw)
 
-@dataclass
-class FrameUserInputs:
-    jump: bool
-    left: float
-    right: float
-    up: float
-    down: float
-    attack: bool
-    heal: bool
-    skill: bool
-    dash: bool
-    harpoon: bool
+    @dataclass
+    class Inputs:
+        JUMP: int = 0
 
-    @classmethod
-    def from_raw(cls, raw):
-        return cls(*raw)
+        LEFT: int = 1
+        RIGHT: int = 2
+        UP: int = 3
+        DOWN: int = 4
 
-@dataclass
-class FrameData:
-    boss: FrameEnemyData
-    enemies: List[FrameEnemyData]
-    hero: FrameHeroData
-    inputs: FrameUserInputs
+        ATTACK: int = 5
+        HEAL: int = 6
+        SKILL: int = 7
+        DASH: int = 8
+        HARPOON: int = 9
 
-    @classmethod
-    def from_raw(cls, raw):
-        return cls(
-            boss=FrameEnemyData.from_raw(raw[0]),
-            enemies=[FrameEnemyData.from_raw(e) for e in raw[1]],
-            hero=FrameHeroData.from_raw(raw[2]),
-            inputs=FrameUserInputs.from_raw(raw[3])
-        )
+    @dataclass
+    class Playmaker:
+        NAME: int = 0
+        STATE_NAME: int = 1
