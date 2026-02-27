@@ -32,7 +32,7 @@ namespace AIPlugin
         {
             _enemies[__instance.gameObject] = new EnemyInstance
             {
-                Name = __instance.name,
+                Name = __instance.gameObject.name,
                 GameObject = __instance.gameObject,
                 HealthManager = __instance.gameObject.GetComponent<HealthManager>(),
                 Rigidbody2D = __instance.gameObject.GetComponent<Rigidbody2D>(),

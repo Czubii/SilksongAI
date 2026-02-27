@@ -7,12 +7,6 @@ namespace AIPlugin
     {
         public static FrameData GetAll(EnemyInstance boss, List<EnemyInstance> enemies)
         {
-            FrameEnemyData? bossData = GetEnemyData(boss);
-            if (bossData == null)
-            {
-                AIPlugin.Log.LogError("FrameDataCollector: bossData missing.");
-                return null;
-            }
 
             FrameHeroData? heroData = GetHeroData();
             if (heroData == null)
@@ -32,12 +26,21 @@ namespace AIPlugin
 
             FrameData frameData = new FrameData()
             {
-                Boss = (FrameEnemyData)bossData,
                 Hero = (FrameHeroData)heroData,
                 UserInputs = userInputs
             };
 
-            frameData.Enemies = new FrameEnemyData[enemies.Count];
+            frameData.Enemies = new FrameEnemyData[enemies.Count + 1];
+
+            FrameEnemyData? bossData = GetEnemyData(boss);
+            if (bossData == null)
+            {
+                AIPlugin.Log.LogError("FrameDataCollector: bossData missing.");
+                return null;
+            }
+
+            frameData.Enemies[0] = (FrameEnemyData)bossData;
+
             for (int i = 0; i < enemies.Count; i++)
             {
                 FrameEnemyData? enemyData = GetEnemyData(enemies[i]);
@@ -47,7 +50,7 @@ namespace AIPlugin
                     continue;
                 }
 
-                frameData.Enemies[i] = (FrameEnemyData)enemyData;
+                frameData.Enemies[i+1] = (FrameEnemyData)enemyData;
             }
 
             return frameData;

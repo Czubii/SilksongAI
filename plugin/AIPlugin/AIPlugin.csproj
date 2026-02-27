@@ -157,9 +157,11 @@
   <ItemGroup>
     <Compile Include="BossFightSession.cs" />
     <Compile Include="BossReferenceDatabase.cs" />
+    <Compile Include="CustomRespawnPoint.cs" />
     <Compile Include="EnemyTracker.cs" />
-    <Compile Include="inputTracker.cs" />
+    <Compile Include="FrameDataCollector.cs" />
     <Compile Include="DataStructures.cs" />
+    <Compile Include="GameStateController.cs" />
     <Compile Include="GameStateLogger.cs" />
     <Compile Include="PluginGUI.cs" />
     <Compile Include="BossFightRecorder.cs" />

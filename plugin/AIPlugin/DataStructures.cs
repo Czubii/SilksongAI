@@ -3,11 +3,12 @@
 
 namespace AIPlugin
 {
+
     [MessagePackObject]
     public class RecordingInfo
     {
         [Key("Format Version")]
-        public int FormatVersion = 1;
+        public int FormatVersion = 2;
         [Key("FrameCount")]
         public int FrameCount;
         [Key("Success")]
@@ -16,19 +17,23 @@ namespace AIPlugin
         public string PlayerName;
         [Key("BossInternalName")]
         public string BossInternalName;
-
     }
 
     [MessagePackObject]
-    public class FrameData
+    public class RecordingHeader
+    {
+        [Key("EnemyNames")]
+        public string[] EnemyNames;
+    }
+
+    [MessagePackObject]
+    public class FrameData //TODO add some header before the frame data to output files
     {
         [Key(0)]
-        public FrameEnemyData Boss;
-        [Key(1)]
-        public FrameEnemyData[] Enemies;
-        [Key(2)]
         public FrameHeroData Hero;
-        [Key(3)]
+        [Key(1)]
+        public FrameEnemyData[] Enemies; // The main target (i.e. boss) should always be at the first index
+        [Key(2)]
         public FrameUserInputs UserInputs;
 
     }
@@ -50,10 +55,9 @@ namespace AIPlugin
         public int hp;
         [Key(6)]
         public PlayMakerData[] playMakers;
-
     }
     [MessagePackObject]
-    public struct PlayMakerData // TODO make this store some integer ID-s and add the names to RecordingInfo
+    public struct PlayMakerData
     {
         [Key(0)]
         public string Name; //PlayMakerFSM.FsmName

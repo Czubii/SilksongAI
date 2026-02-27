@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Playables;
 
 namespace AIPlugin
 {
@@ -19,9 +20,9 @@ namespace AIPlugin
         public enum OutputType
         {
             JSON,
-            BIN
+            MSGPACK
         }
-        private OutputType _outputType = OutputType.JSON; // TODO change to BIN when ready
+        private OutputType _outputType = OutputType.MSGPACK;
 
         private bool _sessionActive = false;
         public RecordingState State {  get; private set; } = RecordingState.Idle;
@@ -115,9 +116,9 @@ namespace AIPlugin
                     _outputJSON = json;
                     _outputBIN = null;
                 }
-                else if (_outputType == OutputType.BIN)
+                else if (_outputType == OutputType.MSGPACK)
                 {
-                    var bin = new FileStream(Path.Combine(path, baseFilename),
+                    var bin = new FileStream(Path.Combine(path, baseFilename + ".msgpack"),
                     FileMode.Create, FileAccess.Write, FileShare.Read,
                     bufferSize: 64 * 1024,
                     useAsync: false);
@@ -155,9 +156,36 @@ namespace AIPlugin
                 PlayerName = AIPlugin.SteamUserName
             };
 
+            WriteHeader();
+
             _frameCount = 0;
             State = RecordingState.Recording;
         }
+
+        private void WriteHeader()
+        {
+            RecordingHeader header = new RecordingHeader();
+
+            header.EnemyNames = new string[_enemies.Count + 1];
+            header.EnemyNames[0] = _boss.Name;
+
+            for (int i = 0; i < _enemies.Count; i++)
+            {
+                header.EnemyNames[i+1] = _enemies[i].Name;
+            }
+
+            // Write the header:
+            if (_outputType == OutputType.JSON)
+            {
+                var dataBinWithKeys = MessagePackSerializer.Serialize(header, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+                _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
+            }
+            else if (_outputType == OutputType.MSGPACK)
+            {
+                MessagePackSerializer.Serialize(_outputBIN, header); // save the binary frame data
+            }
+        }
+
         private void StopRecording(BossFightSession.FightResults fightResults) // close files write the info about recording
         {
             if (!_sessionActive || State != RecordingState.Recording) return;
@@ -173,7 +201,7 @@ namespace AIPlugin
             var path = GetOutputPath();
             var baseFileName = GetBaseOutputFilename();
 
-            using (StreamWriter outputInfoFile = new StreamWriter(Path.Combine(path, baseFileName + "_info.json")))
+            using (StreamWriter outputInfoFile = new StreamWriter(Path.Combine(path, baseFileName + ".info.json")))
             {
                 var dataBinWithKeys = MessagePackSerializer.Serialize(_recordingInfo);
                 outputInfoFile.Write(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
@@ -224,7 +252,7 @@ namespace AIPlugin
                 var dataBinWithKeys = MessagePackSerializer.Serialize(frameData, MessagePack.Resolvers.ContractlessStandardResolver.Options);
                 _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
             }
-            else if (_outputType == OutputType.BIN)
+            else if (_outputType == OutputType.MSGPACK)
             {
                 MessagePackSerializer.Serialize(_outputBIN, frameData); // save the binary frame data
             }
