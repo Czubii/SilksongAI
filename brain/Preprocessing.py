@@ -78,6 +78,15 @@ class RawDatasetReader:
                         yield prev_frame, data_file.info
                     prev_frame = frame
 
+    def get_total_frame_count(self, require_success) -> int:
+        frame_count: int = 0
+        for dataset in self.usable_files:
+            if require_success and dataset.info["Success"] != True: continue
+
+            frame_count += dataset.info["FrameCount"]
+
+        return frame_count
+
 
 class PlaymakerIndexer: #TODO: add _dictionary saving
     def __init__(self, reader: RawDatasetReader):
@@ -131,11 +140,13 @@ class PlaymakerIndexer: #TODO: add _dictionary saving
 class Preprocessor:
     def __init__(self, reader: RawDatasetReader, require_success=True):
         self._reader = reader
+        self._num_continuous = Layout.Hero.num_elements + self._reader.get_enemy_count() * (Layout.Enemy.num_elements - 1)
         self._pm_indexer = PlaymakerIndexer(self._reader)
         self._pm_indexer.run()
-        self._mean = self._get_mean_of_cont()
-        self._std = self._get_std_of_cont()
+        self._mean = self._get_mean_of_continuous()
+        self._std = self._get_std_of_continuous()
         self._require_success = require_success
+
 
 
     @staticmethod
@@ -154,11 +165,8 @@ class Preprocessor:
             for playmaker in enemy[Layout.Enemy.PLAY_MAKERS]
         ], dtype=np.int32)
 
-    def _get_mean_of_cont(self) -> np.array: #TODO: exclude booleans
-
-        num_enemies = 3 #TODO: have it saved somewhere per whole dataset
-        num_cont = Layout.Hero.num_elements + num_enemies * (Layout.Enemy.num_elements -1)
-        mean = np.zeros([num_cont], dtype=np.float32)
+    def _get_mean_of_continuous(self) -> np.array: #TODO: exclude booleans
+        mean = np.zeros([self._num_continuous], dtype=np.float32)
         n_frames = 0
 
         for frame, _ in self._reader.iterate_frames(False):
@@ -167,9 +175,9 @@ class Preprocessor:
 
         return mean / n_frames
 
-    def _get_std_of_cont(self)-> np.array: #TODO: exclude booleans
+    def _get_std_of_continuous(self)-> np.array: #TODO: exclude booleans
 
-        num_enemies = 3 #TODO: have it saved somewhere per whole dataset
+        num_enemies = self._reader.get_enemy_count()
         num_cont = Layout.Hero.num_elements + num_enemies * (Layout.Enemy.num_elements -1)
         var = np.zeros([num_cont], dtype=np.float32)
         n_frames = 0
@@ -184,19 +192,19 @@ class Preprocessor:
     def run(self, output: str):
         for frame, recording_info in self._reader.iterate_frames(self._require_success):
 
-            cont = np.divide(self._build_continuous_vector(frame) - self._mean, self._std)
+            continuous = np.divide(self._build_continuous_vector(frame) - self._mean, self._std)
             fsm = self._build_playmaker_vector(frame, recording_info["EnemyNames"])
 
             inputs = np.array(frame[Layout.Frame.INPUTS], dtype=np.float32)
 
-            if inputs[3] > 0.32 and inputs[3] < 0.34:
-                print(np.divide(cont - self._mean, self._std))
+            if 0.24 < inputs[3] < 0.69:
+                print(continuous)
                 print(fsm)
                 print(inputs)
                 return
 
 
 if __name__ == "__main__":
-    reader = RawDatasetReader("../datasets/Mossbone Mother")
+    reader = RawDatasetReader("../datasets/Mossbone Mother", target_boss="Mossbone Mother")
     preprocessor = Preprocessor(reader, True)
     preprocessor.run("")
