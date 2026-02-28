@@ -56,9 +56,6 @@ class BossNet(nn.Module):
         return self.output(x)
 
 
-
-
-
 if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -66,6 +63,7 @@ if __name__ == "__main__":
     print("Using device:", device)
 
     time_window = 200
+
     continuous_count = 35
     playmaker_count = 6
     playmaker_vocab_size = 40
