@@ -227,7 +227,7 @@ class DataSaver:
 
         data = {
             "continuous": torch.tensor(np.stack(cont_list)),
-            "playmaker": torch.tensor(np.stack(playmaker_list)),
+            "playmakers": torch.tensor(np.stack(playmaker_list)),
             "targets": torch.tensor(np.stack(target_list)),
         }
 
