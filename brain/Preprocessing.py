@@ -133,13 +133,15 @@ class PlaymakerIndexer: #TODO: add _dictionary saving #TODO: make this also reus
             raise Exception("Not indexed! You have to call run() first!")
         return self._dictionary[f"{re.sub(self._instance_regex, '', enemy_name)}|{playmaker_name}|{state_name}"]
 
+    def get_word_count(self):
+        return len(self._vocab)
 
 class Preprocessor:
     def __init__(self, reader: RawDatasetReader, require_success=True):
         self._reader = reader
         self._num_continuous = Layout.Hero.num_elements + self._reader.get_enemy_count() * (Layout.Enemy.num_elements - 1)
-        self._pm_indexer = PlaymakerIndexer(self._reader)
-        self._pm_indexer.run()
+        self.pm_indexer = PlaymakerIndexer(self._reader)
+        self.pm_indexer.run()
         self._require_success = require_success
 
     @staticmethod
@@ -183,8 +185,8 @@ class Preprocessor:
 
     def _build_playmaker_vector(self, frame, enemy_names) -> np.ndarray:
         return np.array([
-            self._pm_indexer.get(enemy_names[i], playmaker[Layout.Playmaker.NAME],
-                                 playmaker[Layout.Playmaker.STATE_NAME])
+            self.pm_indexer.get(enemy_names[i], playmaker[Layout.Playmaker.NAME],
+                                playmaker[Layout.Playmaker.STATE_NAME])
             for i, enemy in enumerate(frame[Layout.Frame.ENEMIES])
             for playmaker in enemy[Layout.Enemy.PLAY_MAKERS]
         ], dtype=np.int32)
@@ -237,6 +239,7 @@ class DataSaver:
 if __name__ == "__main__":
     reader = RawDatasetReader("../recordings/Mossbone Mother", target_boss="Mossbone Mother")
     preprocessor = Preprocessor(reader, True)
+    print(preprocessor.pm_indexer.get_word_count())
     data_saver = DataSaver(preprocessor)
 
-    data_saver.to_file("mossbone_mother")
+    #data_saver.to_file("mossbone_mother")

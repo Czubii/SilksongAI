@@ -25,3 +25,4 @@ class BossFightDataset(Dataset):
 
 if __name__ == "__main__":
     dataset = BossFightDataset(processed_data_filename="mossbone_mother.pt")
+    print(dataset[0])
