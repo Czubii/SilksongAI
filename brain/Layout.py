@@ -62,7 +62,7 @@ class Layout:
         VEL_Y: int = 4
         HP: int = 5
         # Very important - this has to ALWAYS be last and should be included in boolean mask as boolean-type !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        PLAY_MAKERS: int = 6
+        PLAYMAKERS: int = 6
         # !!!!!!!!!!!!!!!!!
 
         num_elements = 7
