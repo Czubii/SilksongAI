@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from typing import List
 
+import numpy as np
+
+
 ###------------------------------------------------------------------------------------------###
 #
 #   If you plan to add or remove some data in plugin's recorder remember to add them here and always increment
@@ -24,7 +27,6 @@ class Layout:
 
     @dataclass
     class Hero:
-        num_elements = 17
         POS_X: int = 0
         POS_Y: int = 1
         FACING: int = 2
@@ -43,17 +45,33 @@ class Layout:
         CAN_INPUT: int = 15
         CAN_BACK_DASH: int = 16
 
+        num_elements = 17
+
+        # 1 for boolean-type variables 0 for others - this is used in preprocessor in z-score
+        # standardization to affect only the non-boolean variables
+        boolean_mask = np.array([
+            0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+        ], dtype=np.bool)
+
     @dataclass
     class Enemy:
-        num_elements = 7
         POS_X: int = 0
         POS_Y: int = 1
         FACING: int = 2
         VEL_X: int = 3
         VEL_Y: int = 4
         HP: int = 5
-        PLAY_MAKERS: int = 6 # Very important - this has to ALWAYS be last !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Very important - this has to ALWAYS be last and should be included in boolean mask as boolean-type !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        PLAY_MAKERS: int = 6
+        # !!!!!!!!!!!!!!!!!
 
+        num_elements = 7
+
+        # 1 for boolean-type variables 0 for others - this is used in preprocessor in z-score
+        # standardization to affect only the non-boolean variables
+        boolean_mask = np.array([
+            0, 0, 1, 0, 0, 0, 1
+        ], dtype=np.bool)
 
     @dataclass
     class Inputs:
@@ -71,8 +89,12 @@ class Layout:
         DASH: int = 8
         HARPOON: int = 9
 
+        # no boolean mask here as this won't be standard
+
     @dataclass
     class Playmaker:
         num_elements: int = 2
         NAME: int = 0
         STATE_NAME: int = 1
+
+        # no boolean mask here as this won't be standard

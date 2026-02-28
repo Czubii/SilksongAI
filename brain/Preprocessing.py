@@ -138,11 +138,7 @@ class Preprocessor:
         self._num_continuous = Layout.Hero.num_elements + self._reader.get_enemy_count() * (Layout.Enemy.num_elements - 1)
         self._pm_indexer = PlaymakerIndexer(self._reader)
         self._pm_indexer.run()
-        self._mean = self._get_mean_of_continuous()
-        self._std = self._get_std_of_continuous()
         self._require_success = require_success
-
-
 
     @staticmethod
     def _build_continuous_vector(frame) -> np.ndarray:
@@ -160,6 +156,14 @@ class Preprocessor:
             for playmaker in enemy[Layout.Enemy.PLAY_MAKERS]
         ], dtype=np.int32)
 
+    def _build_boolean_mask(self) -> np.ndarray:
+        num_enemies = self._reader.get_enemy_count()
+        return np.array([
+            *[val for val in Layout.Hero.boolean_mask],
+            *[val for _ in range(num_enemies)
+                  for val in Layout.Enemy.boolean_mask[:Layout.Enemy.PLAY_MAKERS]]
+        ], dtype=np.float32)
+
     def _get_mean_of_continuous(self) -> np.array: #TODO: exclude booleans
         mean = np.zeros([self._num_continuous], dtype=np.float32)
         n_frames = 0
@@ -170,7 +174,7 @@ class Preprocessor:
 
         return mean / n_frames
 
-    def _get_std_of_continuous(self)-> np.array: #TODO: exclude booleans
+    def _get_std_of_continuous(self, mean: np.ndarray)-> np.ndarray: #TODO: exclude booleans
 
         num_enemies = self._reader.get_enemy_count()
         num_cont = Layout.Hero.num_elements + num_enemies * (Layout.Enemy.num_elements -1)
@@ -178,16 +182,25 @@ class Preprocessor:
         n_frames = 0
         for frame, _ in self._reader.iterate_frames(False):
             n_frames += 1
-            var += np.pow(self._build_continuous_vector(frame) - self._mean, 2)
+            var += np.pow(self._build_continuous_vector(frame) - mean, 2)
 
         std = np.sqrt(var / (n_frames-1)) # let's pray to god we never get only one frame
         std[std == 0] = 1.0
         return std
 
     def run(self, output: str):
+
+        bm = self._build_boolean_mask()
+
+        mean = self._get_mean_of_continuous()
+        np.putmask(mean, bm, 0)
+
+        std = self._get_std_of_continuous(mean)
+        np.putmask(std, bm, 1)
+
         for frame, recording_info in self._reader.iterate_frames(self._require_success):
 
-            continuous = np.divide(self._build_continuous_vector(frame) - self._mean, self._std)
+            continuous = np.divide(self._build_continuous_vector(frame) - mean, std) #standarization inline
             fsm = self._build_playmaker_vector(frame, recording_info["EnemyNames"])
             inputs = np.array(frame[Layout.Frame.INPUTS], dtype=np.float32)
 
