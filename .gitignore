@@ -9,5 +9,6 @@ obj/
 config.env
 temp/
 packages/
-datasets/
+recordings/
+preprocessed/
 __pycache__/

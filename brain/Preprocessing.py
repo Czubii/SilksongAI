@@ -1,9 +1,11 @@
 import re
 from os import listdir
 from os.path import isfile, join
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Generator, Iterator
 import msgpack
 import numpy as np
+import torch
+
 from Layout import *
 
 
@@ -148,14 +150,6 @@ class Preprocessor:
               for val in enemy[:Layout.Enemy.PLAY_MAKERS]]
         ], dtype=np.float32)
 
-    def _build_playmaker_vector(self, frame, enemy_names) -> np.ndarray:
-        return np.array([
-            self._pm_indexer.get(enemy_names[i], playmaker[Layout.Playmaker.NAME],
-                                 playmaker[Layout.Playmaker.STATE_NAME])
-            for i, enemy in enumerate(frame[Layout.Frame.ENEMIES])
-            for playmaker in enemy[Layout.Enemy.PLAY_MAKERS]
-        ], dtype=np.int32)
-
     def _build_boolean_mask(self) -> np.ndarray:
         num_enemies = self._reader.get_enemy_count()
         return np.array([
@@ -164,7 +158,7 @@ class Preprocessor:
                   for val in Layout.Enemy.boolean_mask[:Layout.Enemy.PLAY_MAKERS]]
         ], dtype=np.float32)
 
-    def _get_mean_of_continuous(self) -> np.array: #TODO: exclude booleans
+    def _get_mean_of_continuous(self) -> np.array:
         mean = np.zeros([self._num_continuous], dtype=np.float32)
         n_frames = 0
 
@@ -174,8 +168,7 @@ class Preprocessor:
 
         return mean / n_frames
 
-    def _get_std_of_continuous(self, mean: np.ndarray)-> np.ndarray: #TODO: exclude booleans
-
+    def _get_std_of_continuous(self, mean: np.ndarray)-> np.ndarray:
         num_enemies = self._reader.get_enemy_count()
         num_cont = Layout.Hero.num_elements + num_enemies * (Layout.Enemy.num_elements -1)
         var = np.zeros([num_cont], dtype=np.float32)
@@ -188,7 +181,15 @@ class Preprocessor:
         std[std == 0] = 1.0
         return std
 
-    def run(self, output: str):
+    def _build_playmaker_vector(self, frame, enemy_names) -> np.ndarray:
+        return np.array([
+            self._pm_indexer.get(enemy_names[i], playmaker[Layout.Playmaker.NAME],
+                                 playmaker[Layout.Playmaker.STATE_NAME])
+            for i, enemy in enumerate(frame[Layout.Frame.ENEMIES])
+            for playmaker in enemy[Layout.Enemy.PLAY_MAKERS]
+        ], dtype=np.int32)
+
+    def frame_data_generator(self) -> Iterator[Tuple[np.ndarray, np.ndarray, np.ndarray]]:
 
         bm = self._build_boolean_mask()
 
@@ -200,18 +201,42 @@ class Preprocessor:
 
         for frame, recording_info in self._reader.iterate_frames(self._require_success):
 
-            continuous = np.divide(self._build_continuous_vector(frame) - mean, std) #standarization inline
-            fsm = self._build_playmaker_vector(frame, recording_info["EnemyNames"])
-            inputs = np.array(frame[Layout.Frame.INPUTS], dtype=np.float32)
+            continuous = self._build_continuous_vector(frame)
+            continuous -= mean
+            continuous /= std
 
-            if 0.24 < inputs[3] < 0.69:
-                print(continuous)
-                print(fsm)
-                print(inputs)
-                return
+            playmakers = self._build_playmaker_vector(frame, recording_info["EnemyNames"])
+            user_inputs = np.array(frame[Layout.Frame.INPUTS], dtype=np.float32)
+
+            yield continuous, playmakers, user_inputs
+
+class DataSaver:
+    def __init__(self, preprocessor: Preprocessor):
+        self._preprocessor = preprocessor
+
+    def to_file(self, output_name: str) -> None:
+
+        cont_list = []
+        playmaker_list = []
+        target_list = []
+
+        for continuous, playmaker, user_inputs in self._preprocessor.frame_data_generator():
+            cont_list.append(continuous)
+            playmaker_list.append(playmaker)
+            target_list.append(user_inputs)
+
+        data = {
+            "continuous": torch.tensor(np.stack(cont_list)),
+            "playmaker": torch.tensor(np.stack(playmaker_list)),
+            "targets": torch.tensor(np.stack(target_list)),
+        }
+
+        torch.save(data, f"processed/{output_name}.pt")
 
 
 if __name__ == "__main__":
-    reader = RawDatasetReader("../datasets/Mossbone Mother", target_boss="Mossbone Mother")
+    reader = RawDatasetReader("../recordings/Mossbone Mother", target_boss="Mossbone Mother")
     preprocessor = Preprocessor(reader, True)
-    preprocessor.run("")
+    data_saver = DataSaver(preprocessor)
+
+    data_saver.to_file("mossbone_mother")
