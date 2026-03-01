@@ -19,7 +19,7 @@ class LayoutNotSupported(Exception):
 @dataclass
 class Layout:
 
-    SUPPORTED_FORMAT_VERSION: int = 3
+    SUPPORTED_FORMAT_VERSION: int = 4
 
     @dataclass
     class Frame:

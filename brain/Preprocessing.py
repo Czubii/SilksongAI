@@ -45,6 +45,7 @@ class RawDatasetReader:
                 format_version = header.get("Format Version", int) #TODO remove space from "Format Version"
 
                 if format_version != Layout.SUPPORTED_FORMAT_VERSION or header.get("BossName") != self.target_boss:
+                    print(f"skipping recording {filename}, recording's format version: {format_version}")
                     continue
                 #TODO: add some checking whether in all recordings the number of enemies is constant!!!!
                 footer = None

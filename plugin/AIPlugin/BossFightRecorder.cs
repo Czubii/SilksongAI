@@ -25,6 +25,9 @@ namespace AIPlugin
         }
         private OutputType _outputType = OutputType.MSGPACK;
 
+        private int _recordEvertNFrame = 10;
+        private int _framesToNextRecord = 0;
+
         private bool _sessionActive = false;
         public RecordingState State {  get; private set; } = RecordingState.Idle;
 
@@ -159,6 +162,7 @@ namespace AIPlugin
             WriteHeader();
 
             _frameCount = 0;
+            _framesToNextRecord = 0;
             State = RecordingState.Recording;
         }
 
@@ -262,9 +266,15 @@ namespace AIPlugin
         private void Update()
         {
             if (State != RecordingState.Recording 
-                || (GameManager.instance?.IsGamePaused() ?? true)) return; 
+                || (GameManager.instance?.IsGamePaused() ?? true)) return;
 
-            RecordFrame();
+            _framesToNextRecord--;
+
+            if (_framesToNextRecord <= 0)
+            {
+                RecordFrame();
+                _framesToNextRecord = _recordEvertNFrame;
+            }
         }
         public void RecordFrame()
         {

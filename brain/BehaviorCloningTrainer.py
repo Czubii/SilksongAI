@@ -1,5 +1,7 @@
 import os
 from typing import Optional
+
+import numpy as np
 from sympy.printing.pytorch import torch
 from torch import optim, nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -9,6 +11,8 @@ from BossFightDataset import BossFightDataset
 from Networks import BossNet
 from Preprocessing import ProcessingPipeline
 from RecordingLayout import Layout, LayoutNotSupported
+
+import matplotlib.pyplot as plt
 
 
 class BehaviorCloningTrainer:
@@ -74,7 +78,7 @@ class BehaviorCloningTrainer:
             self._testing_dataset = None
             return
 
-        self._testing_dataset = BossFightDataset(testing_data)
+        self._testing_dataset = BossFightDataset(testing_data, self._model_time_widow)
 
 
     def create_network(self, hidden_dim, embedding_dim: int = None):
@@ -95,7 +99,7 @@ class BehaviorCloningTrainer:
         self._network_loaded = True
 
     def train_network(self, num_epochs: int,
-                      learning_rate: float = 1e-4,
+                      learning_rate: float = 5e-4,
                       batch_size: int = 32,
                       use_gpu: bool = False,):
 
@@ -111,12 +115,18 @@ class BehaviorCloningTrainer:
                 print("CUDA device not available. Make sure you have the correct pytorch version installed and your device supports CUDA computation.")
         print("Starting training. Using device:", device)
 
+        self._network.to(device)
 
         optimizer = optim.Adam(self._network.parameters(), lr=learning_rate)
-        criterion = nn.MSELoss()
+        criterion = nn.SmoothL1Loss()
+
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
         dataloader = DataLoader(self._training_dataset, batch_size=batch_size, shuffle=True)
         dataloader_test = DataLoader(self._testing_dataset, batch_size=batch_size, shuffle=True)
+
+        training_loss_per_epoch = []
+        testing_loss_per_epoch = []
 
         for epoch in range(num_epochs):
 
@@ -136,6 +146,8 @@ class BehaviorCloningTrainer:
                 total_loss += loss.item()
                 n += 1
 
+            scheduler.step()
+
             if self._testing_dataset is None:
                 print(f"Epoch: {epoch} | Avg Loss: {total_loss / n}")
                 continue
@@ -143,15 +155,40 @@ class BehaviorCloningTrainer:
             total_loss_testing = 0
             m = 0
             for continuous_batch, playmaker_batch, target_batch in dataloader_test:
+
+                continuous_batch = continuous_batch.to(device, dtype=torch.float32)
+                playmaker_batch = playmaker_batch.to(device, dtype=torch.long)
+                target_batch = target_batch.to(device, dtype=torch.float32)
+
                 output_batch = self._network(continuous_batch, playmaker_batch)
-                total_loss_testing += criterion(output_batch, target_batch)
+                total_loss_testing += criterion(output_batch, target_batch).item()
                 m+=1
 
-            print(f"Epoch: {epoch} | Avg Loss: {total_loss / n} | Testing data avg loss: {total_loss_testing / m}")
 
+            training_loss_per_epoch.append(total_loss / n)
+            testing_loss_per_epoch.append(total_loss_testing / m)
+            print(f"Epoch: {epoch} | Avg Loss: {total_loss / n:.4} | Testing data avg loss: {total_loss_testing / m:.4}")
+
+        return training_loss_per_epoch, testing_loss_per_epoch
+
+
+def plot_training_testing_loss(training_loss_per_epoch, testing_loss_per_epoch, title="Training vs Testing Loss"):
+    epochs = range(1, len(training_loss_per_epoch) + 1)
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(epochs, training_loss_per_epoch, label="Training Loss", marker='o')
+    plt.plot(epochs, testing_loss_per_epoch, label="Testing Loss", marker='x')
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title(title)
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 if __name__ == '__main__':
-    pipeline = BehaviorCloningTrainer("lacetest")
+    pipeline = BehaviorCloningTrainer("lacetest", model_time_widow=4)
 
     try:
         pipeline.load_dataset()
@@ -160,9 +197,18 @@ if __name__ == '__main__':
         print("Creating new dataset")
         pipeline.process_recordings(recording_path="../recordings/Lace Boss1",
                                     target_boss="Lace Boss1",
-                                    num_test_recordings=1)
+                                    num_test_recordings=5)
         pipeline.load_dataset()
 
-    pipeline.create_network(100)
+    pipeline.create_network(40)
+    # 10: 0.02004
+    # 25: 0.01486
+    # 50: 0.01589
+    # 100: 0.01533
 
-    pipeline.train_network(100)
+    training_loss_per_epoch, testing_loss_per_epoch = (pipeline.train_network(80,
+                               use_gpu=True,
+                               batch_size=512,
+                               learning_rate = 5e-3))
+
+    plot_training_testing_loss(training_loss_per_epoch, testing_loss_per_epoch,)

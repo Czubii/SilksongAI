@@ -8,7 +8,7 @@ namespace AIPlugin
     public class RecordingHeader
     {
         [Key("Format Version")]
-        public int FormatVersion = 3;
+        public int FormatVersion = 4;
         [Key("BossName")]
         public string BossName;
         [Key("EnemyNames")]
