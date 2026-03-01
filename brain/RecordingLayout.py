@@ -13,6 +13,9 @@ import numpy as np
 #
 ###------------------------------------------------------------------------------------------###
 
+class LayoutNotSupported(Exception):
+    pass
+
 @dataclass
 class Layout:
 

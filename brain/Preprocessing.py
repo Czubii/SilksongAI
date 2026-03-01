@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from sympy.codegen import Print
 
-from Layout import *
+from RecordingLayout import *
 
 
 @dataclass
@@ -279,14 +279,14 @@ class ProcessingPipeline:
             if expected_cont_dim is None:
                 expected_cont_dim = cont_len
             elif cont_len != expected_cont_dim:
-                raise Exception(f"Continuous vector length mismatch! Got {cont_len}, expected {expected_cont_dim}")
+                raise Exception(f"ProcessingPipeline: Continuous vector length mismatch! Got {cont_len}, expected {expected_cont_dim}")
 
             if expected_playmaker_dim is None:
                 expected_playmaker_dim = pm_len
             elif pm_len != expected_playmaker_dim:
-                raise Exception(f"Playmaker vector length mismatch! Got {pm_len}, expected {expected_playmaker_dim}")
+                raise Exception(f"ProcessingPipeline: Playmaker vector length mismatch! Got {pm_len}, expected {expected_playmaker_dim}")
 
-        print(f"Dataset verification passed. Continuous={expected_cont_dim}, Playmakers={expected_playmaker_dim}")
+        print(f"ProcessingPipeline: Recording verification passed")
 
     def process_and_save(self, dataset_name: str, output_dir: str, num_testing: int = 0, save_vocab: bool = False, verify_data_shape = True) -> None:
         """
@@ -326,6 +326,7 @@ class ProcessingPipeline:
 
         if num_testing > 0:
             data_test = {
+                "layout_version": Layout.SUPPORTED_FORMAT_VERSION,
                 "cont_dim": self._preprocessor.get_continuous_dim(),
                 "playmaker_dim": self._preprocessor.get_playmaker_dim(),
                 "vocab_dim": self._vocabulary.get_word_count(),
@@ -337,6 +338,7 @@ class ProcessingPipeline:
             torch.save(data_test, os.path.join(output_dir, f"{dataset_name}_testing.pt"))
 
         data_train = {
+            "layout_version": Layout.SUPPORTED_FORMAT_VERSION,
             "cont_dim": self._preprocessor.get_continuous_dim(),
             "playmaker_dim": self._preprocessor.get_playmaker_dim(),
             "vocab_dim": self._vocabulary.get_word_count(),

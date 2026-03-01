@@ -11,11 +11,11 @@ class BossNet(nn.Module):
             playmaker_count: int,
             playmaker_vocab_size: int,
             embedding_dim: int,
+            hidden_dim: int,
             output_dim: int):
 
         super().__init__()
 
-        hidden_dim = 2000
 
         self.embedding = nn.Embedding(playmaker_vocab_size, embedding_dim)
         self.embedded_size = playmaker_count * embedding_dim * time_window
@@ -78,6 +78,7 @@ if __name__ == "__main__":
                   playmaker_count,
                   playmaker_vocab_size,
                   embedding_dim,
+                  200,
                   output_dim).to(device)
 
     optimizer = optim.Adam(net.parameters(), lr=1e-3)
