@@ -2,9 +2,10 @@ import json
 import os
 import re
 from logging import warning
+from optparse import Option
 from os import listdir
 from os.path import isfile, join
-from typing import Iterable, Tuple, Generator, Iterator
+from typing import Iterable, Tuple, Generator, Iterator, Optional
 import msgpack
 import numpy as np
 import torch
@@ -255,7 +256,7 @@ class Preprocessor:
             yield continuous, playmakers, user_inputs, recording_info
 
 class ProcessingPipeline:
-    def __init__(self, data_path: str, target_boss: str, vocabulary=None):
+    def __init__(self, data_path: str, target_boss: str, vocabulary: Optional[Vocabulary]=None):
 
         self._vocabulary = vocabulary
         self._data_reader = RawDatasetReader(data_path, target_boss)
@@ -304,11 +305,12 @@ class ProcessingPipeline:
         target_list = []
         recording_frames_list = []
 
+
         prev_id = -1
         for continuous, playmaker, user_inputs, recording_info in self._preprocessor.frame_data_generator(True):
 
             current_id = recording_info.get("RecordingID")
-            if current_id != prev_id: #store some information about current recording
+            if current_id != prev_id:
                 recording_frames_list.append(recording_info.get("FrameCount"))
                 prev_id = current_id
 
@@ -319,31 +321,36 @@ class ProcessingPipeline:
         if save_vocab:
             self._vocabulary.save(os.path.join(output_dir, f"{dataset_name}_vocabulary.json"))
 
-        data_test = {
-            "cont_dim": self._preprocessor.get_continuous_dim(),
-            "playmaker_dim": self._preprocessor.get_playmaker_dim(),
-            "vocab_dim": self._vocabulary.get_word_count(),
-            "frame_counts": recording_frames_list[:num_testing],
-            "continuous": torch.tensor(np.stack(cont_list[:num_testing])),
-            "playmakers": torch.tensor(np.stack(playmaker_list[:num_testing])),
-            "targets": torch.tensor(np.stack(target_list[:num_testing])),
-        }
+        num_testing = min(num_testing, len(recording_frames_list))
+        test_frames = sum(recording_frames_list[:num_testing])
+
+        if num_testing > 0:
+            data_test = {
+                "cont_dim": self._preprocessor.get_continuous_dim(),
+                "playmaker_dim": self._preprocessor.get_playmaker_dim(),
+                "vocab_dim": self._vocabulary.get_word_count(),
+                "frame_counts": recording_frames_list[:num_testing],
+                "continuous": torch.tensor(np.stack(cont_list[:test_frames])),
+                "playmakers": torch.tensor(np.stack(playmaker_list[:test_frames])),
+                "targets": torch.tensor(np.stack(target_list[:test_frames])),
+            }
+            torch.save(data_test, os.path.join(output_dir, f"{dataset_name}_testing.pt"))
+
         data_train = {
             "cont_dim": self._preprocessor.get_continuous_dim(),
             "playmaker_dim": self._preprocessor.get_playmaker_dim(),
             "vocab_dim": self._vocabulary.get_word_count(),
-            "frame_counts": recording_frames_list[:num_testing],
-            "continuous": torch.tensor(np.stack(cont_list[num_testing:])),
-            "playmakers": torch.tensor(np.stack(playmaker_list[num_testing:])),
-            "targets": torch.tensor(np.stack(target_list[num_testing:])),
+            "frame_counts": recording_frames_list[num_testing:],
+            "continuous": torch.tensor(np.stack(cont_list[test_frames:])),
+            "playmakers": torch.tensor(np.stack(playmaker_list[test_frames:])),
+            "targets": torch.tensor(np.stack(target_list[test_frames:])),
         }
-
         torch.save(data_train, os.path.join(output_dir, f"{dataset_name}_training.pt"))
-        torch.save(data_test, os.path.join(output_dir, f"{dataset_name}_testing.pt"))
+
 
 
 if __name__ == "__main__":
     pp = ProcessingPipeline(data_path="../recordings/Mossbone Mother",
                        target_boss="Mossbone Mother")
 
-    pp.process_and_save("Mossbone_Mother_Tests", output_dir="processed", save_vocab=True)
+    pp.process_and_save("Mossbone_Mother_Tests", output_dir="processed", save_vocab=True, num_testing=2)
