@@ -71,12 +71,10 @@ namespace AIPlugin.Networking
         private void OnEnable()
         {
             AiClient.OnDisconnect += OnDisconnect;
-            AiClient.OnMessageRecieved += OnMessageRecieved;
         }
         private void OnDisable()
         {
             AiClient.OnDisconnect -= OnDisconnect;
-            AiClient.OnMessageRecieved -= OnMessageRecieved;
         }
         private void OnDisconnect() //TODO add some game pausing or something nice here 
         {
@@ -86,11 +84,6 @@ namespace AIPlugin.Networking
                 AIPlugin.Log.LogWarning("Trying to reconnect...");
                 _reconnectTask = TryReconnect();
             }
-        }
-        private void OnMessageRecieved(byte[] bytes)
-        {
-            string message = Encoding.UTF8.GetString(bytes);
-            AIPlugin.Log.LogError(message);
         }
 
         void Update()

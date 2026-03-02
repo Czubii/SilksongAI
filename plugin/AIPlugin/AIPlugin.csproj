@@ -8,23 +8,16 @@
     <Error Condition="'$(GameDir)' == ''" Text="ERROR: GameDir not set in Directory.Build.props.user." />
     <Message Text="GameDir is: $(GameDir)" Importance="high" />
   </Target>
-
-<PropertyGroup>
-  <HasRunDeployAndLaunch>false</HasRunDeployAndLaunch>
-</PropertyGroup>
-
-<Target Name="DeployAndRun"
-        AfterTargets="Build"
-        Condition="'$(HasRunDeployAndLaunch)' == 'false'">
-
+  <PropertyGroup>
+    <HasRunDeployAndLaunch>false</HasRunDeployAndLaunch>
+  </PropertyGroup>
+  <Target Name="DeployAndRun" AfterTargets="Build" Condition="'$(HasRunDeployAndLaunch)' == 'false'">
     <!-- mark it run so next invocation doesn’t run it again -->
     <PropertyGroup>
       <HasRunDeployAndLaunch>true</HasRunDeployAndLaunch>
     </PropertyGroup>
-
     <Exec Command="taskkill /IM &quot;Hollow Knight Silksong.exe&quot; /F" ContinueOnError="true" />
-    <Exec Command="ping 127.0.0.1 -n 2 > nul" />
-
+    <Exec Command="ping 127.0.0.1 -n 2 &gt; nul" />
     <ItemGroup>
       <DeployFiles Include="$(OutputPath)\MessagePack.dll" />
       <DeployFiles Include="$(OutputPath)\MessagePack.Annotations.dll" />
@@ -37,13 +30,10 @@
       <DeployFiles Include="$(OutputPath)\System.Threading.Tasks.Extensions.dll" />
       <DeployFiles Include="$(OutputPath)\System.Runtime.CompilerServices.Unsafe.dll" />
     </ItemGroup>
-
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameDir)\BepInEx\plugins" />
     <Copy SourceFiles="@(DeployFiles)" DestinationFolder="$(GameDir)\BepInEx\plugins\SilksongAI" SkipUnchangedFiles="true" />
-
     <Exec Command="cmd /c start &quot;&quot; /d &quot;$(GameDir)&quot; &quot;Hollow Knight Silksong.exe&quot;" />
-</Target>
-
+  </Target>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -176,7 +166,6 @@
     <Compile Include="FrameDataCollector.cs" />
     <Compile Include="DataStructures.cs" />
     <Compile Include="GameStateController.cs" />
-    <Compile Include="GameStateLogger.cs" />
     <Compile Include="Networking\AiGateway.cs" />
     <Compile Include="Networking\AiService.cs" />
     <Compile Include="Networking\AiClient.cs" />

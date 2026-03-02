@@ -1,17 +1,10 @@
-﻿using Steamworks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
+﻿using System;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace AIPlugin.Networking
 {
-
     public class AiClient: IDisposable
     {
         private readonly string _host;
@@ -82,7 +75,6 @@ namespace AIPlugin.Networking
             }
 
         }
-
         private async Task<byte[]> ReadExactAsync(int size, CancellationToken token)
         {
             byte[] buffer = new byte[size];

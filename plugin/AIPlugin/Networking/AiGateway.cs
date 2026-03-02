@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AIPlugin.Networking
@@ -22,11 +23,13 @@ namespace AIPlugin.Networking
         {
             if (_client == null || !_client.IsConnected) return null;
 
+
             try
             {
                 var response = await SendRequestAsync("get_models");
-                AiService.ThreadSafeLog.Log(response.Payload.ToString(), AIPlugin.Log.LogError);
-                return (List<string>)response.Payload;
+                var models = ((object[])response.Payload).Select(x => x.ToString()).ToList();
+
+                return models;
             }
             catch (Exception ex)
             {
@@ -59,7 +62,7 @@ namespace AIPlugin.Networking
         }
         public void OnMessageRecieved(byte[] data)
         {
-            var response = MessagePackSerializer.Deserialize<Protocol.ResponseEnvelope>(data);
+            var response = MessagePackSerializer.Deserialize<Protocol.ResponseEnvelope>(data, MessagePack.Resolvers.ContractlessStandardResolver.Options);
 
             if (_requestCompletionSources.TryGetValue(response.RequestId, out var tcs))
             {

@@ -11,21 +11,22 @@ namespace AIPlugin
     {
         private ConfigEntry<bool> godModeToggle;
         private ConfigEntry<bool> showEnemiesToggle;
-        private ConfigEntry<bool> fightSelectedBossButton;
         private ConfigEntry<bool> teleportToSelectedBossButton;
-        private ConfigEntry<bool> recordSelectedBossButton;
+        private ConfigEntry<bool> startSessionButton;
         private ConfigEntry<bool> connectToServerButton;
         private ConfigEntry<int> bossSelectionDropdown;
+
         private int _numSessionFights = 1;
         private static readonly int _GUILabelOffsetY = 20;
         public PluginGUI(ConfigFile config)
         {
             godModeToggle = config.Bind(
-                  "General",
-                  "Enable god mode",
+                  "Cheats",
+                  "Infinite Health",
                   false,
+
                   new ConfigDescription(
-                      "Press to enable god mode",
+                      "Press to enable Infinite Health",
                       null,
                       new ConfigurationManagerAttributes
                       {
@@ -60,22 +61,8 @@ namespace AIPlugin
 
                       }
                   ));
-            fightSelectedBossButton = config.Bind(
-                  "Bosses",
-                  "Fight selected boss",
-                  false,
-                  new ConfigDescription(
-                      "Press to fight selected boss",
-                      null,
-                      new ConfigurationManagerAttributes
-                      {
-                          IsAdvanced = false,
-                          CustomDrawer = DrawFightSelectedBossButton
-
-                      }
-                  ));
             teleportToSelectedBossButton = config.Bind(
-                  "Bosses",
+                  "Cheats",
                   "Teleport to selected boss",
                   false,
                   new ConfigDescription(
@@ -88,17 +75,17 @@ namespace AIPlugin
 
                       }
                   ));
-            recordSelectedBossButton = config.Bind(
+            startSessionButton = config.Bind(
                   "Bosses",
-                  "Record the selected boss fight",
+                  "Start Bossfight Session",
                   false,
                   new ConfigDescription(
-                      "Press to record the selected boss fight",
+                      "Press to Start Bossfight Session",
                       null,
                       new ConfigurationManagerAttributes
                       {
                           IsAdvanced = false,
-                          CustomDrawer = DrawRecordSelectedBossButton
+                          CustomDrawer = DrawStartSessionButton
 
                       }
                   ));
@@ -124,7 +111,7 @@ namespace AIPlugin
         private void DrawGodModeToggle(ConfigEntryBase entry)
         {
             bool prev = AIPlugin.GodModeEnabled;
-            AIPlugin.GodModeEnabled = GUILayout.Toggle(AIPlugin.GodModeEnabled, "GodMode");
+            AIPlugin.GodModeEnabled = GUILayout.Toggle(AIPlugin.GodModeEnabled, "Infinite Health");
 
             if (prev == false && AIPlugin.GodModeEnabled == true)
                 GameStateController.SetFullHP();
@@ -175,26 +162,6 @@ namespace AIPlugin
             }
 
         }
-        private void DrawFightSelectedBossButton(ConfigEntryBase entry)
-        {
-            int bossIdx = bossSelectionDropdown.Value;
-            BossMetaData bossReference = BossReferenceDatabase.All[bossIdx];
-
-
-            bool oldGUIenabled = GUI.enabled;
-
-            if (!CanUseTeleportButton())
-                GUI.enabled = false;
-
-            if (GUILayout.Button($"Fight {bossReference.DisplayName}"))
-            {
-                bossReference.SetDefeated(false);
-
-                TeleportService.instance.TeleportTo(bossReference, true);
-            }
-
-            GUI.enabled = oldGUIenabled;
-        }
         private void DrawTeleportToSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
@@ -229,7 +196,7 @@ namespace AIPlugin
 
             GUI.enabled = oldGUIenabled;
         }
-        private void DrawRecordSelectedBossButton(ConfigEntryBase entry)
+        private void DrawStartSessionButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
             BossMetaData bossReference = BossReferenceDatabase.All[bossIdx];
@@ -237,17 +204,19 @@ namespace AIPlugin
 
             bool oldGUIenabled = GUI.enabled;
 
-            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical();
 
             if (!CanUseTeleportButton() || _numSessionFights == 0)
                 GUI.enabled = false;
 
-            if (GUILayout.Button($"Record {bossReference.DisplayName} Fight"))
+            if (GUILayout.Button($"Start Bossfight Session"))
             {
                 BossFightSession.instance.StartSession(bossReference, _numSessionFights);
             }
+            GUI.enabled = true;
+            GUILayout.BeginHorizontal();
 
-            GUI.enabled = oldGUIenabled;
+            GUILayout.Label("Number Of Fights: ");
 
             string _numRecordingsStr = "";
             if (_numSessionFights != 0)
@@ -261,7 +230,41 @@ namespace AIPlugin
 
             _numSessionFights = Math.Abs(_numSessionFights);
 
+
             GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Recording Enabled: ");
+            GUILayout.FlexibleSpace();
+
+            var recorder = BossFightRecorder.instance;
+            if (recorder == null)
+            {
+                GUI.enabled = false;
+                GUILayout.Toggle(false, "");
+                GUI.enabled = true;
+            }
+            else if (BossFightSession.instance.State != BossFightSession.SessionState.Idle)
+            {
+                GUI.enabled = false;
+                GUILayout.Toggle(recorder.enabled, "");
+                GUI.enabled = true;
+            }
+            else recorder.enabled = GUILayout.Toggle(recorder.enabled, "");
+
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+
+
+            GUILayout.Label("AI Enabled: ");
+            GUILayout.FlexibleSpace();
+           // BossFightRecorder.instance. = GUILayout.Toggle(_sessionAiEnabled, "");
+
+
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+
+            GUI.enabled = oldGUIenabled;
         }
 
         private static string RemoveNonNumberChar(string input)
