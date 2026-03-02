@@ -1,4 +1,5 @@
-﻿using MessagePack;
+﻿using AIPlugin.BossfightSession;
+using MessagePack;
 
 
 namespace AIPlugin
@@ -7,8 +8,10 @@ namespace AIPlugin
     [MessagePackObject]
     public class RecordingHeader
     {
-        [Key("Format Version")]
-        public int FormatVersion = 4;
+        [Key("FormatVersion")]
+        public int FormatVersion = 5;
+        [Key("RecordFrameDelta")]
+        public int RecordFrameDelta = SessionConfig.RecordFrameDelta;
         [Key("BossName")]
         public string BossName;
         [Key("EnemyNames")]

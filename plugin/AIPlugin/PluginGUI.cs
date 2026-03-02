@@ -1,4 +1,5 @@
-﻿using AIPlugin.Infrastructure;
+﻿using AIPlugin.BossfightSession;
+using AIPlugin.Infrastructure;
 using AIPlugin.Networking;
 using BepInEx.Configuration;
 using System;
@@ -23,16 +24,18 @@ namespace AIPlugin
 
         private TeleportService _teleportService;
         private AiService _aiService;
-        private BossfightSession _bossfightSession;
+        private SessionManager _bossfightSession;
         private BossfightRecorder _bossfightRecorder;
+        private AiBossfightController _aiBossfightController;
 
 
         public PluginGUI(ConfigFile config, ServiceRegistry registry)
         {
             _teleportService = registry.Get<TeleportService>();
             _aiService = registry.Get<AiService>();
-            _bossfightSession = registry.Get<BossfightSession>();
+            _bossfightSession = registry.Get<SessionManager>();
             _bossfightRecorder = registry.Get<BossfightRecorder>();
+            _aiBossfightController = registry.Get<AiBossfightController>();
 
             godModeToggle = config.Bind(
                   "Cheats",
@@ -254,7 +257,7 @@ namespace AIPlugin
                 GUILayout.Toggle(false, "");
                 GUI.enabled = true;
             }
-            else if (_bossfightSession.State != BossfightSession.SessionState.Idle)
+            else if (_bossfightSession.State != SessionManager.SessionState.Idle)
             {
                 GUI.enabled = false;
                 GUILayout.Toggle(_bossfightRecorder.enabled, "");
@@ -265,11 +268,22 @@ namespace AIPlugin
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-
-
             GUILayout.Label("AI Enabled: ");
             GUILayout.FlexibleSpace();
-           // BossFightRecorder.instance. = GUILayout.Toggle(_sessionAiEnabled, "");
+            
+            if (_aiBossfightController == null)
+            {
+                GUI.enabled = false;
+                GUILayout.Toggle(false, "");
+                GUI.enabled = true;
+            }
+            else if (_bossfightSession.State != SessionManager.SessionState.Idle || !_aiService.IsConnected)
+            {
+                GUI.enabled = false;
+                GUILayout.Toggle(_aiBossfightController.enabled, "");
+                GUI.enabled = true;
+            }
+            else _aiBossfightController.enabled = GUILayout.Toggle(_aiBossfightController.enabled, "");
 
 
             GUILayout.EndHorizontal();
@@ -285,7 +299,7 @@ namespace AIPlugin
         private bool CanUseTeleportButton()
         {
             if(!_teleportService.CanTeleport() ||
-                _bossfightSession.State != BossfightSession.SessionState.Idle)
+                _bossfightSession.State != SessionManager.SessionState.Idle)
                 return false;
             
             return true;
@@ -328,23 +342,23 @@ namespace AIPlugin
 
             rect0.y += _GUILabelOffsetY;
 
-            if (_bossfightSession.State != BossfightSession.SessionState.Idle)
+            if (_bossfightSession.State != SessionManager.SessionState.Idle)
             {
                 string BossName = _bossfightSession.TargetBoss.DisplayName;
                 int RecordedFights = _bossfightSession.TotalFights - _bossfightSession.RemainingFights;
                 int TotalFights = _bossfightSession.TotalFights;
                 switch (_bossfightSession.State)
                 {
-                    case BossfightSession.SessionState.StartingNewFight:
+                    case SessionManager.SessionState.StartingNewFight:
                         GUI.Label(rect0, $"Starting fight: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
                         break;
-                    case BossfightSession.SessionState.AwaitingBoss:
+                    case SessionManager.SessionState.AwaitingBoss:
                         GUI.Label(rect0, $"Awating boss: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
                         break;
-                    case BossfightSession.SessionState.Fighting:
+                    case SessionManager.SessionState.Fighting:
                         GUI.Label(rect0, $"Fighting: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
                         break;
-                    case BossfightSession.SessionState.Stopping:
+                    case SessionManager.SessionState.Stopping:
                         GUI.Label(rect0, $"Stopping fight: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
                         break;
                 };

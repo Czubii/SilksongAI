@@ -159,7 +159,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BossfightSession\BossfightSession.cs" />
+    <Compile Include="BossfightSession\AiBossfightController.cs" />
+    <Compile Include="BossfightSession\SessionConfig.cs" />
+    <Compile Include="BossfightSession\SessionManager.cs" />
     <Compile Include="Infrastructure\ServiceRegistry.cs" />
     <Compile Include="Utilities\BossReferenceDatabase.cs" />
     <Compile Include="Utilities\CustomRespawnPoint.cs" />

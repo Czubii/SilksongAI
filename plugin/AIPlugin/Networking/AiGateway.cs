@@ -14,8 +14,8 @@ namespace AIPlugin.Networking
         public AiGateway(AiClient client)
         {
             _client = client;
-            
-            AiClient.OnMessageRecieved += OnMessageRecieved;
+
+            _client.OnMessageRecieved += OnMessageRecieved;
 
             _requestCompletionSources = new ConcurrentDictionary<string, TaskCompletionSource<Protocol.ResponseEnvelope>>();
         }
@@ -71,7 +71,7 @@ namespace AIPlugin.Networking
         }   
         public void Dispose()
         {
-            AiClient.OnMessageRecieved -= OnMessageRecieved;
+            _client.OnMessageRecieved -= OnMessageRecieved;
         }
     }
 }

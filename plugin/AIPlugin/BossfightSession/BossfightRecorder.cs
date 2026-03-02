@@ -5,26 +5,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Playables;
-using static AIPlugin.BossfightSession;
 
-namespace AIPlugin
+namespace AIPlugin.BossfightSession
 {
-    public class BossfightRecorder : MonoBehaviour
+    public class BossfightRecorder : MonoBehaviour, ISessionListener
     {
         public enum RecordingState
         {
             Idle,
             Recording
         }
-        public enum OutputType
-        {
-            JSON,
-            MSGPACK
-        }
-        private OutputType _outputType = OutputType.MSGPACK;
 
-        private int _recordEvertNFrame = 10;
         private int _framesToNextRecord = 0;
 
         private bool _sessionActive = false;
@@ -50,29 +41,22 @@ namespace AIPlugin
 
         private int _frameCount = 0;
 
-        private void OnEnable()
-        {
-            BossfightSession.OnSessionStarted += OnSessionStarted;
-            BossfightSession.OnSessionStopped += OnSessionStopped;
-            BossfightSession.OnFightStarted += StartRecording;
-            BossfightSession.OnFightFinished += StopRecording;
-        }
         private void OnDisable()
         {
-            BossfightSession.OnSessionStarted -= OnSessionStarted;
-            BossfightSession.OnSessionStopped -= OnSessionStopped;
-            BossfightSession.OnFightStarted -= StartRecording;
-            BossfightSession.OnFightFinished -= StopRecording;
+            if (State == RecordingState.Recording)
+            {
+                StopRecordingPrematurely(); // closes streams, writes footer as failure, renames temp
+            }
         }
-        private void OnSessionStarted(BossfightSession.SessionInfo sessionInfo)
+        public void OnSessionStarted(SessionManager.SessionInfo sessionInfo)
         {
-            if (_sessionActive || State != RecordingState.Idle) return;
+            if (_sessionActive || State != RecordingState.Idle || !enabled) return;
 
             _bossMetaData = sessionInfo.TargetBoss;
 
             _sessionActive = true;
         }
-        private void OnSessionStopped(bool forcedStop)
+        public void OnSessionStopped(bool forcedStop)
         {
             if(!_sessionActive) return;
             if(State == RecordingState.Recording) StopRecordingPrematurely();
@@ -82,9 +66,9 @@ namespace AIPlugin
 
             _sessionActive = false;
         }
-        private void StartRecording()
+        public void OnFightStarted()
         {
-            if(!_sessionActive || State != RecordingState.Idle) return;
+            if(!_sessionActive || State != RecordingState.Idle || !enabled) return;
 
             var path = GetOutputPath();
             var baseFilename = GetBaseOutputFilename();
@@ -98,14 +82,14 @@ namespace AIPlugin
                 if (File.Exists(_tempFilePath))
                     File.Delete(_tempFilePath);
 
-                if (_outputType == OutputType.JSON)
+                if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
                 {
                     var json = new StreamWriter(_tempFilePath);
 
                     _outputJSON = json;
                     _outputBIN = null;
                 }
-                else if (_outputType == OutputType.MSGPACK)
+                else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
                 {
                     var bin = new FileStream(_tempFilePath,
                     FileMode.Create, FileAccess.Write, FileShare.Read,
@@ -163,18 +147,18 @@ namespace AIPlugin
             }
 
             // Write the header:
-            if (_outputType == OutputType.JSON)
+            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
             {
                 var dataBinWithKeys = MessagePackSerializer.Serialize(header, MessagePack.Resolvers.ContractlessStandardResolver.Options);
                 _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
             }
-            else if (_outputType == OutputType.MSGPACK)
+            else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
             {
                 MessagePackSerializer.Serialize(_outputBIN, header); // save the binary frame data
             }
         }
 
-        private void WriteFooter(FightResults fightResults)
+        private void WriteFooter(SessionManager.FightResults fightResults)
         {
             RecordingFooter footer = new RecordingFooter
             {
@@ -183,18 +167,18 @@ namespace AIPlugin
             };
 
             // Write the footer:
-            if (_outputType == OutputType.JSON)
+            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
             {
                 var dataBinWithKeys = MessagePackSerializer.Serialize(footer, MessagePack.Resolvers.ContractlessStandardResolver.Options);
                 _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
             }
-            else if (_outputType == OutputType.MSGPACK)
+            else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
             {
                 MessagePackSerializer.Serialize(_outputBIN, footer); // save the binary frame data
             }
         }
 
-        private void StopRecording(FightResults fightResults) // close files write the info about recording
+        public void OnFightFinished(SessionManager.FightResults fightResults) // close files write the info about recording
         {
             if (!_sessionActive || State != RecordingState.Recording) return;
 
@@ -212,7 +196,7 @@ namespace AIPlugin
 
             string newPath = "";
 
-            if (_outputType == OutputType.JSON)
+            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
                 newPath = Path.Combine(path, baseFilename + ".json");
             else
                 newPath = Path.Combine(path, baseFilename + ".msgpack");
@@ -227,7 +211,7 @@ namespace AIPlugin
         }
         private void StopRecordingPrematurely()
         {
-            StopRecording(new BossfightSession.FightResults(false));
+            OnFightFinished(new SessionManager.FightResults(false));
         }
         private string GetOutputPath()
         {
@@ -253,7 +237,7 @@ namespace AIPlugin
             if (_framesToNextRecord <= 0)
             {
                 RecordFrame();
-                _framesToNextRecord = _recordEvertNFrame;
+                _framesToNextRecord = SessionConfig.RecordFrameDelta;
             }
         }
         public void RecordFrame()
@@ -269,27 +253,17 @@ namespace AIPlugin
                 return;
             }
 
-            if (_outputType == OutputType.JSON)
+            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
             {
                 var dataBinWithKeys = MessagePackSerializer.Serialize(frameData, MessagePack.Resolvers.ContractlessStandardResolver.Options);
                 _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
             }
-            else if (_outputType == OutputType.MSGPACK)
+            else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
             {
                 MessagePackSerializer.Serialize(_outputBIN, frameData); // save the binary frame data
             }
 
             return;
         }
-        public void SetOutputType(OutputType type)
-        {
-            if(State != RecordingState.Idle || _sessionActive)
-            {
-                AIPlugin.Log.LogError("BossFightRecorder.SetOutputType(): Cannot change the output type while recording");
-                return;
-            }
-            _outputType = type;
-        }
-
     }
 }

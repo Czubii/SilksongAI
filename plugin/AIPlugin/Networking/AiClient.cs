@@ -18,6 +18,7 @@ namespace AIPlugin.Networking
 
         public bool IsConnected => _tcpClient?.Connected ?? false;
 
+        public event Action OnConnect;
         public event Action OnDisconnect;
         public event Action<byte[]> OnMessageRecieved;
 
@@ -30,11 +31,23 @@ namespace AIPlugin.Networking
         public async Task ConnectAsync()
         {
             _tcpClient = new TcpClient();
-            await _tcpClient.ConnectAsync(_host, _port);
-            _stream = _tcpClient.GetStream();
+            try
+            {
+                await _tcpClient.ConnectAsync(_host, _port).ConfigureAwait(false);
+                _stream = _tcpClient.GetStream();
 
-            _cts = new CancellationTokenSource();
-            _recieveLoop = Task.Run(() => RecieveLoopAsync(_cts.Token));
+                OnConnect?.Invoke();
+
+                _cts = new CancellationTokenSource();
+                _recieveLoop = Task.Run(() => RecieveLoopAsync(_cts.Token));
+            }
+            catch
+            {
+                _tcpClient?.Close();
+                _tcpClient = null;
+                _stream = null;
+                throw;
+            }
         }
 
         public async Task SendAsync(byte[] bytes)

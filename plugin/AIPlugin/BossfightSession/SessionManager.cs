@@ -1,11 +1,21 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Profiling;
+using static AIPlugin.BossfightSession.SessionManager;
 
-namespace AIPlugin
+namespace AIPlugin.BossfightSession
 {
-    public class BossfightSession : MonoBehaviour
+    public interface ISessionListener
+    {
+        void OnSessionStarted(SessionInfo info);
+        void OnSessionStopped(bool forced);
+        void OnFightStarted();
+        void OnFightFinished(FightResults results);
+    }
+    public class SessionManager : MonoBehaviour
     {   
         public enum SessionState
         {
@@ -61,13 +71,28 @@ namespace AIPlugin
                 Success = success;
             }
         }
-        public static event Action<SessionInfo> OnSessionStarted;
-        public static event Action<bool> OnSessionStopped; // <bool> - was the session stopped forcibly (true - yes, false - no)
-        public static event Action OnFightStarted;
-        public static event Action<FightResults> OnFightFinished;
-        public void Initialize(TeleportService teleport)
+
+        private readonly List<ISessionListener> _listeners = new List<ISessionListener>();
+        public void Initialize(TeleportService teleport, List<ISessionListener> listeners)
         {
+            _listeners.AddRange(listeners);
             _teleportService = teleport;
+        }
+        private void RaiseSessionStarted(SessionInfo info)
+        {
+            foreach (var r in _listeners) r.OnSessionStarted(info);
+        }
+        private void RaiseSessionStopped(bool forced)
+        {
+            foreach (var r in _listeners) r.OnSessionStopped(forced);
+        }
+        private void RaiseFightStarted()
+        {
+            foreach (var r in _listeners) r.OnFightStarted();
+        }
+        private void RaiseFightFinished(FightResults results)
+        {
+            foreach (var r in _listeners) r.OnFightFinished(results);
         }
         public void StartSession(BossMetaData boss, int numFights, SessionSettings settings = null)
         {
@@ -84,7 +109,7 @@ namespace AIPlugin
 
             State = SessionState.StartingNewFight;
 
-            OnSessionStarted?.Invoke(new SessionInfo(boss, numFights));
+            RaiseSessionStarted(new SessionInfo(boss, numFights));
 
             RemainingFights = numFights;
             TotalFights = numFights;
@@ -148,9 +173,10 @@ namespace AIPlugin
                     continue;
                 }
 
-                OnFightStarted?.Invoke();
+                RaiseFightStarted();
                 yield return WaitForAttemptFinished();
-                OnFightFinished?.Invoke(new FightResults(!_heroDied));
+                RaiseFightFinished(new FightResults(!_heroDied));
+
                 if(_heroDied) StartCoroutine(AwaitCocoonAndRemove());
 
                 AIPlugin.Log.LogDebug($"BossFightSession: Attempt Ended, hero died: {_heroDied}");
@@ -160,7 +186,7 @@ namespace AIPlugin
             AIPlugin.Log.LogDebug($"BossFightSession: Finalizing Session");
             yield return FinalizeSession();
             State = SessionState.Idle;
-            OnSessionStopped?.Invoke(_forceStopFlag);
+            RaiseSessionStopped(_forceStopFlag);
         }
         private IEnumerator FinalizeSession()
         {

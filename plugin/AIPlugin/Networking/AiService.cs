@@ -9,7 +9,7 @@ namespace AIPlugin.Networking
     /// High level integration layer between external python AI server and the game for real time game controll
     /// This class is responsible for Holding the GameClient, managing lifecycle and auto reconnection to the server if something fails
     /// </summary>
-    public class AiService : IDisposable
+    public class AiService : MonoBehaviour, IDisposable
     {
         private AiClient _client;
         private AiGateway _gateway;
@@ -17,12 +17,16 @@ namespace AIPlugin.Networking
 
         private Task _connectTask;
         private Task _reconnectTask;
-        
         public bool IsConnected => _client?.IsConnected ?? false;
 
         private bool _autoReconnect = true;
         private int _reconnectAttempts = 10;
         public int _reconnectAttemptDelay = 2000;
+
+        public event Action OnConnected;
+        public event Action OnDisconnected;
+        private bool _notifyConnected;
+        private bool _notifyDisconnected;
 
         public static class ThreadSafeLog
         {
@@ -39,15 +43,17 @@ namespace AIPlugin.Networking
                 }
             }
         }
-        public AiService(string ip, int port) 
+        public void Initialize(string ip, int port)
         {
             _client = new AiClient(ip, port);
             _gateway = new AiGateway(_client);
 
-            _client.OnDisconnect += OnDisconnect;
+            _client.OnDisconnect += HandleDisconnect;
+            _client.OnConnect += HandleConnect;
         }
-        private void OnDisconnect() //TODO add some game pausing or something nice here 
+        private void HandleDisconnect() //TODO add some game pausing or something nice here 
         {
+            _notifyDisconnected = true; 
             AIPlugin.Log.LogWarning("Lost Connection to the AI server");
             if (_autoReconnect)
             {
@@ -55,9 +61,25 @@ namespace AIPlugin.Networking
                 _reconnectTask = TryReconnect();
             }
         }
+        private void HandleConnect() 
+        {
+            _notifyConnected = true;
+        }
         void Update()
         {
             ThreadSafeLog.Flush();
+            if (_notifyConnected)
+            {
+                AIPlugin.Log.LogInfo("NOTIFY CONN");
+                OnConnected?.Invoke();
+                _notifyConnected = false;   
+            }
+            if (_notifyDisconnected)
+            {
+                AIPlugin.Log.LogInfo("NOTIFY DSC");
+                OnDisconnected?.Invoke();
+                _notifyDisconnected = false;
+            }
         }
 
         public void ConnectToServer()
@@ -68,25 +90,34 @@ namespace AIPlugin.Networking
         }
         private async Task TryReconnect()
         {
-            for (int i = 0; i < _reconnectAttempts; i++)
+            try
             {
-                await Task.Delay(_reconnectAttemptDelay);
-                await Connect();
-
-                if (IsConnected)
+                for (int i = 0; i < _reconnectAttempts; i++)
                 {
-                    ThreadSafeLog.Log($"Reconnected Succesfully", AIPlugin.Log.LogMessage);
-                    return;
+                    await Task.Delay(_reconnectAttemptDelay);
+
+                    await Connect();
+
+                    if (IsConnected)
+                    {
+                        ThreadSafeLog.Log($"Reconnected Succesfully", AIPlugin.Log.LogMessage);
+                        return;
+                    }
                 }
+                ThreadSafeLog.Log($"Could not reconnect after {_reconnectAttempts} attempts", AIPlugin.Log.LogMessage);
             }
-            ThreadSafeLog.Log($"Could not reconnect after {_reconnectAttempts} attempts", AIPlugin.Log.LogMessage);
+            finally
+            {
+                _reconnectTask = null;
+            }
+
         }
         private async Task Connect()
         {
             try
             {
-                var asyncConnectTask = _client.ConnectAsync();
-                await asyncConnectTask;
+                if (IsConnected) return;
+                await _client.ConnectAsync();
             }
             catch (Exception ex)
             {
@@ -100,7 +131,8 @@ namespace AIPlugin.Networking
 
         public void Dispose()
         {
-            _client.OnDisconnect -= OnDisconnect;
+            _client.OnDisconnect -= HandleDisconnect;
+            _client.OnConnect -= HandleConnect;
             _client?.Dispose();
             _gateway?.Dispose();    
         } 

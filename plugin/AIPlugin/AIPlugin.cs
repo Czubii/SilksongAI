@@ -7,6 +7,8 @@ using Steamworks;
 using AIPlugin.Networking;
 using System.Threading.Tasks;
 using AIPlugin.Infrastructure;
+using AIPlugin.BossfightSession;
+using System.Collections.Generic;
 
 namespace AIPlugin
 {
@@ -27,16 +29,22 @@ namespace AIPlugin
                 _registry = new ServiceRegistry();
 
                 var teleporter = gameObject.AddComponent<TeleportService>();
-                var session = gameObject.AddComponent<BossfightSession>();
-                session.Initialize(teleporter);
                 var recorder = gameObject.AddComponent<BossfightRecorder>();
-                recorder.enabled = false;
-                var aiService = new AiService("127.0.0.1", 5000);
+                var aiService = gameObject.AddComponent<AiService>();
+                aiService.Initialize("127.0.0.1", 5000);
 
+                var aiBossfightController = gameObject.AddComponent<AiBossfightController>();
+                aiBossfightController.Initialize(aiService);
+
+                var session = gameObject.AddComponent<SessionManager>();
+                session.Initialize(teleporter, new List<ISessionListener> { recorder, aiBossfightController });
+                recorder.enabled = false;
+                
                 _registry.Add(teleporter);
                 _registry.Add(session);
                 _registry.Add(recorder);
                 _registry.Add(aiService);
+                _registry.Add(aiBossfightController);
 
                 gui = new PluginGUI(Config, _registry);
 
@@ -77,7 +85,7 @@ namespace AIPlugin
             if (Input.GetKeyDown(KeyCode.F10))
             {
                 //BossFightRecordingSession.ForceStopRecordingSession();
-                _registry.Get<BossfightSession>().StopSession();
+                _registry.Get<SessionManager>().StopSession();
             }
             if (Input.GetKeyDown(KeyCode.F9))
             {
