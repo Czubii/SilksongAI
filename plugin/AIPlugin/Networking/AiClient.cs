@@ -18,8 +18,8 @@ namespace AIPlugin.Networking
 
         public bool IsConnected => _tcpClient?.Connected ?? false;
 
-        public static event Action OnDisconnect;
-        public static event Action<byte[]> OnMessageRecieved;
+        public event Action OnDisconnect;
+        public event Action<byte[]> OnMessageRecieved;
 
         public AiClient(string host, int port)
         {

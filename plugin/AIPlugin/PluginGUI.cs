@@ -1,4 +1,5 @@
-﻿using AIPlugin.Networking;
+﻿using AIPlugin.Infrastructure;
+using AIPlugin.Networking;
 using BepInEx.Configuration;
 using System;
 using System.Collections.Generic;
@@ -20,9 +21,19 @@ namespace AIPlugin
         private int _numSessionFights = 1;
         private static readonly int _GUILabelOffsetY = 20;
 
-        private List<String> _models = new List<String>();
-        public PluginGUI(ConfigFile config)
+        private TeleportService _teleportService;
+        private AiService _aiService;
+        private BossfightSession _bossfightSession;
+        private BossfightRecorder _bossfightRecorder;
+
+
+        public PluginGUI(ConfigFile config, ServiceRegistry registry)
         {
+            _teleportService = registry.Get<TeleportService>();
+            _aiService = registry.Get<AiService>();
+            _bossfightSession = registry.Get<BossfightSession>();
+            _bossfightRecorder = registry.Get<BossfightRecorder>();
+
             godModeToggle = config.Bind(
                   "Cheats",
                   "Infinite Health",
@@ -179,7 +190,7 @@ namespace AIPlugin
             if (GUILayout.Button($"Teleport to {bossReference.DisplayName}"))
             {
                 bossReference.SetDefeated(true);
-                TeleportService.instance.TeleportTo(bossReference, true);
+                _teleportService.TeleportTo(bossReference, true);
             }
 
             GUI.enabled = oldGUIenabled;
@@ -187,14 +198,13 @@ namespace AIPlugin
         private void DrawConnectToServerButton(ConfigEntryBase entry)
         {
             bool oldGUIenabled = GUI.enabled;
-            var aiService = AiService.instance;
 
-            if (aiService == null || aiService.IsConnected)
+            if (_aiService.IsConnected)
                 GUI.enabled = false;
 
             if (GUILayout.Button($"Connect To AI Server"))
             {
-                aiService?.ConnectToServer();
+                _aiService.ConnectToServer();
             }
 
             GUI.enabled = oldGUIenabled;
@@ -213,7 +223,7 @@ namespace AIPlugin
 
             if (GUILayout.Button($"Start Bossfight Session"))
             {
-                BossFightSession.instance.StartSession(bossReference, _numSessionFights);
+                _bossfightSession.StartSession(bossReference, _numSessionFights);
             }
             GUI.enabled = true;
             GUILayout.BeginHorizontal();
@@ -238,20 +248,19 @@ namespace AIPlugin
             GUILayout.Label("Recording Enabled: ");
             GUILayout.FlexibleSpace();
 
-            var recorder = BossfightRecorder.instance;
-            if (recorder == null)
+            if (_bossfightRecorder == null)
             {
                 GUI.enabled = false;
                 GUILayout.Toggle(false, "");
                 GUI.enabled = true;
             }
-            else if (BossFightSession.instance.State != BossFightSession.SessionState.Idle)
+            else if (_bossfightSession.State != BossfightSession.SessionState.Idle)
             {
                 GUI.enabled = false;
-                GUILayout.Toggle(recorder.enabled, "");
+                GUILayout.Toggle(_bossfightRecorder.enabled, "");
                 GUI.enabled = true;
             }
-            else recorder.enabled = GUILayout.Toggle(recorder.enabled, "");
+            else _bossfightRecorder.enabled = GUILayout.Toggle(_bossfightRecorder.enabled, "");
 
 
             GUILayout.EndHorizontal();
@@ -275,8 +284,8 @@ namespace AIPlugin
         }
         private bool CanUseTeleportButton()
         {
-            if(!TeleportService.instance.CanTeleport() || 
-                BossFightSession.instance.State != BossFightSession.SessionState.Idle)
+            if(!_teleportService.CanTeleport() ||
+                _bossfightSession.State != BossfightSession.SessionState.Idle)
                 return false;
             
             return true;
@@ -319,24 +328,23 @@ namespace AIPlugin
 
             rect0.y += _GUILabelOffsetY;
 
-            var bf = BossFightSession.instance;
-            if (bf.State != BossFightSession.SessionState.Idle)
+            if (_bossfightSession.State != BossfightSession.SessionState.Idle)
             {
-                string BossName = bf.TargetBoss.DisplayName;
-                int RecordedFights = bf.TotalFights - bf.RemainingFights;
-                int TotalFights = bf.TotalFights;
-                switch (bf.State)
+                string BossName = _bossfightSession.TargetBoss.DisplayName;
+                int RecordedFights = _bossfightSession.TotalFights - _bossfightSession.RemainingFights;
+                int TotalFights = _bossfightSession.TotalFights;
+                switch (_bossfightSession.State)
                 {
-                    case BossFightSession.SessionState.StartingNewFight:
+                    case BossfightSession.SessionState.StartingNewFight:
                         GUI.Label(rect0, $"Starting fight: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
                         break;
-                    case BossFightSession.SessionState.AwaitingBoss:
+                    case BossfightSession.SessionState.AwaitingBoss:
                         GUI.Label(rect0, $"Awating boss: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
                         break;
-                    case BossFightSession.SessionState.Fighting:
+                    case BossfightSession.SessionState.Fighting:
                         GUI.Label(rect0, $"Fighting: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
                         break;
-                    case BossFightSession.SessionState.Stopping:
+                    case BossfightSession.SessionState.Stopping:
                         GUI.Label(rect0, $"Stopping fight: {BossName} {RecordedFights}/{TotalFights}", labelStyleRight);
                         break;
                 };

@@ -4,11 +4,9 @@ using HarmonyLib;
 using System;
 using UnityEngine;
 using Steamworks;
-using HarmonyLib.Tools;
 using AIPlugin.Networking;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
+using AIPlugin.Infrastructure;
 
 namespace AIPlugin
 {
@@ -20,21 +18,28 @@ namespace AIPlugin
         public static ManualLogSource Log { get; private set; }
         public static string SteamUserName = "Unknown";
         public static bool GodModeEnabled { get; set; } = false;
+        private ServiceRegistry _registry;
         private void Awake()
         {
             try
             {
                 Log = Logger;
+                _registry = new ServiceRegistry();
 
-                TeleportService.EnsureExists();
-                BossFightSession.EnsureExists();
-                BossfightRecorder.EnsureExists();
-                BossfightRecorder.instance.enabled = false;
-                AiService.EnsureExists();
+                var teleporter = gameObject.AddComponent<TeleportService>();
+                var session = gameObject.AddComponent<BossfightSession>();
+                session.Initialize(teleporter);
+                var recorder = gameObject.AddComponent<BossfightRecorder>();
+                recorder.enabled = false;
+                var aiService = new AiService("127.0.0.1", 5000);
 
-                gui = new PluginGUI(Config);
+                _registry.Add(teleporter);
+                _registry.Add(session);
+                _registry.Add(recorder);
+                _registry.Add(aiService);
 
-                HarmonyFileLog.Enabled = true;
+                gui = new PluginGUI(Config, _registry);
+
                 Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
                 Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
             }
@@ -72,7 +77,7 @@ namespace AIPlugin
             if (Input.GetKeyDown(KeyCode.F10))
             {
                 //BossFightRecordingSession.ForceStopRecordingSession();
-                BossFightSession.instance.StopSession();
+                _registry.Get<BossfightSession>().StopSession();
             }
             if (Input.GetKeyDown(KeyCode.F9))
             {
@@ -82,7 +87,7 @@ namespace AIPlugin
 
         private async Task Test()
         {
-            var models = await AiService.instance.gateway.ListModelsAsync();
+            var models = await _registry.Get<AiService>().Gateway.ListModelsAsync();
             foreach (var model in models)
             {
                 Log.LogInfo($"{model}");

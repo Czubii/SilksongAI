@@ -9,13 +9,11 @@ namespace AIPlugin.Networking
     /// High level integration layer between external python AI server and the game for real time game controll
     /// This class is responsible for Holding the GameClient, managing lifecycle and auto reconnection to the server if something fails
     /// </summary>
-    public class AiService : MonoBehaviour //TODO: add disconnection handlinga / auto reconnecting all of that nasty stuff
+    public class AiService : IDisposable
     {
-        public static AiService instance;
-
         private AiClient _client;
         private AiGateway _gateway;
-        public AiGateway gateway => _gateway;
+        public AiGateway Gateway => _gateway;
 
         private Task _connectTask;
         private Task _reconnectTask;
@@ -41,36 +39,12 @@ namespace AIPlugin.Networking
                 }
             }
         }
-        private void Awake()
+        public AiService(string ip, int port) 
         {
-            if (instance != null)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-
-            _client = new AiClient("127.0.0.1", 5000);
+            _client = new AiClient(ip, port);
             _gateway = new AiGateway(_client);
-        }
-        public static void EnsureExists()
-        {
-            if (instance != null) return;
 
-            var go = new GameObject("AiService");
-            DontDestroyOnLoad(go);
-            instance = go.AddComponent<AiService>();
-        }
-
-        private void OnEnable()
-        {
-            AiClient.OnDisconnect += OnDisconnect;
-        }
-        private void OnDisable()
-        {
-            AiClient.OnDisconnect -= OnDisconnect;
+            _client.OnDisconnect += OnDisconnect;
         }
         private void OnDisconnect() //TODO add some game pausing or something nice here 
         {
@@ -123,6 +97,13 @@ namespace AIPlugin.Networking
                 _connectTask = null;
             }
         }
+
+        public void Dispose()
+        {
+            _client.OnDisconnect -= OnDisconnect;
+            _client?.Dispose();
+            _gateway?.Dispose();    
+        } 
 
     }
 }

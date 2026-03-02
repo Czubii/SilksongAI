@@ -10,26 +10,7 @@ namespace AIPlugin
 {
     public class TeleportService : MonoBehaviour
     {
-        public static TeleportService instance { get; private set; }
-        public bool TeleportInProgress { get; private set; }
-        private void Awake()
-        {
-            if (instance != null)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        public static void EnsureExists()
-        {
-            if (instance != null) return;
-
-            var go = new GameObject("TeleportService");
-            go.AddComponent<TeleportService>();
-        }
+        public bool TeleportInProgress { get; private set;}
         public void TeleportTo(BossMetaData boss, bool requireSceneReload)
         {
             TeleportTo(boss.ArenaSceneName, boss.ArenaPosition, requireSceneReload);

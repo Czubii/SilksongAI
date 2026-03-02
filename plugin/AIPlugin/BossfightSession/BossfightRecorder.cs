@@ -6,13 +6,12 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Playables;
-using static AIPlugin.BossFightSession;
+using static AIPlugin.BossfightSession;
 
 namespace AIPlugin
 {
     public class BossfightRecorder : MonoBehaviour
     {
-        public static BossfightRecorder instance;
         public enum RecordingState
         {
             Idle,
@@ -51,40 +50,21 @@ namespace AIPlugin
 
         private int _frameCount = 0;
 
-        private void Awake()
-        {
-            if (instance != null)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        public static void EnsureExists()
-        {
-            if (instance != null) return;
-
-            var go = new GameObject("BossFightRecorder");
-            DontDestroyOnLoad(go);
-            instance = go.AddComponent<BossfightRecorder>();
-        }
         private void OnEnable()
         {
-            BossFightSession.OnSessionStarted += OnSessionStarted;
-            BossFightSession.OnSessionStopped += OnSessionStopped;
-            BossFightSession.OnFightStarted += StartRecording;
-            BossFightSession.OnFightFinished += StopRecording;
+            BossfightSession.OnSessionStarted += OnSessionStarted;
+            BossfightSession.OnSessionStopped += OnSessionStopped;
+            BossfightSession.OnFightStarted += StartRecording;
+            BossfightSession.OnFightFinished += StopRecording;
         }
         private void OnDisable()
         {
-            BossFightSession.OnSessionStarted -= OnSessionStarted;
-            BossFightSession.OnSessionStopped -= OnSessionStopped;
-            BossFightSession.OnFightStarted -= StartRecording;
-            BossFightSession.OnFightFinished -= StopRecording;
+            BossfightSession.OnSessionStarted -= OnSessionStarted;
+            BossfightSession.OnSessionStopped -= OnSessionStopped;
+            BossfightSession.OnFightStarted -= StartRecording;
+            BossfightSession.OnFightFinished -= StopRecording;
         }
-        private void OnSessionStarted(BossFightSession.SessionInfo sessionInfo)
+        private void OnSessionStarted(BossfightSession.SessionInfo sessionInfo)
         {
             if (_sessionActive || State != RecordingState.Idle) return;
 
@@ -247,7 +227,7 @@ namespace AIPlugin
         }
         private void StopRecordingPrematurely()
         {
-            StopRecording(new BossFightSession.FightResults(false));
+            StopRecording(new BossfightSession.FightResults(false));
         }
         private string GetOutputPath()
         {

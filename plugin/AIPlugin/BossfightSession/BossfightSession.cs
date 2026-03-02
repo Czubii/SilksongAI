@@ -5,10 +5,8 @@ using UnityEngine;
 
 namespace AIPlugin
 {
-    public class BossFightSession : MonoBehaviour
+    public class BossfightSession : MonoBehaviour
     {   
-        public static BossFightSession instance;
-
         public enum SessionState
         {
             Idle,
@@ -29,17 +27,14 @@ namespace AIPlugin
                 keepTools = false;
             }
         }
-
+        private TeleportService _teleportService;
         public BossMetaData TargetBoss { get; private set; }
-
         public int RemainingFights { get; private set; } = 0;
-
         public int TotalFights { get; private set; } = 0;
 
         public int AwaitBossTimeoutFrames = 2500;
 
         private CustomRespawnPoint _spawnPoint;
-
         public SessionState State { get; private set; } = SessionState.Idle;
 
         private bool _bossFound;
@@ -70,25 +65,9 @@ namespace AIPlugin
         public static event Action<bool> OnSessionStopped; // <bool> - was the session stopped forcibly (true - yes, false - no)
         public static event Action OnFightStarted;
         public static event Action<FightResults> OnFightFinished;
-
-        private void Awake()
+        public void Initialize(TeleportService teleport)
         {
-            if (instance != null)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        public static void EnsureExists()
-        {
-            if (instance != null) return;
-
-            var go = new GameObject("BossFightSession");
-            DontDestroyOnLoad(go);
-            instance = go.AddComponent<BossFightSession>();
+            _teleportService = teleport;
         }
         public void StartSession(BossMetaData boss, int numFights, SessionSettings settings = null)
         {
@@ -194,16 +173,16 @@ namespace AIPlugin
             }
             else
             {
-                yield return TeleportService.instance.AwaitCanTeleport();
+                yield return _teleportService.AwaitCanTeleport();
                 _spawnPoint?.Dispose();
                 _spawnPoint = null;
                 CustomRespawnPoint.ResetTemporary();
-                TeleportService.instance.TeleportToBench();
+                _teleportService.TeleportToBench();
             }
         }
         private IEnumerator PrepareHero()
         {
-            var ts = TeleportService.instance;
+            var ts = _teleportService;
 
             yield return ts.AwaitCanTeleport(() => IsStopping());
 
