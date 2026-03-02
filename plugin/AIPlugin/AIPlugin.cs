@@ -5,6 +5,10 @@ using System;
 using UnityEngine;
 using Steamworks;
 using HarmonyLib.Tools;
+using AIPlugin.Networking;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace AIPlugin
 {
@@ -12,23 +16,34 @@ namespace AIPlugin
     public class AIPlugin : BaseUnityPlugin
     {
         private PluginGUI gui;
+        private Task test;
         public static ManualLogSource Log { get; private set; }
         public static string SteamUserName = "Unknown";
         public static bool GodModeEnabled { get; set; } = false;
         private void Awake()
         {
-            Log = Logger;
+            try
+            {
+                Log = Logger;
+
+                TeleportService.EnsureExists();
+                BossFightSession.EnsureExists();
+                BossFightRecorder.EnsureExists();
+                AiService.EnsureExists();
+
+                gui = new PluginGUI(Config);
+
+                HarmonyFileLog.Enabled = true;
+                Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
+                Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
+            }
+            catch (Exception e)
+            {
+                Log.LogError(e);
+                return;
+            }
+
             Log.LogInfo("Plugin loaded and initialized");
-
-            gui = new PluginGUI(Config);
-
-            HarmonyFileLog.Enabled = true;
-            Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
-            Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
-
-            TeleportService.EnsureExists();
-            BossFightSession.EnsureExists();
-            BossFightRecorder.EnsureExists();
         }
         [HarmonyPostfix]
         [HarmonyPatch(typeof(SteamAPI), "Init")]
@@ -57,6 +72,19 @@ namespace AIPlugin
             {
                 //BossFightRecordingSession.ForceStopRecordingSession();
                 BossFightSession.instance.StopSession();
+            }
+            if (Input.GetKeyDown(KeyCode.F9))
+            {
+                test = Test();
+            }
+        }
+
+        private async Task Test()
+        {
+            var models = await AiService.instance.gateway.ListModelsAsync();
+            foreach (var model in models)
+            {
+                Log.LogInfo($"{model}");
             }
         }
         private void OnGUI()

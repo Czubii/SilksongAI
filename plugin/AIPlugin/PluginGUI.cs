@@ -1,4 +1,5 @@
-﻿using BepInEx.Configuration;
+﻿using AIPlugin.Networking;
+using BepInEx.Configuration;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace AIPlugin
         private ConfigEntry<bool> fightSelectedBossButton;
         private ConfigEntry<bool> teleportToSelectedBossButton;
         private ConfigEntry<bool> recordSelectedBossButton;
+        private ConfigEntry<bool> connectToServerButton;
         private ConfigEntry<int> bossSelectionDropdown;
         private int _numSessionFights = 1;
         private static readonly int _GUILabelOffsetY = 20;
@@ -98,6 +100,19 @@ namespace AIPlugin
                           IsAdvanced = false,
                           CustomDrawer = DrawRecordSelectedBossButton
 
+                      }
+                  ));
+            connectToServerButton = config.Bind(
+                  "Server",
+                  "Connect To AI Server",
+                  false,
+                  new ConfigDescription(
+                      "Press to Connect To AI Server",
+                      null,
+                      new ConfigurationManagerAttributes
+                      {
+                          IsAdvanced = false,
+                          CustomDrawer = DrawConnectToServerButton
                       }
                   ));
         }
@@ -195,6 +210,21 @@ namespace AIPlugin
             {
                 bossReference.SetDefeated(true);
                 TeleportService.instance.TeleportTo(bossReference, true);
+            }
+
+            GUI.enabled = oldGUIenabled;
+        }
+        private void DrawConnectToServerButton(ConfigEntryBase entry)
+        {
+            bool oldGUIenabled = GUI.enabled;
+            var aiService = AiService.instance;
+
+            if (aiService == null || aiService.IsConnected)
+                GUI.enabled = false;
+
+            if (GUILayout.Button($"Connect To AI Server"))
+            {
+                aiService?.ConnectToServer();
             }
 
             GUI.enabled = oldGUIenabled;
