@@ -1,6 +1,7 @@
 ﻿using AIPlugin.Networking;
 using BepInEx.Configuration;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -18,6 +19,8 @@ namespace AIPlugin
 
         private int _numSessionFights = 1;
         private static readonly int _GUILabelOffsetY = 20;
+
+        private List<String> _models = new List<String>();
         public PluginGUI(ConfigFile config)
         {
             godModeToggle = config.Bind(
@@ -90,7 +93,7 @@ namespace AIPlugin
                       }
                   ));
             connectToServerButton = config.Bind(
-                  "Server",
+                  "AI settings",
                   "Connect To AI Server",
                   false,
                   new ConfigDescription(
@@ -201,7 +204,6 @@ namespace AIPlugin
             int bossIdx = bossSelectionDropdown.Value;
             BossMetaData bossReference = BossReferenceDatabase.All[bossIdx];
 
-
             bool oldGUIenabled = GUI.enabled;
 
             GUILayout.BeginVertical();
@@ -236,7 +238,7 @@ namespace AIPlugin
             GUILayout.Label("Recording Enabled: ");
             GUILayout.FlexibleSpace();
 
-            var recorder = BossFightRecorder.instance;
+            var recorder = BossfightRecorder.instance;
             if (recorder == null)
             {
                 GUI.enabled = false;

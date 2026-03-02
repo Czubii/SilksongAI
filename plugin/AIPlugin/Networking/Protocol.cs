@@ -1,10 +1,4 @@
 ﻿using MessagePack;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace AIPlugin.Networking
 {
     public class Protocol

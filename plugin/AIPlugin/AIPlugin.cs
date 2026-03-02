@@ -28,8 +28,8 @@ namespace AIPlugin
 
                 TeleportService.EnsureExists();
                 BossFightSession.EnsureExists();
-                BossFightRecorder.EnsureExists();
-                BossFightRecorder.instance.enabled = false;
+                BossfightRecorder.EnsureExists();
+                BossfightRecorder.instance.enabled = false;
                 AiService.EnsureExists();
 
                 gui = new PluginGUI(Config);

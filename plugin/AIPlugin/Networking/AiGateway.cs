@@ -23,7 +23,6 @@ namespace AIPlugin.Networking
         {
             if (_client == null || !_client.IsConnected) return null;
 
-
             try
             {
                 var response = await SendRequestAsync("get_models");

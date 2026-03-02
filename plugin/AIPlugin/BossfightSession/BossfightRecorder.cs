@@ -10,9 +10,9 @@ using static AIPlugin.BossFightSession;
 
 namespace AIPlugin
 {
-    public class BossFightRecorder : MonoBehaviour
+    public class BossfightRecorder : MonoBehaviour
     {
-        public static BossFightRecorder instance;
+        public static BossfightRecorder instance;
         public enum RecordingState
         {
             Idle,
@@ -68,7 +68,7 @@ namespace AIPlugin
 
             var go = new GameObject("BossFightRecorder");
             DontDestroyOnLoad(go);
-            instance = go.AddComponent<BossFightRecorder>();
+            instance = go.AddComponent<BossfightRecorder>();
         }
         private void OnEnable()
         {
