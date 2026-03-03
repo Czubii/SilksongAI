@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AIPlugin.BossfightSession
 {
-    public static class SessionConfig
+    internal static class SessionConfig
     {
         public enum RecordingOutputTypes
         {
@@ -15,6 +15,7 @@ namespace AIPlugin.BossfightSession
             MSGPACK
         }
         public static readonly int RecordFrameDelta = 10;
-        public static readonly RecordingOutputTypes RecordingOutputType = RecordingOutputTypes.MSGPACK;
+        public static readonly RecordingOutputTypes RecordingOutputType = RecordingOutputTypes.JSON;
+        public static readonly int AwaitBossTimeoutFrames = 2000;
     }
 }

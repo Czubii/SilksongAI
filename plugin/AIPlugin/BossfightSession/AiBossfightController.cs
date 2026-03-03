@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using static AIPlugin.BossfightSession.BossfightRecorder;
 using static AIPlugin.BossfightSession.SessionManager;
 
 namespace AIPlugin.BossfightSession
@@ -14,7 +15,16 @@ namespace AIPlugin.BossfightSession
     /// </summary>
     public class AiBossfightController : MonoBehaviour, ISessionListener
     {
+        public enum AiState
+        {
+            Idle,
+            Fighting
+        }
+
+        public AiState State;
+
         private AiService _service;
+        private int _framesToNextRecord = 0;
         public void Initialize(AiService service)
         {
             _service = service;
@@ -33,23 +43,30 @@ namespace AIPlugin.BossfightSession
                 return;
             }
         }
-        public void OnSessionStarted(SessionInfo info)
+        public void OnFightStarted(SessionEnemyManager enemyManager)
+        {
+            _framesToNextRecord = 0;
+        }
+        public void OnFightFinished(FightResults results, bool forced)
         {
 
         }
-        public void OnSessionStopped(bool forced)
+        public void Update()
+        {
+            if (State != AiState.Fighting || (GameManager.instance?.IsGamePaused() ?? true)) return;
+
+            _framesToNextRecord--;
+
+            if (_framesToNextRecord <= 0)
+            {
+                RecordFrame();
+                _framesToNextRecord = SessionConfig.RecordFrameDelta;
+            }
+        }
+        private void RecordFrame()
         {
 
         }
-        public void OnFightStarted()
-        {
-
-        }
-        public void OnFightFinished(FightResults results)
-        {
-
-        }
-
 
     }
 }

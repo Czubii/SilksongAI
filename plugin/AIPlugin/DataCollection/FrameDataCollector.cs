@@ -5,7 +5,8 @@ namespace AIPlugin
 {
     public static class FrameDataCollector
     {
-        public static FrameData GetAll(EnemyInstance boss, List<EnemyInstance> enemies)
+        //public static LivePredictionFrameData TODO
+        public static RecordingFrameData GetAll(EnemyInstance boss, List<EnemyInstance> enemies)
         {
 
             FrameHeroData? heroData = GetHeroData();
@@ -24,7 +25,7 @@ namespace AIPlugin
 
             FrameUserInputs userInputs = GetInputs(IH);
 
-            FrameData frameData = new FrameData()
+            RecordingFrameData frameData = new RecordingFrameData()
             {
                 Hero = (FrameHeroData)heroData,
                 UserInputs = userInputs

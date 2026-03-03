@@ -2,6 +2,7 @@
 using MessagePack;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -17,15 +18,7 @@ namespace AIPlugin.BossfightSession
         }
 
         private int _framesToNextRecord = 0;
-
-        private bool _sessionActive = false;
         public RecordingState State {  get; private set; } = RecordingState.Idle;
-
-        private BossMetaData _bossMetaData;
-
-        private EnemyInstance _boss;
-
-        private List<EnemyInstance> _enemies = new List<EnemyInstance>(); // every enemy except boss present on scene
 
         //private List<DamageSource> _damageSources; // TODO
 
@@ -33,13 +26,11 @@ namespace AIPlugin.BossfightSession
 
         private Stream _outputBIN;
 
-        private string _directory;
-
-        private string _baseFileName;
-
         private string _tempFilePath;
 
         private int _frameCount = 0;
+
+        private SessionEnemyManager _enemyManager;
 
         private void OnDisable()
         {
@@ -48,29 +39,12 @@ namespace AIPlugin.BossfightSession
                 StopRecordingPrematurely(); // closes streams, writes footer as failure, renames temp
             }
         }
-        public void OnSessionStarted(SessionManager.SessionInfo sessionInfo)
+        public void OnFightStarted(SessionEnemyManager enemyManager)
         {
-            if (_sessionActive || State != RecordingState.Idle || !enabled) return;
+            if(State != RecordingState.Idle || !enabled) return;
+            if(enemyManager == null) throw new ArgumentNullException(nameof(enemyManager));
 
-            _bossMetaData = sessionInfo.TargetBoss;
-
-            _sessionActive = true;
-        }
-        public void OnSessionStopped(bool forcedStop)
-        {
-            if(!_sessionActive) return;
-            if(State == RecordingState.Recording) StopRecordingPrematurely();
-
-            _directory = null;
-            _baseFileName = null;
-
-            _sessionActive = false;
-        }
-        public void OnFightStarted()
-        {
-            if(!_sessionActive || State != RecordingState.Idle || !enabled) return;
-
-            var path = GetOutputPath();
+            var path = GetOutputPath(enemyManager.GetTargetInstance().Name);
             var baseFilename = GetBaseOutputFilename();
 
             try // initialize directory and files
@@ -111,17 +85,7 @@ namespace AIPlugin.BossfightSession
                 return;
             }
 
-            _enemies.Clear();
-            _enemies = EnemyTracker.GetAll().ToList();
-
-            _boss = _enemies.FirstOrDefault(e => e.Name == _bossMetaData.InternalName);
-            if (_boss == null)
-            {
-                AIPlugin.Log.LogError($"BossFightRecorder(): Boss '{_bossMetaData.InternalName}' not found in scene");
-                return;
-            }
-
-            _enemies.Remove(_boss);
+            _enemyManager = enemyManager;
 
             WriteHeader();
 
@@ -132,18 +96,21 @@ namespace AIPlugin.BossfightSession
 
         private void WriteHeader()
         {
+            EnemyInstance boss = _enemyManager.GetTargetInstance();
+            List<EnemyInstance> enemies = _enemyManager.GetNonTargetInstances();
+
             RecordingHeader header = new RecordingHeader 
             { 
                 PlayerName = AIPlugin.SteamUserName,
-                BossName = _bossMetaData.InternalName,
+                BossName = boss.Name,
             };
 
-            header.EnemyNames = new string[_enemies.Count + 1];
-            header.EnemyNames[0] = _boss.Name;
+            header.EnemyNames = new string[enemies.Count + 1];
+            header.EnemyNames[0] = boss.Name;
 
-            for (int i = 0; i < _enemies.Count; i++)
+            for (int i = 0; i < enemies.Count; i++)
             {
-                header.EnemyNames[i+1] = _enemies[i].Name;
+                header.EnemyNames[i+1] = enemies[i].Name;
             }
 
             // Write the header:
@@ -178,9 +145,9 @@ namespace AIPlugin.BossfightSession
             }
         }
 
-        public void OnFightFinished(SessionManager.FightResults fightResults) // close files write the info about recording
+        public void OnFightFinished(SessionManager.FightResults fightResults, bool forced) // close files write the info about recording
         {
-            if (!_sessionActive || State != RecordingState.Recording) return;
+            if (State != RecordingState.Recording) return;
 
             WriteFooter(fightResults);
 
@@ -189,43 +156,39 @@ namespace AIPlugin.BossfightSession
             _outputJSON?.Dispose();
             _outputBIN?.Dispose();
 
-            // rename the output:
-
-            var path = GetOutputPath();
-            var baseFilename = GetBaseOutputFilename();
-
-            string newPath = "";
-
-            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
-                newPath = Path.Combine(path, baseFilename + ".json");
-            else
-                newPath = Path.Combine(path, baseFilename + ".msgpack");
-
             if (File.Exists(_tempFilePath))
             {
-                File.Move(_tempFilePath, newPath);
+                if (forced)
+                {
+                    File.Delete(_tempFilePath);
+                }
+                else
+                {
+                    string newPath;
+
+                    if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
+                        newPath = Path.ChangeExtension(_tempFilePath, ".json");
+                    else
+                        newPath = Path.ChangeExtension(_tempFilePath, ".msgpack");
+
+                    File.Move(_tempFilePath, newPath);
+                }
             }
 
+            _enemyManager = null;
             _tempFilePath = null;
-            _baseFileName = null;
         }
         private void StopRecordingPrematurely()
         {
-            OnFightFinished(new SessionManager.FightResults(false));
+            OnFightFinished(new SessionManager.FightResults(false), true);
         }
-        private string GetOutputPath()
+        private string GetOutputPath(string bossName)
         {
-            if (_directory == null)
-                _directory = Path.Combine(Paths.PluginPath, "SilksongAI", "Recordings", _bossMetaData.InternalName);
-
-            return _directory;
+            return Path.Combine(Paths.PluginPath, "SilksongAI", "Recordings", bossName);
         }
         private string GetBaseOutputFilename()
         {
-            if (_baseFileName == null)
-                _baseFileName = $"session_{DateTime.Now:yyyyMMdd_HHmmss}";
-
-            return _baseFileName;
+            return $"session_{DateTime.Now:yyyyMMdd_HHmmss}";
         }
         private void Update()
         {
@@ -244,7 +207,10 @@ namespace AIPlugin.BossfightSession
         {
             _frameCount++;
 
-            FrameData frameData = FrameDataCollector.GetAll(_boss, _enemies);
+            EnemyInstance boss = _enemyManager?.GetTargetInstance() ?? null;
+            List<EnemyInstance> enemies = _enemyManager?.GetNonTargetInstances() ?? null;
+
+            RecordingFrameData frameData = FrameDataCollector.GetAll(boss, enemies);
 
             if (frameData == null)
             {

@@ -161,6 +161,7 @@
   <ItemGroup>
     <Compile Include="BossfightSession\AiBossfightController.cs" />
     <Compile Include="BossfightSession\SessionConfig.cs" />
+    <Compile Include="BossfightSession\SessionEnemyManager.cs" />
     <Compile Include="BossfightSession\SessionManager.cs" />
     <Compile Include="Infrastructure\ServiceRegistry.cs" />
     <Compile Include="Utilities\BossReferenceDatabase.cs" />

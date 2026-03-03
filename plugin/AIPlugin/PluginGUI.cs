@@ -182,7 +182,7 @@ namespace AIPlugin
         private void DrawTeleportToSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
-            BossMetaData bossReference = BossReferenceDatabase.All[bossIdx];
+            BossMetadata bossReference = BossReferenceDatabase.All[bossIdx];
 
 
             bool oldGUIenabled = GUI.enabled;
@@ -215,7 +215,7 @@ namespace AIPlugin
         private void DrawStartSessionButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
-            BossMetaData bossReference = BossReferenceDatabase.All[bossIdx];
+            BossMetadata bossReference = BossReferenceDatabase.All[bossIdx];
 
             bool oldGUIenabled = GUI.enabled;
 
@@ -344,7 +344,7 @@ namespace AIPlugin
 
             if (_bossfightSession.State != SessionManager.SessionState.Idle)
             {
-                string BossName = _bossfightSession.TargetBoss.DisplayName;
+                string BossName = _bossfightSession.TargetBossMetadata.DisplayName;
                 int RecordedFights = _bossfightSession.TotalFights - _bossfightSession.RemainingFights;
                 int TotalFights = _bossfightSession.TotalFights;
                 switch (_bossfightSession.State)

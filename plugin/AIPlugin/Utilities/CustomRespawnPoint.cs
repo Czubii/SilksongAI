@@ -1,9 +1,10 @@
-﻿using TeamCherry.SharedUtils;
+﻿using System;
+using TeamCherry.SharedUtils;
 using UnityEngine;
 
 namespace AIPlugin
 {
-    public class CustomRespawnPoint
+    public class CustomRespawnPoint: IDisposable
     {
         private RespawnMarker _marker;
         private string _scene;

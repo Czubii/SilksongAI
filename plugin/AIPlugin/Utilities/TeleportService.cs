@@ -11,7 +11,7 @@ namespace AIPlugin
     public class TeleportService : MonoBehaviour
     {
         public bool TeleportInProgress { get; private set;}
-        public void TeleportTo(BossMetaData boss, bool requireSceneReload)
+        public void TeleportTo(BossMetadata boss, bool requireSceneReload)
         {
             TeleportTo(boss.ArenaSceneName, boss.ArenaPosition, requireSceneReload);
         }

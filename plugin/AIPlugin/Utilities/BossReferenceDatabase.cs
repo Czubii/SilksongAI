@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AIPlugin
 {
 
-    public class BossMetaData
+    public class BossMetadata
     {
         public string DisplayName;
         public string InternalName;
@@ -53,9 +53,9 @@ namespace AIPlugin
             crest.Slots[3] = slot;
         }
 
-        public static readonly List<BossMetaData> All = new List<BossMetaData>
+        public static readonly List<BossMetadata> All = new List<BossMetadata>
         {
-            new BossMetaData
+            new BossMetadata
             {
                 DisplayName = "Moss Mother",
                 InternalName = "Mossbone Mother",
@@ -91,7 +91,7 @@ namespace AIPlugin
                     p.silkRegenMax = 0;
                 }
             },
-            new BossMetaData
+            new BossMetadata
             {
                 DisplayName = "Bell Beast",
                 InternalName = "Bone Beast",
@@ -120,7 +120,7 @@ namespace AIPlugin
 
                 }
             },
-            new BossMetaData
+            new BossMetadata
             {
                 DisplayName = "Lace 1",
                 InternalName = "Lace Boss1",
@@ -149,7 +149,7 @@ namespace AIPlugin
 
                 }
             },
-            new BossMetaData
+            new BossMetadata
             {
                 DisplayName = "Fourth Chorus",
                 InternalName = "SG_head",
@@ -178,7 +178,7 @@ namespace AIPlugin
 
                 }
             },
-            new BossMetaData
+            new BossMetadata
             {
                 DisplayName = "Moorwing",
                 InternalName = "Vampire Gnat",
@@ -207,7 +207,7 @@ namespace AIPlugin
 
                 }
             },
-            new BossMetaData
+            new BossMetadata
             {
                 DisplayName = "Sister Splinter",
                 InternalName = "Splinter Queen",
@@ -236,7 +236,7 @@ namespace AIPlugin
 
                 }
             },
-            new BossMetaData
+            new BossMetadata
             {                   
                 DisplayName = "Widow",
                 InternalName = "Spinner Boss",

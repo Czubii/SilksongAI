@@ -10,10 +10,8 @@ namespace AIPlugin.BossfightSession
 {
     public interface ISessionListener
     {
-        void OnSessionStarted(SessionInfo info);
-        void OnSessionStopped(bool forced);
-        void OnFightStarted();
-        void OnFightFinished(FightResults results);
+        void OnFightStarted(SessionEnemyManager enemyManager);
+        void OnFightFinished(FightResults results, bool forced);
     }
     public class SessionManager : MonoBehaviour
     {   
@@ -38,11 +36,9 @@ namespace AIPlugin.BossfightSession
             }
         }
         private TeleportService _teleportService;
-        public BossMetaData TargetBoss { get; private set; }
+        public BossMetadata TargetBossMetadata { get; private set; }
         public int RemainingFights { get; private set; } = 0;
         public int TotalFights { get; private set; } = 0;
-
-        public int AwaitBossTimeoutFrames = 2500;
 
         private CustomRespawnPoint _spawnPoint;
         public SessionState State { get; private set; } = SessionState.Idle;
@@ -52,17 +48,7 @@ namespace AIPlugin.BossfightSession
         private bool _heroDied;
 
         private bool _forceStopFlag;
-        public readonly struct SessionInfo
-        {
-            public readonly BossMetaData TargetBoss;
-            public readonly int TotalFights;
-
-            public SessionInfo(BossMetaData boss, int totalFights)
-            {
-                TargetBoss = boss;
-                TotalFights = totalFights;
-            }
-        }
+        private bool ForceStop() => _forceStopFlag;
         public readonly struct FightResults
         {
             public readonly bool Success;
@@ -72,29 +58,24 @@ namespace AIPlugin.BossfightSession
             }
         }
 
+        private SessionEnemyManager _enemyManager = new SessionEnemyManager();
+
         private readonly List<ISessionListener> _listeners = new List<ISessionListener>();
+
         public void Initialize(TeleportService teleport, List<ISessionListener> listeners)
         {
             _listeners.AddRange(listeners);
             _teleportService = teleport;
         }
-        private void RaiseSessionStarted(SessionInfo info)
-        {
-            foreach (var r in _listeners) r.OnSessionStarted(info);
-        }
-        private void RaiseSessionStopped(bool forced)
-        {
-            foreach (var r in _listeners) r.OnSessionStopped(forced);
-        }
         private void RaiseFightStarted()
         {
-            foreach (var r in _listeners) r.OnFightStarted();
+            foreach (var r in _listeners) r.OnFightStarted(_enemyManager);
         }
         private void RaiseFightFinished(FightResults results)
         {
-            foreach (var r in _listeners) r.OnFightFinished(results);
+            foreach (var r in _listeners) r.OnFightFinished(results, ForceStop());
         }
-        public void StartSession(BossMetaData boss, int numFights, SessionSettings settings = null)
+        public void StartSession(BossMetadata boss, int numFights, SessionSettings settings = null)
         {
             if (State != SessionState.Idle)
             {
@@ -109,11 +90,9 @@ namespace AIPlugin.BossfightSession
 
             State = SessionState.StartingNewFight;
 
-            RaiseSessionStarted(new SessionInfo(boss, numFights));
-
             RemainingFights = numFights;
             TotalFights = numFights;
-            TargetBoss = boss;
+            TargetBossMetadata = boss;
             
             _forceStopFlag = false;
 
@@ -122,14 +101,16 @@ namespace AIPlugin.BossfightSession
 
             //CacheOldPlayerData(); // TODO
 
-            if (!settings.keepAbilities) TargetBoss.SetExpectedPlayerAbilities();
+            if (!settings.keepAbilities) TargetBossMetadata.SetExpectedPlayerAbilities();
             //if (!settings.keepTools) TargetBoss.SetExpectedPlayerTools(); //TODO
 
-            _spawnPoint = new CustomRespawnPoint("BossFightSessionRespawn" + TargetBoss.InternalName, 
-                TargetBoss.ArenaSceneName, 
-                TargetBoss.ArenaPosition);
+            _spawnPoint = new CustomRespawnPoint("BossFightSessionRespawn" + TargetBossMetadata.InternalName, 
+                TargetBossMetadata.ArenaSceneName, 
+                TargetBossMetadata.ArenaPosition);
 
-            AIPlugin.Log.LogDebug($"BossFightSession: Starting new bossfight session, target: {TargetBoss.DisplayName}");
+            _enemyManager.SetTargetEnemy(TargetBossMetadata);
+
+            AIPlugin.Log.LogDebug($"BossFightSession: Starting new bossfight session, target: {TargetBossMetadata.DisplayName}");
             StartCoroutine(SessionLoop());
         }
         public void StopSession()
@@ -145,7 +126,7 @@ namespace AIPlugin.BossfightSession
             GameStateController.RemoveCocoon();
             _heroDied = false;
 
-            while (RemainingFights > 0 && !IsStopping())
+            while (RemainingFights > 0 && !ForceStop())
             {
                 _spawnPoint.UseAsTemporary(0); // refresh spawnpoint
                 RemainingFights--;
@@ -153,14 +134,13 @@ namespace AIPlugin.BossfightSession
                 State = SessionState.StartingNewFight;
                 AIPlugin.Log.LogDebug($"BossFightSession: Starting new fight");
                 yield return PrepareHero();
-                _heroDied = false;
-                if (IsStopping()) break;
+                if (ForceStop()) break;
 
                 State = SessionState.AwaitingBoss;
                 AIPlugin.Log.LogDebug($"BossFightSession: Awaiting boss");
                 _bossFound = false;
-                yield return AwaitBoss();
-                if (IsStopping()) break;
+                yield return _enemyManager.AwaitTargetOnScene((r) => _bossFound = r, ForceStop);
+                if (ForceStop()) break;
 
                 if (_bossFound)
                 {
@@ -173,6 +153,7 @@ namespace AIPlugin.BossfightSession
                     continue;
                 }
 
+                _heroDied = false;
                 RaiseFightStarted();
                 yield return WaitForAttemptFinished();
                 RaiseFightFinished(new FightResults(!_heroDied));
@@ -186,7 +167,6 @@ namespace AIPlugin.BossfightSession
             AIPlugin.Log.LogDebug($"BossFightSession: Finalizing Session");
             yield return FinalizeSession();
             State = SessionState.Idle;
-            RaiseSessionStopped(_forceStopFlag);
         }
         private IEnumerator FinalizeSession()
         {
@@ -210,20 +190,20 @@ namespace AIPlugin.BossfightSession
         {
             var ts = _teleportService;
 
-            yield return ts.AwaitCanTeleport(() => IsStopping());
+            yield return ts.AwaitCanTeleport(() => ForceStop());
 
-            if (IsStopping()) yield break;
+            if (ForceStop()) yield break;
 
             if (!_heroDied)
             {
                 GameStateController.SetFullHP();
                 GameStateController.SetFullSilk();
 
-                if (!TargetBoss.RequireHardSceneReload)
+                if (!TargetBossMetadata.RequireHardSceneReload)
                 {
-                    TargetBoss.SetDefeated(false);
+                    TargetBossMetadata.SetDefeated(false);
 
-                    ts.TeleportTo(TargetBoss, true);
+                    ts.TeleportTo(TargetBossMetadata, true);
                     yield return ts.AwaitCanTeleport();
                 }
                 else
@@ -231,8 +211,8 @@ namespace AIPlugin.BossfightSession
                     ts.TeleportTo("Tut_01", Vector3.zero, true); // any room different than the bossfight would do
                     yield return ts.AwaitCanTeleport();
 
-                    TargetBoss.SetDefeated(false);
-                    ts.TeleportTo(TargetBoss, true);
+                    TargetBossMetadata.SetDefeated(false);
+                    ts.TeleportTo(TargetBossMetadata, true);
                     yield return ts.AwaitCanTeleport();
                 }
             }
@@ -243,7 +223,7 @@ namespace AIPlugin.BossfightSession
 
                 yield return new WaitUntil(() => // wait untill can input or stop flag
                 {
-                    if (IsStopping()) return true;
+                    if (ForceStop()) return true;
 
                     if (HeroController.instance == null)
                         return false;
@@ -254,44 +234,10 @@ namespace AIPlugin.BossfightSession
 
             GameCameras.instance.HUDIn(); // turn on HUD in case some boss disables it after death (for example widow does that)
         }
-
-        private IEnumerator AwaitBoss()
-        {
-            int i = 0;
-            yield return new WaitUntil(() =>
-            {
-                if (IsStopping())
-                {
-                    _bossFound = false;
-                    return true;
-                }
-                if (i >= AwaitBossTimeoutFrames)
-                {
-                    AIPlugin.Log.LogWarning($"AwaitBossAndStartRecording(): Timeout hit when awaiting {TargetBoss.InternalName} " +
-                        $"(timeout frames setting: {AwaitBossTimeoutFrames} ");
-                    _bossFound = false;
-                    return true;
-                }
-                var boss = EnemyTracker
-                    .GetAll()
-                    .FirstOrDefault(e => e.Name == TargetBoss.InternalName);
-                
-                if (boss != null)
-                {
-                    _bossFound = true;
-                    return true;
-                }
-                
-                i++;
-                return false;
-            });
-        }
         private IEnumerator WaitForAttemptFinished()
         {
-            var boss = EnemyTracker
-                    .GetAll()
-                    .FirstOrDefault(e => e.Name == TargetBoss.InternalName);
-            var hm = boss.GameObject.GetComponent<HealthManager>();
+            var boss = _enemyManager.GetTargetInstance();
+            var hm = boss.HealthManager;
             var pd = PlayerData.instance;
 
             yield return new WaitUntil(() =>
@@ -311,7 +257,7 @@ namespace AIPlugin.BossfightSession
                     _heroDied = true;
                     return true;
                 }
-                if (IsStopping())
+                if (ForceStop())
                 {
                     return true;
                 }
@@ -330,10 +276,6 @@ namespace AIPlugin.BossfightSession
             });
             AIPlugin.Log.LogDebug("REMOVING COCOON");
             GameStateController.RemoveCocoon();
-        }
-        private bool IsStopping()
-        {
-            return (_forceStopFlag);
         }
     }
 }

@@ -19,6 +19,24 @@ namespace AIPlugin.Networking
 
             _requestCompletionSources = new ConcurrentDictionary<string, TaskCompletionSource<Protocol.ResponseEnvelope>>();
         }
+        //public async Task<List<string>> PredictInputsAsync(RecordingFrameData)
+        //{
+        //    if (_client == null || !_client.IsConnected) return null;
+
+        //    try
+        //    {
+        //        var response = await SendRequestAsync("get_models");
+        //        var models = ((object[])response.Payload).Select(x => x.ToString()).ToList();
+
+        //        return models;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        AiService.ThreadSafeLog.Log(ex.ToString(), AIPlugin.Log.LogError);
+        //    }
+
+        //    return null;
+        //}
         public async Task<List<string>> ListModelsAsync()
         {
             if (_client == null || !_client.IsConnected) return null;

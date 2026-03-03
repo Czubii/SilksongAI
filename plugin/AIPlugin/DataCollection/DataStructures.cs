@@ -29,7 +29,7 @@ namespace AIPlugin
     }
 
     [MessagePackObject]
-    public class FrameData //TODO add some header before the frame data to output files
+    public class RecordingFrameData
     {
         [Key(0)]
         public FrameHeroData Hero;
@@ -38,6 +38,14 @@ namespace AIPlugin
         [Key(2)]
         public FrameUserInputs UserInputs;
 
+    }
+    [MessagePackObject]
+    public class LivePredictionFrameData
+    {
+        [Key(0)]
+        public FrameHeroData Hero;
+        [Key(1)]
+        public FrameEnemyData[] Enemies; // The main target (i.e. boss) should always be at the first index
     }
 
     [MessagePackObject]
