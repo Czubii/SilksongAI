@@ -29,22 +29,26 @@ namespace AIPlugin
                 _registry = new ServiceRegistry();
 
                 var teleporter = gameObject.AddComponent<TeleportService>();
-                var recorder = gameObject.AddComponent<BossfightRecorder>();
                 var aiService = gameObject.AddComponent<AiService>();
                 aiService.Initialize("127.0.0.1", 5000);
+                var gameStateController = new GameStateController();
+                var sessionEventHandler = new SessionEvents();
+                var enemyManager = new SessionEnemyManager();
 
-                var aiBossfightController = gameObject.AddComponent<AiBossfightController>();
-                aiBossfightController.Initialize(aiService);
+                var session = gameObject.AddComponent<SessionOrchestrator>();
+                session.Initialize(sessionEventHandler, gameStateController, teleporter, enemyManager);
 
-                var session = gameObject.AddComponent<SessionManager>();
-                session.Initialize(teleporter, new List<ISessionListener> { recorder, aiBossfightController });
+                var recorder = gameObject.AddComponent<BossfightRecorder>();
+                recorder.Initialize(enemyManager);
                 recorder.enabled = false;
+                sessionEventHandler.Subscribe(recorder);
+                
                 
                 _registry.Add(teleporter);
                 _registry.Add(session);
                 _registry.Add(recorder);
                 _registry.Add(aiService);
-                _registry.Add(aiBossfightController);
+                _registry.Add(gameStateController);
 
                 gui = new PluginGUI(Config, _registry);
 
@@ -85,7 +89,7 @@ namespace AIPlugin
             if (Input.GetKeyDown(KeyCode.F10))
             {
                 //BossFightRecordingSession.ForceStopRecordingSession();
-                _registry.Get<SessionManager>().StopSession();
+                _registry.Get<SessionOrchestrator>().RequestStop();
             }
             if (Input.GetKeyDown(KeyCode.F9))
             {

@@ -1,8 +1,8 @@
 ﻿namespace AIPlugin
 {
-    public static class GameStateController
+    public class GameStateController
     {
-        public static void SetFullHP()
+        public void SetFullHP()
         {
             HeroController heroController = HeroController.instance;
             if (heroController == null)
@@ -13,7 +13,7 @@
             heroController.RefillHealthToMax();
         }
 
-        public static void SetFullSilk()
+        public void SetFullSilk()
         {
             HeroController heroController = HeroController.instance;
             if (heroController == null)
@@ -24,7 +24,7 @@
             heroController.RefillSilkToMaxSilent();
 
         }
-        public static void RemoveCocoon()
+        public void RemoveCocoon()
         {
             HeroController heroController = HeroController.instance;
             if (heroController == null)

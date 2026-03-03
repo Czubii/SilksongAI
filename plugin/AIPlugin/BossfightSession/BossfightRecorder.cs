@@ -32,6 +32,10 @@ namespace AIPlugin.BossfightSession
 
         private SessionEnemyManager _enemyManager;
 
+        public void Initialize(SessionEnemyManager enemyManager)
+        {
+            _enemyManager = enemyManager;
+        }
         private void OnDisable()
         {
             if (State == RecordingState.Recording)
@@ -39,12 +43,11 @@ namespace AIPlugin.BossfightSession
                 StopRecordingPrematurely(); // closes streams, writes footer as failure, renames temp
             }
         }
-        public void OnFightStarted(SessionEnemyManager enemyManager)
+        public void OnFightStarted()
         {
             if(State != RecordingState.Idle || !enabled) return;
-            if(enemyManager == null) throw new ArgumentNullException(nameof(enemyManager));
 
-            var path = GetOutputPath(enemyManager.GetTargetInstance().Name);
+            var path = GetOutputPath(_enemyManager.GetTargetInstance().Name);
             var baseFilename = GetBaseOutputFilename();
 
             try // initialize directory and files
@@ -85,8 +88,6 @@ namespace AIPlugin.BossfightSession
                 return;
             }
 
-            _enemyManager = enemyManager;
-
             WriteHeader();
 
             _frameCount = 0;
@@ -125,11 +126,11 @@ namespace AIPlugin.BossfightSession
             }
         }
 
-        private void WriteFooter(SessionManager.FightResults fightResults)
+        private void WriteFooter(AttemptResult result)
         {
             RecordingFooter footer = new RecordingFooter
             {
-                Success = fightResults.Success,
+                Success = result == AttemptResult.Success,
                 FrameCount = _frameCount
             };
 
@@ -145,11 +146,11 @@ namespace AIPlugin.BossfightSession
             }
         }
 
-        public void OnFightFinished(SessionManager.FightResults fightResults, bool forced) // close files write the info about recording
+        public void OnFightFinished(AttemptResult result) // close files write the info about recording
         {
             if (State != RecordingState.Recording) return;
 
-            WriteFooter(fightResults);
+            WriteFooter(result);
 
             State = RecordingState.Idle;
 
@@ -158,11 +159,7 @@ namespace AIPlugin.BossfightSession
 
             if (File.Exists(_tempFilePath))
             {
-                if (forced)
-                {
-                    File.Delete(_tempFilePath);
-                }
-                else
+                if (result == AttemptResult.Success || result == AttemptResult.HeroDied)
                 {
                     string newPath;
 
@@ -173,14 +170,17 @@ namespace AIPlugin.BossfightSession
 
                     File.Move(_tempFilePath, newPath);
                 }
+                else
+                {
+                    File.Delete(_tempFilePath);
+                }
             }
 
-            _enemyManager = null;
             _tempFilePath = null;
         }
         private void StopRecordingPrematurely()
         {
-            OnFightFinished(new SessionManager.FightResults(false), true);
+            OnFightFinished(AttemptResult.ForcedStop);
         }
         private string GetOutputPath(string bossName)
         {
