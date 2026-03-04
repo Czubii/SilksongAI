@@ -47,6 +47,7 @@ namespace AIPlugin.BossfightSession
             _sessionRuntime = SessionRuntime.Start(_sessionContext);
             _enemyManager.SetTargetEnemy(_sessionContext.Boss);
             _cancel = new CancellationHandle();
+            _sessionContext.Boss.SetExpectedPlayerAbilities();//TODO MOVE SOMWHERE ELSE AND MAKE COMPATIBLE WITH CONFIG
             StartCoroutine(SessionLoop());
             return true;
         }

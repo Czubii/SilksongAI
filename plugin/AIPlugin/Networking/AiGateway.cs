@@ -37,16 +37,25 @@ namespace AIPlugin.Networking
 
         //    return null;
         //}
-        public async Task<List<string>> ListModelsAsync()
+        public async Task<Dictionary<string, List<string>>> ListModelsAsync()
         {
             if (_client == null || !_client.IsConnected) return null;
 
             try
             {
                 var response = await SendRequestAsync("get_models");
-                var models = ((object[])response.Payload).Select(x => x.ToString()).ToList();
 
-                return models;
+                var raw = response.Payload as IDictionary<object, object>;
+
+                if (raw == null)
+                    return null;
+
+                return raw.ToDictionary(
+                    kvp => kvp.Key.ToString(),
+                    kvp => ((IEnumerable<object>)kvp.Value)
+                           .Select(x => x.ToString())
+                           .ToList()
+                );
             }
             catch (Exception ex)
             {

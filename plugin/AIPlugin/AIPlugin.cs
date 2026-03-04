@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using AIPlugin.Infrastructure;
 using AIPlugin.BossfightSession;
 using System.Collections.Generic;
+using AIPlugin.Utilities;
 
 namespace AIPlugin
 {
@@ -42,13 +43,16 @@ namespace AIPlugin
                 recorder.Initialize(enemyManager);
                 recorder.enabled = false;
                 sessionEventHandler.Subscribe(recorder);
+
+                var coordinator = new AIServerCoordinator(aiService);
                 
-                
-                _registry.Add(teleporter);
+                _registry.Add(teleporter);//TODO add everything to registry
                 _registry.Add(session);
                 _registry.Add(recorder);
                 _registry.Add(aiService);
                 _registry.Add(gameStateController);
+                _registry.Add(sessionEventHandler);
+                _registry.Add(coordinator);
 
                 gui = new PluginGUI(Config, _registry);
 
@@ -90,19 +94,6 @@ namespace AIPlugin
             {
                 //BossFightRecordingSession.ForceStopRecordingSession();
                 _registry.Get<SessionOrchestrator>().RequestStop();
-            }
-            if (Input.GetKeyDown(KeyCode.F9))
-            {
-                test = Test();
-            }
-        }
-
-        private async Task Test()
-        {
-            var models = await _registry.Get<AiService>().Gateway.ListModelsAsync();
-            foreach (var model in models)
-            {
-                Log.LogInfo($"{model}");
             }
         }
         private void OnGUI()

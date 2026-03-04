@@ -1,6 +1,7 @@
 ﻿using AIPlugin.BossfightSession;
 using AIPlugin.Infrastructure;
 using AIPlugin.Networking;
+using AIPlugin.Utilities;
 using BepInEx.Configuration;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,12 @@ namespace AIPlugin
         private SessionOrchestrator _bossfightSession;
         private BossfightRecorder _bossfightRecorder;
         private GameStateController _gameStateController;
+        private AIServerCoordinator _serverCoordinator;
+
+        private bool _showBossDropdown = false;
+        private bool _showModelDropdown = false;
+        private Vector2 _modelScroll;
+        private Vector2 _bossScroll;
 
         public PluginGUI(ConfigFile config, ServiceRegistry registry)
         {
@@ -35,6 +42,7 @@ namespace AIPlugin
             _bossfightSession = registry.Get<SessionOrchestrator>();
             _bossfightRecorder = registry.Get<BossfightRecorder>();
             _gameStateController = registry.Get<GameStateController>();
+            _serverCoordinator = registry.Get<AIServerCoordinator>();
 
             godModeToggle = config.Bind(
                   "Cheats",
@@ -115,7 +123,7 @@ namespace AIPlugin
                       new ConfigurationManagerAttributes
                       {
                           IsAdvanced = false,
-                          CustomDrawer = DrawConnectToServerButton
+                          CustomDrawer = DrawServerSettings
                       }
                   ));
         }
@@ -138,8 +146,7 @@ namespace AIPlugin
 
             config.Value = GUILayout.Toggle(config.Value, "Show Enemies");
         }
-        private bool _showBossDropdown;
-        private Vector2 _bossScroll;
+
         private void DrawBossSelectionDropdown(ConfigEntryBase entry)
         {
             var config = (ConfigEntry<int>)entry;
@@ -197,19 +204,77 @@ namespace AIPlugin
 
             GUI.enabled = oldGUIenabled;
         }
-        private void DrawConnectToServerButton(ConfigEntryBase entry)
+
+        private void DrawServerSettings(ConfigEntryBase entry)
         {
+
             bool oldGUIenabled = GUI.enabled;
 
             if (_aiService.IsConnected)
                 GUI.enabled = false;
+
+            GUILayout.BeginVertical();
 
             if (GUILayout.Button($"Connect To AI Server"))
             {
                 _aiService.ConnectToServer();
             }
 
+            if (_aiService.IsConnected)
+            {
+
+                GUILayout.BeginHorizontal();
+
+                GUILayout.Label("Model Selection", GUILayout.Width(100));
+
+                GUI.enabled = true;
+
+                List<string> modelNames;
+                int bossIdx = bossSelectionDropdown.Value;
+                string bossName = BossReferenceDatabase.All[bossIdx].InternalName;
+                var anyModels = _serverCoordinator.TryGetModels(bossName, out modelNames);
+
+                _serverCoordinator.EnsureValidSelection(bossName);
+
+                if (!_showModelDropdown)//TODO make this an object and the one in boss selection
+                {
+                    string selectedModelName = _serverCoordinator.GetSelectedModelName() ?? "None";
+                    // Button showing current selection
+                    if (GUILayout.Button(selectedModelName) && anyModels)
+                    {
+                        _showModelDropdown = !_showModelDropdown;
+                    }
+                }
+
+                if (_showModelDropdown)
+                {
+                    GUILayout.BeginVertical("box");
+
+                    _modelScroll = GUILayout.BeginScrollView(
+                        _modelScroll,
+                        GUIStyle.none,
+                        GUILayout.Height(200)   // visible height of dropdown
+                    );
+
+                    for (int i = 0; i < modelNames.Count; i++)
+                    {
+                        if (GUILayout.Button(modelNames[i]))
+                        {
+                            _serverCoordinator.SelectModel(bossName, modelNames[i]);
+                            _showModelDropdown = false; // Welcome to nesting hell
+                        }
+                    }
+
+                    GUILayout.EndScrollView();
+                    GUILayout.EndVertical();
+                }
+
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndVertical();
             GUI.enabled = oldGUIenabled;
+
+
         }
         private void DrawStartSessionButton(ConfigEntryBase entry)
         {

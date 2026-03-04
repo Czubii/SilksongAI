@@ -71,7 +71,9 @@ namespace AIPlugin
                 facing = enemy.GameObject.transform.localScale.x >= 0.0 ? 1 : -1,
                 velX = enemy.Rigidbody2D.linearVelocity.x,
                 velY = enemy.Rigidbody2D.linearVelocity.y,
-                hp = enemy.HealthManager.hp
+                hp = enemy.HealthManager.hp,
+                Name = enemy.Name,
+                
             };
 
             output.playMakers = new PlayMakerData[enemy.PlayMakers.Length];

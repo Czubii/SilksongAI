@@ -9,7 +9,7 @@ namespace AIPlugin
     public class RecordingHeader
     {
         [Key("FormatVersion")]
-        public int FormatVersion = 5;
+        public int FormatVersion = 8;
         [Key("RecordFrameDelta")]
         public int RecordFrameDelta = SessionConfig.RecordFrameDelta;
         [Key("BossName")]
@@ -64,6 +64,8 @@ namespace AIPlugin
         [Key(5)]
         public int hp;
         [Key(6)]
+        public string Name;
+        [Key(7)]
         public PlayMakerData[] playMakers;
     }
     [MessagePackObject]

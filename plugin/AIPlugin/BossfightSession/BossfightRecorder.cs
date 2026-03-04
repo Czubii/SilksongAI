@@ -20,8 +20,6 @@ namespace AIPlugin.BossfightSession
         private int _framesToNextRecord = 0;
         public RecordingState State {  get; private set; } = RecordingState.Idle;
 
-        //private List<DamageSource> _damageSources; // TODO
-
         private StreamWriter _outputJSON;
 
         private Stream _outputBIN;
@@ -228,8 +226,6 @@ namespace AIPlugin.BossfightSession
             {
                 MessagePackSerializer.Serialize(_outputBIN, frameData); // save the binary frame data
             }
-
-            return;
         }
     }
 }

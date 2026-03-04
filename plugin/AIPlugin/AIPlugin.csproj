@@ -166,10 +166,10 @@
     <Compile Include="BossfightSession\SessionContext.cs" />
     <Compile Include="BossfightSession\SessionEnemyManager.cs" />
     <Compile Include="BossfightSession\SessionEvents.cs" />
-    <Compile Include="BossfightSession\SessionManager.cs" />
     <Compile Include="BossfightSession\SessionOrchestrator.cs" />
     <Compile Include="BossfightSession\SessionRuntime.cs" />
     <Compile Include="Infrastructure\ServiceRegistry.cs" />
+    <Compile Include="Utilities\AIServerCoordinator.cs" />
     <Compile Include="Utilities\BossReferenceDatabase.cs" />
     <Compile Include="Utilities\CustomRespawnPoint.cs" />
     <Compile Include="DataCollection\EnemyTracker.cs" />
