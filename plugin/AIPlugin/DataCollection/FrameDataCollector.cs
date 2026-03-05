@@ -5,7 +5,52 @@ namespace AIPlugin
 {
     public static class FrameDataCollector
     {
-        //public static LivePredictionFrameData TODO
+        public static LivePredictionFrameData GetLive(EnemyInstance boss, List<EnemyInstance> enemies) //TODO avoid repetition with functino bellow
+        {
+            FrameHeroData? heroData = GetHeroData();
+            if (heroData == null)
+            {
+                AIPlugin.Log.LogError("FrameDataCollector: heroData missing.");
+                return null;
+            }
+
+            var IH = InputHandler.Instance;
+            if (IH == null)
+            {
+                AIPlugin.Log.LogError("FrameDataCollector: InputHandler.Instance missing.");
+                return null;
+            }
+
+            LivePredictionFrameData frameData = new LivePredictionFrameData()
+            {
+                Hero = (FrameHeroData)heroData,
+            };
+
+            frameData.Enemies = new FrameEnemyData[enemies.Count + 1];
+
+            FrameEnemyData? bossData = GetEnemyData(boss);
+            if (bossData == null)
+            {
+                AIPlugin.Log.LogError("FrameDataCollector: bossData missing.");
+                return null;
+            }
+
+            frameData.Enemies[0] = (FrameEnemyData)bossData;
+
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                FrameEnemyData? enemyData = GetEnemyData(enemies[i]);
+                if (enemyData == null)
+                {
+                    AIPlugin.Log.LogWarning("BossFightRecorder: enemyData missing");
+                    continue;
+                }
+
+                frameData.Enemies[i + 1] = (FrameEnemyData)enemyData;
+            }
+
+            return frameData;
+        }
         public static RecordingFrameData GetAll(EnemyInstance boss, List<EnemyInstance> enemies)
         {
 

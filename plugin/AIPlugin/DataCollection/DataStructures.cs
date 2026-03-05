@@ -122,7 +122,7 @@ namespace AIPlugin
 
     }
     [MessagePackObject]
-    public struct FrameUserInputs
+    public class FrameUserInputs
     {
         // Movement:
         [Key(0)]

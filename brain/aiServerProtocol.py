@@ -1,8 +1,12 @@
 import asyncio
 import msgpack
+import numpy as np
+import torch
 from torchvision.models import list_models
 
 from Networks import BossModelArtifact, BossModelFactory
+from Preprocessing import LivePreprocessor
+from RecordingLayout import Layout
 from model_manager import get_all_models, model_exists, get_model_path
 
 handlers = {}
@@ -12,8 +16,20 @@ class ClientSession: #TODO: add permanence in case of disconnect
         self._selected_boss_name = ""
         self._selected_model_name = ""
         self._artifact: BossModelArtifact = None
+        self._live_preprocessor: LivePreprocessor = None
+
+
+        self.cont_buffer = None
+        self.playmaker_buffer = None
+        self.buffer_index = 0
+        self.buffer_filled = False
+        self.time_window = 1
 
     def select_model(self, boss_name: str, model_name: str, load_artifact: bool = True):
+
+        self._artifact: BossModelArtifact = None
+        self._live_preprocessor: LivePreprocessor = None
+
         if not model_exists(boss_name, model_name):
             self._selected_boss_name = ""
             self._selected_model_name = ""
@@ -21,11 +37,68 @@ class ClientSession: #TODO: add permanence in case of disconnect
 
         self._artifact = BossModelFactory.load(get_model_path(boss_name, model_name)) #TODO add separate button for loading or load when starting session
 
+        self._live_preprocessor = LivePreprocessor(self._artifact)
+
+        config = self._artifact.model.config
+        self.time_window = config["time_window"]
+        cont_feature_size = config["cont_dim"]
+        playmaker_feature_size = config["playmaker_dim"]
+
+        self.cont_buffer = torch.zeros((self.time_window, cont_feature_size), dtype=torch.float32)
+        self.playmaker_buffer = torch.zeros((self.time_window, playmaker_feature_size), dtype=torch.int32)
+
         self._selected_model_name = model_name
         self._selected_boss_name = boss_name
 
     def get_selected_model(self):
         return [self._selected_boss_name, self._selected_model_name]
+
+    def predict_inputs(self, frame_data):
+        if self._artifact is None:
+            raise ValueError("Artifact is not loaded")
+
+        if self._live_preprocessor is None:
+            raise ValueError("LivePreprocessor is not loaded")
+
+        try:
+            processed_cont, processed_playmaker = self._live_preprocessor.process_frame(frame_data)
+        except Exception as e:
+            raise Exception(f"Got exception while processing frame: {e}")
+
+        self.cont_buffer[self.buffer_index] = torch.from_numpy(processed_cont)
+        self.playmaker_buffer[self.buffer_index] = torch.from_numpy(processed_playmaker)
+
+        self.buffer_index += 1
+
+        if self.buffer_index == self.time_window:
+            self.buffer_index = 0
+            self.buffer_filled = True
+
+        if self.buffer_filled:
+            cont_window = torch.roll(self.cont_buffer, -self.buffer_index, dims=0)
+            playmaker_window = torch.roll(self.playmaker_buffer, -self.buffer_index, dims=0)
+        else:
+            cont_window = self.cont_buffer[:self.buffer_index]
+            playmaker_window = self.playmaker_buffer[:self.buffer_index]
+
+            return None
+
+        try:
+            cont_window_batched = cont_window.unsqueeze(0)
+            playmaker_window_batched = playmaker_window.unsqueeze(0)
+
+            output = self._artifact.model(cont_window_batched, playmaker_window_batched)
+        except Exception as e:
+            raise Exception(
+                f"Got exception while predicting inputs: {e} | "
+                f"cont_shape={cont_window.shape} "
+                f"playmaker_shape={playmaker_window.shape}"
+            ) from e
+
+
+        return output.view(-1).tolist()
+
+
 
 def register_handler(name):
     def decorator(func):
@@ -51,6 +124,11 @@ async def select_model(payload, session: ClientSession):
         "models": get_all_models()
     }
     return output
+
+@register_handler("predict_inputs")
+async def predict_inputs(payload, session: ClientSession):
+    return session.predict_inputs(payload)
+
 
 async def read_msg(reader):
     length_bytes = await reader.readexactly(4)

@@ -1,11 +1,8 @@
 ﻿using AIPlugin.Utilities;
-using JetBrains.Annotations;
 using MessagePack;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace AIPlugin.Networking
@@ -22,24 +19,21 @@ namespace AIPlugin.Networking
 
             _pendingRequests = new ConcurrentDictionary<string, object>();
         }
-        //public async Task<List<string>> PredictInputsAsync(RecordingFrameData)
-        //{
-        //    if (_client == null || !_client.IsConnected) return null;
+        public async Task<FrameUserInputs> PredictInputsAsync(LivePredictionFrameData frameData)
+        {
+            if (_client == null || !_client.IsConnected) return null;
 
-        //    try
-        //    {
-        //        var response = await SendRequestAsync("get_models");
-        //        var models = ((object[])response.Payload).Select(x => x.ToString()).ToList();
+            try
+            {
+                return await SendRequestAsync<FrameUserInputs, LivePredictionFrameData >("predict_inputs", frameData);
+            }
+            catch (Exception ex)
+            {
+                ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
+            }
 
-        //        return models;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        AiService.ThreadSafeLog.Log(ex.ToString(), AIPlugin.Log.LogError);
-        //    }
-
-        //    return null;
-        //}
+            return null;
+        }
         public async Task<ModelsOverviewResponse> ListModelsAsync()
         {
             if (_client == null || !_client.IsConnected) return null;
@@ -99,7 +93,6 @@ namespace AIPlugin.Networking
 
             if(!envelope.Success)
                 throw new Exception("Server Error: " + envelope.ErrorMessage);
-
 
             return envelope.Payload;
         }

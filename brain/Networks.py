@@ -13,10 +13,13 @@ class BossModelArtifact:
         vocab: dict,
         metadata: dict,
     ):
-        self.model = model
+        self.model: BossNet = model
         self.boss_name = boss_name
         self.vocab = vocab
         self.metadata = metadata
+
+        self.mean = metadata["transformations"]["cont_mean"]
+        self.std = metadata["transformations"]["cont_std"]
 
     def save(self, path):
         torch.save({

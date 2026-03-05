@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from sympy.codegen import Print
 
+from Networks import BossModelArtifact
 from RecordingLayout import *
 
 
@@ -97,11 +98,15 @@ class RawDatasetReader:
         return frame_count
 
 
-class Vocabulary: #TODO: add _dictionary saving #TODO: make this also reusable for live preprocessing
-    def __init__(self):
+class Vocabulary:
+    def __init__(self, raw_dictionary: dict[str, int] = None):
 
         self._dictionary: dict[str, int] = dict()
         self._indexed = False
+
+        if raw_dictionary is not None:
+            self._dictionary = raw_dictionary
+            self._indexed = True
 
         self._instance_regex = re.compile(r' \(\d+\)$')
 
@@ -269,19 +274,54 @@ class LivePreprocessor:
     """
     Used for live inference
     """
-    def __init__(self, vocabulary: Vocabulary, cont_mean: np.ndarray, cont_std: np.ndarray):
-        self._vocabulary = vocabulary
-        self._mean = cont_mean
-        self._std = cont_std
+    def __init__(self, artifact: BossModelArtifact):
+        self._vocabulary = Vocabulary(artifact.vocab)
+        self._mean = artifact.mean
+        self._std = artifact.std
 
     def process_frame(self, frame: List) -> Tuple[np.ndarray, np.ndarray]:
-        continuous = build_continuous_vector(frame)
-        continuous -= self._mean
-        continuous /= self._std
+        try:
+            continuous = build_continuous_vector(frame)
+        except Exception as e:
+            raise RuntimeError(
+                f"[process_frame] Failed in build_continuous_vector | "
+                f"frame_type={type(frame)} frame_len={len(frame) if frame is not None else 'None'}"
+            ) from e
 
-        enemy_names = build_enemy_names_list(frame)
+        try:
+            continuous -= self._mean
+        except Exception as e:
+            raise RuntimeError(
+                f"[process_frame] Failed during normalization subtraction | "
+                f"continuous_shape={getattr(continuous, 'shape', None)} "
+                f"mean_shape={getattr(self._mean, 'shape', None)}"
+            ) from e
 
-        playmakers = build_playmaker_vector(self._vocabulary, frame, enemy_names)
+        try:
+            continuous /= self._std
+        except Exception as e:
+            raise RuntimeError(
+                f"[process_frame] Failed during normalization division | "
+                f"continuous_shape={getattr(continuous, 'shape', None)} "
+                f"std_shape={getattr(self._std, 'shape', None)}"
+            ) from e
+
+        try:
+            enemy_names = build_enemy_names_list(frame)
+        except Exception as e:
+            raise RuntimeError(
+                f"[process_frame] Failed in build_enemy_names_list | "
+                f"frame_len={len(frame) if frame is not None else 'None'}"
+            ) from e
+
+        try:
+            playmakers = build_playmaker_vector(self._vocabulary, frame, enemy_names)
+        except Exception as e:
+            raise RuntimeError(
+                f"[process_frame] Failed in build_playmaker_vector | "
+                f"vocab_size={len(self._vocabulary) if self._vocabulary is not None else 'None'} "
+                f"enemy_names_count={len(enemy_names) if enemy_names is not None else 'None'}"
+            ) from e
 
         return continuous, playmakers
 

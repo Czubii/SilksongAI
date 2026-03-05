@@ -29,6 +29,7 @@ namespace AIPlugin
         private BossfightRecorder _bossfightRecorder;
         private GameStateController _gameStateController;
         private AIServerCoordinator _serverCoordinator;
+        private AiBossfightController _aiBossfightController;
 
         private CustomGUILayouts.DropdownState _bossDropdownState = new CustomGUILayouts.DropdownState();
         private CustomGUILayouts.DropdownState _modelDropdownState = new CustomGUILayouts.DropdownState();
@@ -41,6 +42,7 @@ namespace AIPlugin
             _bossfightRecorder = registry.Get<BossfightRecorder>();
             _gameStateController = registry.Get<GameStateController>();
             _serverCoordinator = registry.Get<AIServerCoordinator>();
+            _aiBossfightController = registry.Get<AiBossfightController>();
 
             godModeToggle = config.Bind(
                   "Cheats",
@@ -288,20 +290,20 @@ namespace AIPlugin
             GUILayout.BeginHorizontal();
             GUILayout.Label("AI Enabled: ");
             GUILayout.FlexibleSpace();
-            
-            //if (_aiBossfightController == null)
-            //{
-            //    GUI.enabled = false;
-            //    GUILayout.Toggle(false, "");
-            //    GUI.enabled = true;
-            //}
-            //else if (_bossfightSession.State != SessionOrchestrator.SessionState.Idle || !_aiService.IsConnected)
-            //{
-            //    GUI.enabled = false;
-            //    GUILayout.Toggle(_aiBossfightController.enabled, "");
-            //    GUI.enabled = true;
-            //}
-            //else _aiBossfightController.enabled = GUILayout.Toggle(_aiBossfightController.enabled, "");
+
+            if (_aiBossfightController == null)
+            {
+                GUI.enabled = false;
+                GUILayout.Toggle(false, "");
+                GUI.enabled = true;
+            }
+            else if (_bossfightSession.State != SessionOrchestrator.SessionState.Idle || !_aiService.IsConnected)
+            {
+                GUI.enabled = false;
+                GUILayout.Toggle(_aiBossfightController.enabled, "");
+                GUI.enabled = true;
+            }
+            else _aiBossfightController.enabled = GUILayout.Toggle(_aiBossfightController.enabled, "");
 
 
             GUILayout.EndHorizontal();

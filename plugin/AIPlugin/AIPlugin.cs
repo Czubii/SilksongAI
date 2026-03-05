@@ -44,6 +44,11 @@ namespace AIPlugin
                 recorder.enabled = false;
                 sessionEventHandler.Subscribe(recorder);
 
+                var aiController = gameObject.AddComponent<AiBossfightController>();
+                aiController.Initialize(enemyManager, aiService);
+                aiController.enabled = false;
+                sessionEventHandler.Subscribe(aiController);
+
                 var coordinator = new AIServerCoordinator(aiService);
                 
                 _registry.Add(teleporter);//TODO add everything to registry
@@ -53,6 +58,7 @@ namespace AIPlugin
                 _registry.Add(gameStateController);
                 _registry.Add(sessionEventHandler);
                 _registry.Add(coordinator);
+                _registry.Add(aiController);
 
                 gui = new PluginGUI(Config, _registry);
 
