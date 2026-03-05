@@ -199,16 +199,11 @@ namespace AIPlugin.BossfightSession
         }
         private IEnumerator FinalizeSession()
         {
-            if (_sessionRuntime.LastAttempt == AttemptResult.HeroDied)
-            {
-                _sessionRuntime.Dispose();
-            }
-            else
-            {
-                yield return _teleport.AwaitCanTeleport();
-                _sessionRuntime.Dispose();
-                _teleport.TeleportToBench();
-            }
+            yield return _teleport.AwaitCanTeleport();
+            
+            _sessionRuntime.Dispose();
+            _teleport.TeleportToBench();
+            
         }
         public BossMetadata GetTarget() => _sessionContext.Boss;
         public int GetCurrentFightIdx() => _sessionRuntime.AttemptIndex;

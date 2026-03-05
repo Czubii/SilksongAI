@@ -10,6 +10,7 @@ using AIPlugin.Infrastructure;
 using AIPlugin.BossfightSession;
 using System.Collections.Generic;
 using AIPlugin.Utilities;
+using GenericVariableExtension;
 
 namespace AIPlugin
 {
@@ -102,6 +103,8 @@ namespace AIPlugin
                 //BossFightRecordingSession.ForceStopRecordingSession();
                 _registry.Get<SessionOrchestrator>().RequestStop();
             }
+
+
         }
         private void OnGUI()
         {

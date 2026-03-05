@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using HarmonyLib;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace AIPlugin
@@ -7,7 +8,7 @@ namespace AIPlugin
     {
         public static LivePredictionFrameData GetLive(EnemyInstance boss, List<EnemyInstance> enemies) //TODO avoid repetition with functino bellow
         {
-            FrameHeroData? heroData = GetHeroData();
+            FrameHeroData? heroData = GetHeroData(boss);
             if (heroData == null)
             {
                 AIPlugin.Log.LogError("FrameDataCollector: heroData missing.");
@@ -54,7 +55,7 @@ namespace AIPlugin
         public static RecordingFrameData GetAll(EnemyInstance boss, List<EnemyInstance> enemies)
         {
 
-            FrameHeroData? heroData = GetHeroData();
+            FrameHeroData? heroData = GetHeroData(boss);
             if (heroData == null)
             {
                 AIPlugin.Log.LogError("FrameDataCollector: heroData missing.");
@@ -136,7 +137,13 @@ namespace AIPlugin
 
             return output;
         }
+        public static float GetHeroCooldown(string name)
+        {
+            float? attackCooldown = Traverse.Create(HeroController.instance).Field("attack_cooldown").GetValue() as float?;
 
+            if (attackCooldown == null) return 0.0f;
+            else return attackCooldown < 0.0f ? 0.0f : (float)attackCooldown;
+        }
         public static FrameHeroData? GetHeroData(EnemyInstance TargetEnemy) //TODO make those take hero etc as parameters
         {
             var hero = HeroController.instance;
@@ -152,6 +159,11 @@ namespace AIPlugin
                 RelPosY = hero.transform.position.y - TargetEnemy.GameObject.transform.position.y,
                 velX = rigidbody.linearVelocity.x,
                 velY = rigidbody.linearVelocity.y,
+                AttackCooldown = GetHeroCooldown("attack_cooldown"),
+                DashCooldown = GetHeroCooldown("dashCooldownTimer"),
+                ThrowToolCoodown = GetHeroCooldown("throwToolCooldown"),
+                HarpoonDashCooldown = GetHeroCooldown("harpoonDashCooldown"),
+                WallClingCooldown = GetHeroCooldown("wallClingCooldownTimer"),
                 hp = hero.playerData.health,
                 silk = hero.playerData.silk,
                 facing = hero.transform.localScale.x >= 0.0,
