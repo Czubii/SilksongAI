@@ -56,7 +56,9 @@ class BehaviorCloningTrainer:
         self._model_artifact.model.to(device)
 
         optimizer = optim.Adam(self._model_artifact.model.parameters(), lr=learning_rate)
-        criterion = nn.SmoothL1Loss()
+
+        regression_loss = nn.SmoothL1Loss()
+        binary_loss = nn.BCEWithLogitsLoss()
 
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
@@ -67,6 +69,29 @@ class BehaviorCloningTrainer:
         testing_loss_per_epoch = []
 
         for epoch in range(num_epochs):
+
+            total_loss_testing = 0
+            m = 0
+            for continuous_batch, playmaker_batch, target_batch in dataloader_test:
+                continuous_batch = continuous_batch.to(device, dtype=torch.float32)
+                playmaker_batch = playmaker_batch.to(device, dtype=torch.long)
+                target_batch = target_batch.to(device, dtype=torch.float32)
+                with torch.no_grad():
+                    output_batch = self._model_artifact.model(continuous_batch, playmaker_batch)
+
+                pred_float = output_batch[:, :Layout.Inputs.float_values]
+                pred_bool = output_batch[:, Layout.Inputs.float_values:]
+
+                target_float = target_batch[:, :Layout.Inputs.float_values]
+                target_bool = target_batch[:, Layout.Inputs.float_values:]
+
+                loss_float = regression_loss(pred_float, target_float)
+                loss_bool = binary_loss(pred_bool, target_bool)
+
+                total_loss_testing += (0.7 * loss_float + 0.3 * loss_bool).item()
+
+                m += 1
+
             total_loss = 0
             n = 0
             for continuous_batch, playmaker_batch, target_batch in dataloader:
@@ -76,7 +101,18 @@ class BehaviorCloningTrainer:
 
                 optimizer.zero_grad()
                 output_batch = self._model_artifact.model(continuous_batch, playmaker_batch)
-                loss = criterion(output_batch, target_batch)
+
+                pred_float = output_batch[:, :Layout.Inputs.float_values]
+                pred_bool = output_batch[:, Layout.Inputs.float_values:]
+
+                target_float = target_batch[:, :Layout.Inputs.float_values]
+                target_bool = target_batch[:, Layout.Inputs.float_values:]
+
+                loss_float = regression_loss(pred_float, target_float)
+                loss_bool = binary_loss(pred_bool, target_bool)
+
+                loss = 0.7 * loss_float + 0.3 * loss_bool
+
                 loss.backward()
                 optimizer.step()
 
@@ -84,23 +120,6 @@ class BehaviorCloningTrainer:
                 n += 1
 
             scheduler.step()
-
-            if self._testing_dataset is None:
-                print(f"Epoch: {epoch} | Avg Loss: {total_loss / n}")
-                continue
-
-            total_loss_testing = 0
-            m = 0
-            for continuous_batch, playmaker_batch, target_batch in dataloader_test:
-
-                continuous_batch = continuous_batch.to(device, dtype=torch.float32)
-                playmaker_batch = playmaker_batch.to(device, dtype=torch.long)
-                target_batch = target_batch.to(device, dtype=torch.float32)
-
-                output_batch = self._model_artifact.model(continuous_batch, playmaker_batch)
-                total_loss_testing += criterion(output_batch, target_batch).item()
-                m+=1
-
 
             training_loss_per_epoch.append(total_loss / n)
             testing_loss_per_epoch.append(total_loss_testing / m)
@@ -133,13 +152,13 @@ def plot_training_testing_loss(training_loss_per_epoch, testing_loss_per_epoch, 
     plt.show()
 
 if __name__ == '__main__':
-    pipeline = BehaviorCloningTrainer("Lace Boss1", "YAS")
+    pipeline = BehaviorCloningTrainer("Lace Boss1", "BESTESTMAN")
 
 
-    training_loss_per_epoch, testing_loss_per_epoch = (pipeline.train_network(150,
+    training_loss_per_epoch, testing_loss_per_epoch = (pipeline.train_network(20,
                                use_gpu=True,
-                               batch_size=128,
-                               learning_rate = 5e-5))
+                               batch_size=256,
+                               learning_rate = 5e-4))
 
     plot_training_testing_loss(training_loss_per_epoch, testing_loss_per_epoch,)
 

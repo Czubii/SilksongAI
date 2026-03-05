@@ -43,9 +43,9 @@ class RawDatasetReader:
                     header = next(unpacker)
                 except StopIteration:
                     continue
-                format_version = header.get("FormatVersion", 1)
+                format_version = header.get("format_version", 1)
 
-                if format_version != Layout.SUPPORTED_FORMAT_VERSION or header.get("BossName") != self.target_boss:
+                if format_version != Layout.SUPPORTED_FORMAT_VERSION or header.get("target_name") != self.target_boss:
                     print(f"skipping recording {filename}, recording's format version: {format_version}")
                     continue
 
@@ -55,7 +55,7 @@ class RawDatasetReader:
 
                 info = dict(header)
                 info.update(footer)
-                info.update({"RecordingID": id})
+                info.update({"recording_id": id})
 
                 dataset_files.append(DatasetFile(
                     filename=filename,
@@ -65,7 +65,7 @@ class RawDatasetReader:
         return dataset_files
 
     def get_enemy_count(self) -> int:
-        return len(self.usable_files[0].info["EnemyNames"])
+        return len(self.usable_files[0].info["enemy_names"])
 
     def iterate_frames(self, require_success) -> Iterable[Tuple[list[any], dict]]:
         """
@@ -73,7 +73,7 @@ class RawDatasetReader:
         :return: yields next frame and recording information
         """
         for data_file in self.usable_files:
-            if require_success and data_file.info["Success"] != True: continue
+            if require_success and data_file.info["success"] != True: continue
 
             with open(join(self._data_path, data_file.filename), "rb") as f:
                 unpacker = msgpack.Unpacker(f, raw=False)
@@ -91,9 +91,9 @@ class RawDatasetReader:
     def get_total_frame_count(self, require_success) -> int:
         frame_count: int = 0
         for dataset in self.usable_files:
-            if require_success and dataset.info["Success"] != True: continue
+            if require_success and dataset.info["success"] != True: continue
 
-            frame_count += dataset.info["FrameCount"]
+            frame_count += dataset.info["frame_count"]
 
         return frame_count
 
@@ -125,11 +125,11 @@ class Vocabulary:
     @staticmethod
     def _get_playmaker_pairs_per_enemy(reader: RawDatasetReader) -> Iterable[tuple[str, str, str]]:
         for frame, recording_info in reader.iterate_frames(require_success=False):
-            enemy_list = frame[Layout.Frame.ENEMIES]
+            enemy_list = frame[Layout.RecordingFrame.ENEMIES]
             if not enemy_list:
                 continue
 
-            for enemy_data, enemy_name in zip(enemy_list, recording_info["EnemyNames"]):
+            for enemy_data, enemy_name in zip(enemy_list, recording_info["enemy_names"]):
                 if enemy_data is None:
                     continue
 
@@ -171,20 +171,20 @@ def build_playmaker_vector(vocabulary, frame, enemy_names) -> np.ndarray:
     return np.array([
         vocabulary.get(enemy_names[i], playmaker[Layout.Playmaker.NAME],
                        playmaker[Layout.Playmaker.STATE_NAME])
-        for i, enemy in enumerate(frame[Layout.Frame.ENEMIES])
+        for i, enemy in enumerate(frame[Layout.RecordingFrame.ENEMIES])
         for playmaker in enemy[Layout.Enemy.PLAYMAKERS]
     ], dtype=np.int32)
 
 def build_continuous_vector(frame) -> np.ndarray:
     return np.array([
-        *[val for val in frame[Layout.Frame.HERO]],
-        *[val for enemy in frame[Layout.Frame.ENEMIES]
+        *[val for val in frame[Layout.RecordingFrame.HERO]],
+        *[val for enemy in frame[Layout.RecordingFrame.ENEMIES]
             for val in enemy[:Layout.Enemy.NAME]]
     ], dtype=np.float32)
 
 def build_enemy_names_list(frame) -> List[str]:
     return [
-        enemy[Layout.Enemy.NAME] for enemy in frame[Layout.Frame.ENEMIES]
+        enemy[Layout.Enemy.NAME] for enemy in frame[Layout.RecordingFrame.ENEMIES]
     ]
 
 class Preprocessor:
@@ -205,7 +205,7 @@ class Preprocessor:
         return (
                 Layout.Hero.num_elements +
                 self._reader.get_enemy_count() *
-                (Layout.Enemy.num_elements - 1)
+                (Layout.Enemy.num_elements - 2)
         )
 
     def get_playmaker_dim(self) -> int:
@@ -218,7 +218,7 @@ class Preprocessor:
         # header - how many playmakers each enemy instance has. But its not that important for now
         frame = next(self._reader.iterate_frames(False))[0]
         playmaker_count = 0
-        for enemy in frame[Layout.Frame.ENEMIES]:
+        for enemy in frame[Layout.RecordingFrame.ENEMIES]:
             playmaker_count += len(enemy[Layout.Enemy.PLAYMAKERS])
         return playmaker_count
 
@@ -266,7 +266,7 @@ class Preprocessor:
             enemy_names = build_enemy_names_list(frame)
 
             playmakers = build_playmaker_vector(self._vocabulary, frame, enemy_names)
-            user_inputs = np.array(frame[Layout.Frame.INPUTS], dtype=np.float32)
+            user_inputs = np.array(frame[Layout.RecordingFrame.INPUTS], dtype=np.float32)
 
             yield continuous, playmakers, user_inputs, recording_info
 
@@ -344,8 +344,8 @@ class ProcessingPipeline:
         expected_playmaker_dim = None
 
         for frame, recording_info in self._data_reader.iterate_frames(False):
-            cont_len = Layout.Hero.num_elements + len(frame[Layout.Frame.ENEMIES]) * (Layout.Enemy.num_elements - 1)
-            pm_len = sum(len(enemy[Layout.Enemy.PLAYMAKERS]) for enemy in frame[Layout.Frame.ENEMIES])
+            cont_len = Layout.Hero.num_elements + len(frame[Layout.RecordingFrame.ENEMIES]) * (Layout.Enemy.num_elements - 1)
+            pm_len = sum(len(enemy[Layout.Enemy.PLAYMAKERS]) for enemy in frame[Layout.RecordingFrame.ENEMIES])
 
             if expected_cont_dim is None:
                 expected_cont_dim = cont_len
@@ -363,12 +363,14 @@ class ProcessingPipeline:
         """
         :param output_dir: directory of the output files
         :param num_testing: how many recordings should be saved separately for testing
-        :param save_vocab: should the vocabulary be saved?
         :param verify_data_shape: should the dataset dimensions be verified?
         :return:
         """
         if verify_data_shape:
-            self.verify_dataset_shape()
+            try:
+                self.verify_dataset_shape()
+            except Exception as e:
+                raise RuntimeError(e)
 
         cont_list = []
         playmaker_list = []
@@ -379,9 +381,9 @@ class ProcessingPipeline:
         prev_id = -1
         for continuous, playmaker, user_inputs, recording_info in self._preprocessor.frame_data_generator(True):
 
-            current_id = recording_info.get("RecordingID")
+            current_id = recording_info.get("recording_id")
             if current_id != prev_id:
-                recording_frames_list.append(recording_info.get("FrameCount"))
+                recording_frames_list.append(recording_info.get("frame_count"))
                 prev_id = current_id
 
             cont_list.append(continuous)

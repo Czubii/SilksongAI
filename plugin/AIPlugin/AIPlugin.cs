@@ -11,6 +11,9 @@ using AIPlugin.BossfightSession;
 using System.Collections.Generic;
 using AIPlugin.Utilities;
 using GenericVariableExtension;
+using System.Reflection;
+using HutongGames.PlayMaker.Actions;
+using UnityEngine.EventSystems;
 
 namespace AIPlugin
 {
@@ -65,6 +68,7 @@ namespace AIPlugin
 
                 Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
                 Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
+                Harmony.CreateAndPatchAll(typeof(HeroController_LookForInput_Patch), null);
             }
             catch (Exception e)
             {
@@ -96,7 +100,7 @@ namespace AIPlugin
             ThreadSafeLogService.Flush();
             if (Input.GetKeyDown(KeyCode.F11))
             {
-                //GameStateLogger.LogGameStateToFiles();
+
             }
             if (Input.GetKeyDown(KeyCode.F10))
             {

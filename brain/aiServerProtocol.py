@@ -87,7 +87,8 @@ class ClientSession: #TODO: add permanence in case of disconnect
             cont_window_batched = cont_window.unsqueeze(0)
             playmaker_window_batched = playmaker_window.unsqueeze(0)
 
-            output = self._artifact.model(cont_window_batched, playmaker_window_batched)
+            with torch.no_grad():
+                output = self._artifact.model(cont_window_batched, playmaker_window_batched)
         except Exception as e:
             raise Exception(
                 f"Got exception while predicting inputs: {e} | "
@@ -95,8 +96,19 @@ class ClientSession: #TODO: add permanence in case of disconnect
                 f"playmaker_shape={playmaker_window.shape}"
             ) from e
 
+        output = output.squeeze(0)  # remove batch dimension
 
-        return output.view(-1).tolist()
+        float_outputs = output[:Layout.Inputs.float_values]
+        bool_logits = output[Layout.Inputs.float_values:]
+
+        bool_probs = torch.sigmoid(bool_logits)
+        bool_values = (bool_probs > 0.5).tolist()
+
+        float_values = float_outputs.tolist()
+
+        payload = float_values + bool_values
+
+        return payload
 
 
 

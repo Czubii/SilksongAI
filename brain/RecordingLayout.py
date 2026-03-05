@@ -19,10 +19,10 @@ class LayoutNotSupported(Exception):
 @dataclass
 class Layout:
 
-    SUPPORTED_FORMAT_VERSION: int = 8
+    SUPPORTED_FORMAT_VERSION: int = 9
 
     @dataclass
-    class Frame:
+    class RecordingFrame:
         num_elements: int = 3
         HERO: int = 0
         ENEMIES: int = 1
@@ -32,68 +32,79 @@ class Layout:
     class Hero:
         POS_X: int = 0
         POS_Y: int = 1
-        FACING: int = 2
-        VEL_X: int = 3
-        VEL_Y: int = 4
-        HP: int = 5
-        SILK: int = 6
-        CAN_JUMP: int = 7
-        CAN_DOUBLE_JUMP: int = 8
-        CAN_ATTACK: int = 9
-        CAN_SPRINT: int = 10
-        CAN_BIND: int = 11
-        CAN_CAST: int = 12
-        CAN_NAIL_ART: int = 13
-        CAN_TRY_HARPOON: int = 14
-        CAN_INPUT: int = 15
-        CAN_BACK_DASH: int = 16
+        REL_POS_X: int = 2
+        REL_POS_Y: int = 3
+        VEL_X: int = 4
+        VEL_Y: int = 5
+        ATTACK_COOLDOWN: int = 6
+        DASH_COOLDOWN: int = 7
+        THROW_TOOL_COOLDOWN: int = 8
+        HARPOON_DASH_COOLDOWN: int = 9
+        WALL_CLING_COOLDOWN: int = 10
+        HP: int = 11
+        SILK: int = 12
+        FACING: int = 13
+        IS_STUNNED: int = 14
+        CAN_JUMP: int = 15
+        CAN_DOUBLE_JUMP: int = 16
+        CAN_ATTACK: int = 17
+        CAN_SPRINT: int = 18
+        CAN_BIND: int = 19
+        CAN_CAST: int = 20
+        CAN_NAIL_ART: int = 21
+        CAN_TRY_HARPOON: int = 22
+        CAN_INPUT: int = 23
+        CAN_BACK_DASH: int = 24
 
-        num_elements = 17
+        num_elements = 25
 
         # 1 for boolean-type variables 0 for others - this is used in preprocessor in z-score
         # standardization to affect only the non-boolean variables
         boolean_mask = np.array([
-            0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         ], dtype=np.bool)
 
     @dataclass
     class Enemy:
         POS_X: int = 0
         POS_Y: int = 1
-        FACING: int = 2
-        VEL_X: int = 3
-        VEL_Y: int = 4
-        HP: int = 5
-        NAME: int = 6
+        REL_POS_X: int = 2
+        REL_POS_Y: int = 3
+        VEL_X: int = 4
+        VEL_Y: int = 5
+        HP: int = 6
+        FACING: int = 7
+        NAME: int = 8
         # Very important - this has to ALWAYS be last and should be included in boolean mask as boolean-type !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        PLAYMAKERS: int = 7
+        PLAYMAKERS: int = 9
         # !!!!!!!!!!!!!!!!!
 
-        num_elements = 7
+        num_elements = 10
 
         # 1 for boolean-type variables 0 for others - this is used in preprocessor in z-score
         # standardization to affect only the non-boolean variables
         boolean_mask = np.array([
-            0, 0, 1, 0, 0, 0, 1
+            0, 0, 0, 0, 0, 0, 0, 1, 1, 1
         ], dtype=np.bool)
 
     @dataclass
     class Inputs:
         num_elements: int = 10
-        JUMP: int = 0
+        float_values: int = 4
 
-        LEFT: int = 1
-        RIGHT: int = 2
-        UP: int = 3
-        DOWN: int = 4
+        LEFT: int = 0   #float
+        RIGHT: int = 1  #float
+        UP: int = 2     #float
+        DOWN: int = 3   #float
+        JUMP: int = 4   #bool
 
-        ATTACK: int = 5
-        HEAL: int = 6
-        SKILL: int = 7
-        DASH: int = 8
-        HARPOON: int = 9
+        ATTACK: int = 5 #bool
+        HEAL: int = 6   #bool
+        SKILL: int = 7  #bool
+        DASH: int = 8   #bool
+        HARPOON: int = 9#bool
 
-        # no boolean mask here as this won't be standard
+        # no boolean mask here as this won't be standardised???
 
     @dataclass
     class Playmaker:

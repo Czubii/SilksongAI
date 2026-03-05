@@ -50,9 +50,9 @@ def new_model(target_boss_name: str,
               raw_recording_dir_path: str,
               overwrite_if_exists: bool = False,
               num_testing = 1,
-              time_window = 5,
+              time_window = 4,
               embedding_dim: int = None,
-              hidden_dim = 200):
+              hidden_dim = 120):
     """
     :param target_boss_name:
     :param model_name: name of newly created model
@@ -116,6 +116,8 @@ def new_model(target_boss_name: str,
 if __name__ == "__main__":
     new_model(
         "Lace Boss1",
-        "YAS",
+        "BESTESTMAN",
         "../recordings/Lace Boss1",
-        True)
+        True,
+                num_testing=8,
+                embedding_dim=120,)

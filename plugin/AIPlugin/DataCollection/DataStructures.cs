@@ -7,10 +7,10 @@ namespace AIPlugin
     [MessagePackObject]
     public class RecordingHeader
     {
-        [Key("format_version")] public int FormatVersion = 9;
+        [Key("format_version")] public int FormatVersion = 10;
         [Key("record_frame_delta")] public int RecordFrameDelta = SessionConfig.RecordFrameDelta;
-        [Key("boss_name")] public string BossName;
-        [Key("nemy_names")] public string[] EnemyNames;
+        [Key("target_name")] public string BossName;
+        [Key("enemy_names")] public string[] EnemyNames;
         [Key("player_name")] public string PlayerName;
     }
     [MessagePackObject]

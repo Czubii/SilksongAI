@@ -139,7 +139,7 @@ namespace AIPlugin
         }
         public static float GetHeroCooldown(string name)
         {
-            float? attackCooldown = Traverse.Create(HeroController.instance).Field("attack_cooldown").GetValue() as float?;
+            float? attackCooldown = Traverse.Create(HeroController.instance).Field(name).GetValue() as float?;
 
             if (attackCooldown == null) return 0.0f;
             else return attackCooldown < 0.0f ? 0.0f : (float)attackCooldown;
@@ -152,7 +152,6 @@ namespace AIPlugin
 
             FrameHeroData output = new FrameHeroData
             {
-
                 posX = hero.transform.position.x,
                 posY = hero.transform.position.y,
                 RelPosX = hero.transform.position.x - TargetEnemy.GameObject.transform.position.x,
