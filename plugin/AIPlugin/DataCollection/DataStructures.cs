@@ -6,6 +6,11 @@ namespace AIPlugin
 {
 
     [MessagePackObject]
+    public struct Empty
+    {
+    }
+
+    [MessagePackObject]
     public class RecordingHeader
     {
         [Key("FormatVersion")]

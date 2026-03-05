@@ -15,9 +15,11 @@ namespace AIPlugin.Utilities
     public class AIServerCoordinator
     {
         private AiService _service;
-        private Dictionary<string, List<string>> _serverModels = new Dictionary<string, List<string>>();
-        private Tuple<string, string> _selectedModel = null;
-        private Task _requestModelsTask = null;
+        private Dictionary<string, List<string>> _availableModels = new Dictionary<string, List<string>>();
+        private (string BossName, string ModelName) _selectedModel = ("", "");
+        private Task _requestModels = null;
+        private Task _requestModelSelection = null;
+
         public AIServerCoordinator(AiService service) 
         { 
             _service = service;
@@ -26,53 +28,75 @@ namespace AIPlugin.Utilities
         }
         private void OnConnected()
         { 
-            _requestModelsTask = Task.Run(ReqestModels);
+            _requestModels = Task.Run(RequestModels);
         }
         private void OnDisconnected()
         {
-            _serverModels.Clear();
-            _selectedModel = null;  
+            _availableModels.Clear();
+            _selectedModel = ("", "");  
         }
 
-        private async Task ReqestModels()
+        private async Task RequestModels()
         {
             try
             {
-                _serverModels = await _service.Gateway.ListModelsAsync();
+                var response = await _service.Gateway.ListModelsAsync();
+                if (response != null)
+                {
+                    _selectedModel = (response.SelectedModel[0], response.SelectedModel[1]);
+                    _availableModels = response.Models;
+                }
             }
-            finally
-            {
-                _requestModelsTask = null;
-            }
-            AIPlugin.Log.LogError(_serverModels.ToString());
+            finally { _requestModels = null; }
         }
 
-        public bool TryGetModels(string bossName, out List<string> models)
+        private async Task RequestModelSelection(string bossName, string modelName)
         {
-            return _serverModels.TryGetValue(bossName, out models);
+            try
+            {
+                var response = await _service.Gateway.SelectModel(bossName, modelName);
+                if (response == null)
+                {
+                    _selectedModel = ("", "");
+                    return;
+                }
+
+                _selectedModel = (response.SelectedModel[0], response.SelectedModel[1]);
+                _availableModels = response.Models;
+
+            }
+            finally { _requestModelSelection = null; }
+        }
+
+        public List<string> GetAvailableModels(string bossName)
+        {
+            if (_availableModels.TryGetValue(bossName, out var models))
+                return models;
+
+            return new List<string>(); 
         }
         public string GetSelectedModelName()
         {
-            if (_selectedModel == null) return null;
-            return _selectedModel.Item2;
+            return _selectedModel.ModelName;
         }
         public void SelectModel(string bossName, string modelName)
         {
-            _selectedModel = new Tuple<string, string>(bossName, modelName);
-        }
-        public void ClearModelSelection()
-        {
-            _selectedModel = null;
+            _selectedModel = (bossName, modelName);
+
+            if (_requestModelSelection == null) _requestModelSelection = RequestModelSelection(bossName, modelName);
         }
         public void EnsureValidSelection(string bossName)
         {
-            if (!TryGetModels(bossName, out var models) || models.Count == 0)
+            var models = GetAvailableModels(bossName);
+
+            if (models.Count == 0 && (_selectedModel.BossName != "" || _selectedModel.ModelName != ""))
             {
-                _selectedModel = null;
+                _selectedModel = ("","");
+                SelectModel("", "");
                 return;
             }
 
-            if (GetSelectedModelName() == null)
+            if (models.Count != 0 && (_selectedModel.BossName == "" || _selectedModel.ModelName == ""))
             {
                 SelectModel(bossName, models[0]);
             }

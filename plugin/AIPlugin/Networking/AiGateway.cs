@@ -1,8 +1,11 @@
-﻿using MessagePack;
+﻿using AIPlugin.Utilities;
+using JetBrains.Annotations;
+using MessagePack;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace AIPlugin.Networking
@@ -10,14 +13,14 @@ namespace AIPlugin.Networking
     public class AiGateway: IDisposable
     {
         private AiClient _client;
-        private ConcurrentDictionary<string, TaskCompletionSource<Protocol.ResponseEnvelope>> _requestCompletionSources;
+        private ConcurrentDictionary<string, object> _pendingRequests;
         public AiGateway(AiClient client)
         {
             _client = client;
 
             _client.OnMessageRecieved += OnMessageRecieved;
 
-            _requestCompletionSources = new ConcurrentDictionary<string, TaskCompletionSource<Protocol.ResponseEnvelope>>();
+            _pendingRequests = new ConcurrentDictionary<string, object>();
         }
         //public async Task<List<string>> PredictInputsAsync(RecordingFrameData)
         //{
@@ -37,63 +40,112 @@ namespace AIPlugin.Networking
 
         //    return null;
         //}
-        public async Task<Dictionary<string, List<string>>> ListModelsAsync()
+        public async Task<ModelsOverviewResponse> ListModelsAsync()
         {
             if (_client == null || !_client.IsConnected) return null;
 
             try
             {
-                var response = await SendRequestAsync("get_models");
-
-                var raw = response.Payload as IDictionary<object, object>;
-
-                if (raw == null)
-                    return null;
-
-                return raw.ToDictionary(
-                    kvp => kvp.Key.ToString(),
-                    kvp => ((IEnumerable<object>)kvp.Value)
-                           .Select(x => x.ToString())
-                           .ToList()
-                );
+                return await SendRequestAsync<ModelsOverviewResponse>("get_models");
             }
             catch (Exception ex)
             {
-                AiService.ThreadSafeLog.Log(ex.ToString(), AIPlugin.Log.LogError);
+                ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
             }
 
             return null;
         }
-        private async Task<Protocol.ResponseEnvelope> SendRequestAsync(string type, object payload = null)
+        public async Task<ModelsOverviewResponse> SelectModel(string BossName, string ModelName)
         {
-            Guid guid = Guid.NewGuid();
+            if (_client == null || !_client.IsConnected) return null;
 
-            var request = new Protocol.RequestEnvelope()
+            try
             {
-                RequestId = guid.ToString(),
+                var payload = new SelectModelRequest(){
+                    BossName = BossName,
+                    ModelName = ModelName
+                };
+                return await SendRequestAsync<ModelsOverviewResponse, SelectModelRequest>("select_model", payload);
+            }
+            catch (Exception ex)
+            {
+                ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
+            }
+
+            return null;
+        }
+        private async Task<TResponse> SendRequestAsync<TResponse>(string type)
+        {
+            return await SendRequestAsync<TResponse, Empty>(type, default);
+        }
+        private async Task<TResponse> SendRequestAsync<TResponse, TPayload>(string type, TPayload payload)
+        {
+            string ID = Guid.NewGuid().ToString(); 
+
+            var request = new Protocol.RequestEnvelope<TPayload>()
+            {
+                RequestId = ID,
                 Type = type,
                 Payload = payload
             };
 
+            var taskCompletion = new TaskCompletionSource<Protocol.ResponseEnvelope<TResponse>>();
+            _pendingRequests[ID] = taskCompletion;
+
             byte[] bytes = MessagePackSerializer.Serialize(request, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-
-            TaskCompletionSource<Protocol.ResponseEnvelope> taskCompletion = new TaskCompletionSource<Protocol.ResponseEnvelope>();
-            _requestCompletionSources.TryAdd(guid.ToString(), taskCompletion);
-
             await _client.SendAsync(bytes);
 
-            Protocol.ResponseEnvelope response = await taskCompletion.Task;
+            var envelope = await taskCompletion.Task;
 
-            return response;
+            if(!envelope.Success)
+                throw new Exception("Server Error: " + envelope.ErrorMessage);
+
+
+            return envelope.Payload;
         }
         public void OnMessageRecieved(byte[] data)
         {
-            var response = MessagePackSerializer.Deserialize<Protocol.ResponseEnvelope>(data, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-
-            if (_requestCompletionSources.TryGetValue(response.RequestId, out var tcs))
+            Protocol.ResponseEnvelope<object> header;
+            try
             {
-                tcs.SetResult(response);
-                _requestCompletionSources.TryRemove(response.RequestId, out _);
+                header = MessagePackSerializer.Deserialize<Protocol.ResponseEnvelope<object>>(data, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+            }
+            catch (Exception ex)
+            {
+                ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
+                return;
+            }
+
+            if (!_pendingRequests.TryGetValue(header.RequestId, out var boxedTcs))
+                return;
+
+            var tcsType = boxedTcs.GetType();
+            var payloadType = tcsType.GenericTypeArguments[0];
+
+            try
+            {
+                var typedEnvelope = MessagePackSerializer.Deserialize(payloadType, data, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+
+                tcsType.GetMethod("SetResult")?.Invoke(
+                    boxedTcs,
+                    new[] { typedEnvelope });
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    tcsType.GetMethod("SetException")?.Invoke(boxedTcs, new[] { ex });
+                }
+                catch
+                {
+                    ThreadSafeLogService.Log("Failed to invoke SetException on TCS", AIPlugin.Log.LogError);
+                }
+
+                ThreadSafeLogService.Log($"Failed to process message: {ex}", AIPlugin.Log.LogError);
+            }
+            finally 
+            {
+                _pendingRequests.TryRemove(header.RequestId, out _);
             }
         }   
         public void Dispose()

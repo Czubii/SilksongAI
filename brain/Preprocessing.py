@@ -42,12 +42,12 @@ class RawDatasetReader:
                     header = next(unpacker)
                 except StopIteration:
                     continue
-                format_version = header.get("Format Version", int) #TODO remove space from "Format Version"
+                format_version = header.get("FormatVersion", 1)
 
                 if format_version != Layout.SUPPORTED_FORMAT_VERSION or header.get("BossName") != self.target_boss:
                     print(f"skipping recording {filename}, recording's format version: {format_version}")
                     continue
-                #TODO: add some checking whether in all recordings the number of enemies is constant!!!!
+
                 footer = None
                 for obj in unpacker:
                     footer = obj
@@ -158,13 +158,43 @@ class Vocabulary: #TODO: add _dictionary saving #TODO: make this also reusable f
         with open(file, 'w') as fp:
             json.dump(self._dictionary, fp, indent=2)
 
+    def get_raw(self):
+        return self._dictionary
 
+
+def build_playmaker_vector(vocabulary, frame, enemy_names) -> np.ndarray:
+    return np.array([
+        vocabulary.get(enemy_names[i], playmaker[Layout.Playmaker.NAME],
+                       playmaker[Layout.Playmaker.STATE_NAME])
+        for i, enemy in enumerate(frame[Layout.Frame.ENEMIES])
+        for playmaker in enemy[Layout.Enemy.PLAYMAKERS]
+    ], dtype=np.int32)
+
+def build_continuous_vector(frame) -> np.ndarray:
+    return np.array([
+        *[val for val in frame[Layout.Frame.HERO]],
+        *[val for enemy in frame[Layout.Frame.ENEMIES]
+            for val in enemy[:Layout.Enemy.NAME]]
+    ], dtype=np.float32)
+
+def build_enemy_names_list(frame) -> List[str]:
+    return [
+        enemy[Layout.Enemy.NAME] for enemy in frame[Layout.Frame.ENEMIES]
+    ]
 
 class Preprocessor:
     def __init__(self, reader: RawDatasetReader, vocabulary: Vocabulary):
         self._reader = reader
         self._vocabulary = vocabulary
         self._num_continuous = self.get_continuous_dim()
+
+        self.mean = self._get_mean_of_continuous()
+        self.std = self._get_std_of_continuous(self.mean)
+
+        bm = self._build_boolean_mask()
+
+        np.putmask(self.mean, bm, 0)
+        np.putmask(self.std, bm, 1)
 
     def get_continuous_dim(self) -> int:
         return (
@@ -187,20 +217,12 @@ class Preprocessor:
             playmaker_count += len(enemy[Layout.Enemy.PLAYMAKERS])
         return playmaker_count
 
-    @staticmethod
-    def _build_continuous_vector(frame) -> np.ndarray:
-        return np.array([
-            *[val for val in frame[Layout.Frame.HERO]],
-            *[val for enemy in frame[Layout.Frame.ENEMIES]
-              for val in enemy[:Layout.Enemy.PLAYMAKERS]]
-        ], dtype=np.float32)
-
     def _build_boolean_mask(self) -> np.ndarray:
         num_enemies = self._reader.get_enemy_count()
         return np.array([
             *[val for val in Layout.Hero.boolean_mask],
             *[val for _ in range(num_enemies)
-              for val in Layout.Enemy.boolean_mask[:Layout.Enemy.PLAYMAKERS]]
+              for val in Layout.Enemy.boolean_mask[:Layout.Enemy.NAME]]
         ], dtype=np.float32)
 
     def _get_mean_of_continuous(self) -> np.array:
@@ -209,7 +231,7 @@ class Preprocessor:
 
         for frame, _ in self._reader.iterate_frames(False):
             n_frames += 1
-            mean += self._build_continuous_vector(frame)
+            mean += build_continuous_vector(frame)
 
         return mean / n_frames
 
@@ -218,49 +240,57 @@ class Preprocessor:
         n_frames = 0
         for frame, _ in self._reader.iterate_frames(False):
             n_frames += 1
-            var += np.pow(self._build_continuous_vector(frame) - mean, 2)
+            var += np.pow(build_continuous_vector(frame) - mean, 2)
 
         std = np.sqrt(var / (n_frames-1)) # let's pray to god we never get only one frame
         std[std == 0] = 1.0
         return std
-
-    def _build_playmaker_vector(self, frame, enemy_names) -> np.ndarray:
-        return np.array([
-            self._vocabulary.get(enemy_names[i], playmaker[Layout.Playmaker.NAME],
-                                playmaker[Layout.Playmaker.STATE_NAME])
-            for i, enemy in enumerate(frame[Layout.Frame.ENEMIES])
-            for playmaker in enemy[Layout.Enemy.PLAYMAKERS]
-        ], dtype=np.int32)
 
     def frame_data_generator(self, require_success: bool) -> Iterator[Tuple[np.ndarray, np.ndarray, np.ndarray, dict]]:
         """
         transforms the frames from raw recordings to format usable by neural network and yields each frame separately
         :return: continuous vector, playmaker id's vector, user_inputs vector, recording info dict
         """
-        bm = self._build_boolean_mask()
-
-        mean = self._get_mean_of_continuous()
-        np.putmask(mean, bm, 0)
-
-        std = self._get_std_of_continuous(mean)
-        np.putmask(std, bm, 1)
 
         for frame, recording_info in self._reader.iterate_frames(require_success):
 
-            continuous = self._build_continuous_vector(frame)
-            continuous -= mean
-            continuous /= std
+            continuous = build_continuous_vector(frame)
+            continuous -= self.mean
+            continuous /= self.std
 
-            playmakers = self._build_playmaker_vector(frame, recording_info["EnemyNames"])
+            enemy_names = build_enemy_names_list(frame)
+
+            playmakers = build_playmaker_vector(self._vocabulary, frame, enemy_names)
             user_inputs = np.array(frame[Layout.Frame.INPUTS], dtype=np.float32)
 
             yield continuous, playmakers, user_inputs, recording_info
+
+class LivePreprocessor:
+    """
+    Used for live inference
+    """
+    def __init__(self, vocabulary: Vocabulary, cont_mean: np.ndarray, cont_std: np.ndarray):
+        self._vocabulary = vocabulary
+        self._mean = cont_mean
+        self._std = cont_std
+
+    def process_frame(self, frame: List) -> Tuple[np.ndarray, np.ndarray]:
+        continuous = build_continuous_vector(frame)
+        continuous -= self._mean
+        continuous /= self._std
+
+        enemy_names = build_enemy_names_list(frame)
+
+        playmakers = build_playmaker_vector(self._vocabulary, frame, enemy_names)
+
+        return continuous, playmakers
 
 class ProcessingPipeline:
     def __init__(self, data_path: str, target_boss: str, vocabulary: Optional[Vocabulary]=None):
 
         self._vocabulary = vocabulary
         self._data_reader = RawDatasetReader(data_path, target_boss)
+        self._target_boss = target_boss
 
         if self._vocabulary is None:
             print("ProcessingPipeline: No vocabulary provided. Creating a new one from recordings.")
@@ -289,9 +319,8 @@ class ProcessingPipeline:
 
         print(f"ProcessingPipeline: Recording verification passed")
 
-    def process_and_save(self, dataset_name: str, output_dir: str, num_testing: int = 0, save_vocab: bool = False, verify_data_shape = True) -> None:
+    def process_and_save(self, output_dir: str, num_testing: int = 0, verify_data_shape = True) -> None:
         """
-        :param dataset_name: The name of the dataset used for saving.
         :param output_dir: directory of the output files
         :param num_testing: how many recordings should be saved separately for testing
         :param save_vocab: should the vocabulary be saved?
@@ -319,41 +348,44 @@ class ProcessingPipeline:
             playmaker_list.append(playmaker)
             target_list.append(user_inputs)
 
-        if save_vocab:
-            self._vocabulary.save(os.path.join(output_dir, f"{dataset_name}_vocabulary.json"))
-
         num_testing = min(num_testing, len(recording_frames_list))
         test_frames = sum(recording_frames_list[:num_testing])
 
         if num_testing > 0:
             data_test = {
                 "layout_version": Layout.SUPPORTED_FORMAT_VERSION,
-                "cont_dim": self._preprocessor.get_continuous_dim(),
-                "playmaker_dim": self._preprocessor.get_playmaker_dim(),
-                "vocab_dim": self._vocabulary.get_word_count(),
+                "target_boss": self._target_boss,
                 "frame_counts": recording_frames_list[:num_testing],
                 "continuous": torch.tensor(np.stack(cont_list[:test_frames])),
                 "playmakers": torch.tensor(np.stack(playmaker_list[:test_frames])),
                 "targets": torch.tensor(np.stack(target_list[:test_frames])),
             }
-            torch.save(data_test, os.path.join(output_dir, f"{dataset_name}_testing.pt"))
+            torch.save(data_test, os.path.join(output_dir, f"testing_data.pt"))
 
         data_train = {
             "layout_version": Layout.SUPPORTED_FORMAT_VERSION,
-            "cont_dim": self._preprocessor.get_continuous_dim(),
-            "playmaker_dim": self._preprocessor.get_playmaker_dim(),
-            "vocab_dim": self._vocabulary.get_word_count(),
+            "target_boss": self._target_boss,
             "frame_counts": recording_frames_list[num_testing:],
             "continuous": torch.tensor(np.stack(cont_list[test_frames:])),
             "playmakers": torch.tensor(np.stack(playmaker_list[test_frames:])),
             "targets": torch.tensor(np.stack(target_list[test_frames:])),
         }
-        torch.save(data_train, os.path.join(output_dir, f"{dataset_name}_training.pt"))
+        torch.save(data_train, os.path.join(output_dir, f"training_data.pt"))
 
+        print(f"dataset saved in {output_dir}")
 
+    def get_vocabulary(self):
+        return self._vocabulary
 
-if __name__ == "__main__":
-    pp = ProcessingPipeline(data_path="../recordings/Mossbone Mother",
-                       target_boss="Mossbone Mother")
+    def get_dims(self) -> dict[str, int]:
+        return {
+            "cont_dim": self._preprocessor.get_continuous_dim(),
+            "playmaker_dim": self._preprocessor.get_playmaker_dim(),
+            "vocab_dim": self._vocabulary.get_word_count()
+        }
 
-    pp.process_and_save("Mossbone_Mother_Tests", output_dir="processed", save_vocab=True, num_testing=2)
+    def get_cont_mean(self):
+        return self._preprocessor.mean
+
+    def get_cont_std(self):
+        return self._preprocessor.std

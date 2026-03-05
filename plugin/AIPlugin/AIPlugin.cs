@@ -86,6 +86,7 @@ namespace AIPlugin
         }
         private void Update()
         {
+            ThreadSafeLogService.Flush();
             if (Input.GetKeyDown(KeyCode.F11))
             {
                 //GameStateLogger.LogGameStateToFiles();

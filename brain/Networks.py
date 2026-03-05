@@ -2,26 +2,90 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from BossFightDataset import BossFightDataset
+from RecordingLayout import Layout
+
+
+class BossModelArtifact:
+    def __init__(
+        self,
+        model: nn.Module,
+        boss_name: str,
+        vocab: dict,
+        metadata: dict,
+    ):
+        self.model = model
+        self.boss_name = boss_name
+        self.vocab = vocab
+        self.metadata = metadata
+
+    def save(self, path):
+        torch.save({
+            "format_version": Layout.SUPPORTED_FORMAT_VERSION,
+            "state_dict": self.model.state_dict(),
+            "config": self.model.config,
+            "boss_name": self.boss_name,
+            "vocab": self.vocab,
+            "metadata": self.metadata,
+        }, path)
+
+    def dataset_matches(self, dataset: BossFightDataset) -> bool:
+        if dataset.target_boss == self.boss_name:
+            return True
+
+        return False
+
+class BossModelFactory:
+    @staticmethod
+    def load(path: str, device: str = "cpu") -> BossModelArtifact:
+        checkpoint = torch.load(path, map_location=device, weights_only=False)
+
+        # Optional: version check
+        if checkpoint.get("format_version", 1) != Layout.SUPPORTED_FORMAT_VERSION:
+            raise ValueError("Unsupported model format version")
+
+        config = checkpoint["config"]
+
+        # Recreate network
+        model = BossNet(**config)
+        model.load_state_dict(checkpoint["state_dict"])
+        model.to(device)
+        model.eval()
+
+        return BossModelArtifact(
+            model=model,
+            boss_name=checkpoint["boss_name"],
+            vocab=checkpoint["vocab"],
+            metadata=checkpoint["metadata"],
+        )
 
 class BossNet(nn.Module):
     def __init__(
             self,
             time_window: int,
-            continuous_count: int,
-            playmaker_count: int,
-            playmaker_vocab_size: int,
+            cont_dim: int,
+            playmaker_dim: int,
+            vocab_dim: int,
             embedding_dim: int,
             hidden_dim: int,
             output_dim: int):
 
         super().__init__()
 
+        self.config = {
+            "time_window": time_window,
+            "cont_dim": cont_dim,
+            "playmaker_dim": playmaker_dim,
+            "vocab_dim": vocab_dim,
+            "embedding_dim": embedding_dim,
+            "hidden_dim": hidden_dim,
+            "output_dim": output_dim
+        }
 
-        self.embedding = nn.Embedding(playmaker_vocab_size, embedding_dim)
-        self.embedded_size = playmaker_count * embedding_dim * time_window
+        self.embedding = nn.Embedding(vocab_dim, embedding_dim)
+        self.embedded_size = playmaker_dim * embedding_dim * time_window
 
         self.continuous_projection = nn.Sequential(
-                nn.Linear(continuous_count * time_window, hidden_dim),
+                nn.Linear(cont_dim * time_window, hidden_dim),
                 nn.ReLU()
         )
 
@@ -55,53 +119,3 @@ class BossNet(nn.Module):
 
         return self.output(x)
 
-
-if __name__ == "__main__":
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = "cpu"
-    print("Using device:", device)
-
-    time_window = 200
-
-    continuous_count = 35
-    playmaker_count = 6
-    playmaker_vocab_size = 40
-    embedding_dim = 4
-    output_dim = 10
-
-    dataset = BossFightDataset("mossbone_mother.pt", time_window=time_window)
-    dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
-
-    net = BossNet(time_window,
-                  continuous_count,
-                  playmaker_count,
-                  playmaker_vocab_size,
-                  embedding_dim,
-                  200,
-                  output_dim).to(device)
-
-    optimizer = optim.Adam(net.parameters(), lr=1e-3)
-    criterion = nn.MSELoss()
-
-    for epoch in range(15):
-
-        total_loss = 0
-        n = 0
-
-        for continuous_batch, playmaker_batch, target_batch in dataloader:
-
-            continuous_batch = continuous_batch.to(device, dtype=torch.float32)
-            playmaker_batch = playmaker_batch.to(device, dtype=torch.long)
-            target_batch = target_batch.to(device, dtype=torch.float32)
-
-            optimizer.zero_grad()
-            output_batch = net(continuous_batch, playmaker_batch)
-            loss = criterion(output_batch, target_batch)
-            loss.backward()
-            optimizer.step()
-
-            total_loss += loss.item()
-            n += 1
-
-        print(f"Epoch: {epoch} | Avg Loss: {total_loss/n}")

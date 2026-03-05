@@ -30,10 +30,8 @@ namespace AIPlugin
         private GameStateController _gameStateController;
         private AIServerCoordinator _serverCoordinator;
 
-        private bool _showBossDropdown = false;
-        private bool _showModelDropdown = false;
-        private Vector2 _modelScroll;
-        private Vector2 _bossScroll;
+        private CustomGUILayouts.DropdownState _bossDropdownState = new CustomGUILayouts.DropdownState();
+        private CustomGUILayouts.DropdownState _modelDropdownState = new CustomGUILayouts.DropdownState();
 
         public PluginGUI(ConfigFile config, ServiceRegistry registry)
         {
@@ -109,7 +107,7 @@ namespace AIPlugin
                       new ConfigurationManagerAttributes
                       {
                           IsAdvanced = false,
-                          CustomDrawer = DrawStartSessionButton
+                          CustomDrawer = DrawSessionSettings
 
                       }
                   ));
@@ -150,46 +148,23 @@ namespace AIPlugin
         private void DrawBossSelectionDropdown(ConfigEntryBase entry)
         {
             var config = (ConfigEntry<int>)entry;
+            _bossDropdownState.SelectedIdx = config.Value;
+            List<string> bossNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToList();
 
-            string[] bossNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToArray(); 
+            bool oldGUIenabled = GUI.enabled;
+            if (!CanUseTeleportButton()) //TODO make more of those functions and make it better lol
+                GUI.enabled = false;
 
-            if (!_showBossDropdown) { 
-                // Button showing current selection
-                if (GUILayout.Button(bossNames[config.Value]))
-                {
-                    _showBossDropdown = !_showBossDropdown;
-                }
-            }
+            _bossDropdownState = CustomGUILayouts.Dropdown(_bossDropdownState, bossNames);
+            config.Value = _bossDropdownState.SelectedIdx;
 
-            if (_showBossDropdown)
-            {
-                GUILayout.BeginVertical("box");
-
-                _bossScroll = GUILayout.BeginScrollView(
-                    _bossScroll,
-                    GUIStyle.none,
-                    GUILayout.Height(200)   // visible height of dropdown
-                );
-
-                for (int i = 0; i < bossNames.Length; i++)
-                {
-                    if (GUILayout.Button(bossNames[i]))
-                    {
-                        config.Value = i;
-                        _showBossDropdown = false;
-                    }
-                }
-
-                GUILayout.EndScrollView();
-                GUILayout.EndVertical();
-            }
+            GUI.enabled = oldGUIenabled;
 
         }
         private void DrawTeleportToSelectedBossButton(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
             BossMetadata bossReference = BossReferenceDatabase.All[bossIdx];
-
 
             bool oldGUIenabled = GUI.enabled;
 
@@ -222,61 +197,39 @@ namespace AIPlugin
 
             if (_aiService.IsConnected)
             {
-
                 GUILayout.BeginHorizontal();
-
-                GUILayout.Label("Model Selection", GUILayout.Width(100));
-
-                GUI.enabled = true;
-
-                List<string> modelNames;
-                int bossIdx = bossSelectionDropdown.Value;
-                string bossName = BossReferenceDatabase.All[bossIdx].InternalName;
-                var anyModels = _serverCoordinator.TryGetModels(bossName, out modelNames);
-
-                _serverCoordinator.EnsureValidSelection(bossName);
-
-                if (!_showModelDropdown)//TODO make this an object and the one in boss selection
+                try
                 {
-                    string selectedModelName = _serverCoordinator.GetSelectedModelName() ?? "None";
-                    // Button showing current selection
-                    if (GUILayout.Button(selectedModelName) && anyModels)
-                    {
-                        _showModelDropdown = !_showModelDropdown;
-                    }
-                }
+                    GUILayout.Label("Model Selection: ", GUILayout.Width(100));
 
-                if (_showModelDropdown)
+                    GUI.enabled = true;
+
+                    string bossName = BossReferenceDatabase.All[bossSelectionDropdown.Value].InternalName;
+                    _serverCoordinator.EnsureValidSelection(bossName);
+                    var modelNames = _serverCoordinator.GetAvailableModels(bossName);
+                    int modelIdx = modelNames.IndexOf(_serverCoordinator.GetSelectedModelName());
+                    modelIdx = Mathf.Clamp(modelIdx, 0, modelNames.Count - 1);
+
+                    _modelDropdownState.SelectedIdx = modelIdx;
+
+                    _modelDropdownState = CustomGUILayouts.Dropdown(_modelDropdownState, modelNames);
+
+                    if (_modelDropdownState.SelectedIdx != modelIdx)
+                        _serverCoordinator.SelectModel(bossName, modelNames[_modelDropdownState.SelectedIdx]);
+                }
+                catch (Exception ex)
                 {
-                    GUILayout.BeginVertical("box");
-
-                    _modelScroll = GUILayout.BeginScrollView(
-                        _modelScroll,
-                        GUIStyle.none,
-                        GUILayout.Height(200)   // visible height of dropdown
-                    );
-
-                    for (int i = 0; i < modelNames.Count; i++)
-                    {
-                        if (GUILayout.Button(modelNames[i]))
-                        {
-                            _serverCoordinator.SelectModel(bossName, modelNames[i]);
-                            _showModelDropdown = false; // Welcome to nesting hell
-                        }
-                    }
-
-                    GUILayout.EndScrollView();
-                    GUILayout.EndVertical();
+                    AIPlugin.Log.LogError(ex);
                 }
-
-                GUILayout.EndHorizontal();
+                finally
+                {
+                    GUILayout.EndHorizontal();
+                }
             }
             GUILayout.EndVertical();
             GUI.enabled = oldGUIenabled;
-
-
         }
-        private void DrawStartSessionButton(ConfigEntryBase entry)
+        private void DrawSessionSettings(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
             BossMetadata bossReference = BossReferenceDatabase.All[bossIdx];
@@ -457,4 +410,81 @@ namespace AIPlugin
         }
 
     }
+
+    public static class CustomGUILayouts
+    {
+        public class DropdownState
+        {
+            public int SelectedIdx = 0;
+            public bool Expanded = false;
+            public Vector2 Scroll;
+        }
+        public static DropdownState Dropdown(DropdownState state, List<string> options)
+        {
+            var oldEnabled = GUI.enabled;
+
+            state.SelectedIdx = options.Count <= 0 ? 0 : Mathf.Clamp(state.SelectedIdx, 0, options.Count - 1);
+
+            if ((state.Expanded && !GUI.enabled) || options.Count == 0)
+                state.Expanded = false;
+
+            if (!state.Expanded)
+            {
+                if (options.Count > 0)
+                {
+                    // Button showing current selection
+                    if (GUILayout.Button(options[state.SelectedIdx]))
+                    {
+                        state.Expanded = !state.Expanded;
+                    }
+                }
+                else
+                {
+                    GUI.enabled = false;
+                    GUILayout.Button("No options available");
+                }
+            }
+            else
+            {
+                GUILayout.BeginVertical("box");
+
+                state.Scroll = GUILayout.BeginScrollView(
+                    state.Scroll,
+                    GUIStyle.none,
+                    GUILayout.Height(200)   // visible height of dropdown
+                );
+
+                for (int i = 0; i < options.Count; i++)
+                {
+                    // Draw a highlight box for the current selection
+                    if (i == state.SelectedIdx)
+                    {
+                        var rect = GUILayoutUtility.GetRect(new GUIContent(options[i]), GUI.skin.button);
+                        GUI.Box(rect, "", GUI.skin.box); // TODO MAKE THIS MORE VISIBLE Draw an empty box behind the button
+                        if (GUI.Button(rect, options[i]))
+                        {
+                            state.SelectedIdx = i;
+                            state.Expanded = false;
+                        }
+                    }
+                    else
+                    {
+                        if (GUILayout.Button(options[i]))
+                        {
+                            state.SelectedIdx = i;
+                            state.Expanded = false;
+                        }
+                    }
+                }
+
+                GUILayout.EndScrollView();
+                GUILayout.EndVertical();
+            }
+
+            GUI.enabled = oldEnabled;
+
+            return state;
+        }
+    }
+
 }

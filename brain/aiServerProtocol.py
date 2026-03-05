@@ -1,19 +1,56 @@
 import asyncio
 import msgpack
+from torchvision.models import list_models
 
+from Networks import BossModelArtifact, BossModelFactory
+from model_manager import get_all_models, model_exists, get_model_path
 
 handlers = {}
+
+class ClientSession: #TODO: add permanence in case of disconnect
+    def __init__(self):
+        self._selected_boss_name = ""
+        self._selected_model_name = ""
+        self._artifact: BossModelArtifact = None
+
+    def select_model(self, boss_name: str, model_name: str, load_artifact: bool = True):
+        if not model_exists(boss_name, model_name):
+            self._selected_boss_name = ""
+            self._selected_model_name = ""
+            return
+
+        self._artifact = BossModelFactory.load(get_model_path(boss_name, model_name)) #TODO add separate button for loading or load when starting session
+
+        self._selected_model_name = model_name
+        self._selected_boss_name = boss_name
+
+    def get_selected_model(self):
+        return [self._selected_boss_name, self._selected_model_name]
 
 def register_handler(name):
     def decorator(func):
         handlers[name] = func
         return func
-
     return decorator
 
 @register_handler("get_models")
-async def handle_ping(payload):
-    return ["cipa", "cyce", "jak", "donice"]
+async def get_models(payload, session: ClientSession):
+    output = {
+        "selected_model": session.get_selected_model(),
+        "models": get_all_models()
+    }
+    return output
+
+@register_handler("select_model")
+async def select_model(payload, session: ClientSession):
+
+    session.select_model(payload["boss_name"], payload["model_name"])
+
+    output = {
+        "selected_model": session.get_selected_model(),
+        "models": get_all_models()
+    }
+    return output
 
 async def read_msg(reader):
     length_bytes = await reader.readexactly(4)
@@ -30,29 +67,30 @@ async def write_msg(writer, msg):
     await writer.drain()
 
 async def handle_client(reader, writer):
+    session = ClientSession()
     addr = writer.get_extra_info("peername")
     print(f"Client connected: {addr}")
     try:
         while True:
             request = await read_msg(reader)
 
-            request_id = request.get("RequestId")
-            req_type = request.get("Type")
-            payload = request.get("Payload")
+            request_id = request.get("request_ID")
+            req_type = request.get("type")
+            payload = request.get("payload")
 
-            response = {"RequestId": request_id, "Success": True, "Payload": None}
+            response = {"request_ID": request_id, "success": True, "error_message": "", "payload": None}
 
             if req_type in handlers:
                 try:
-                    result = await handlers[req_type](payload)
+                    result = await handlers[req_type](payload, session)
                     print(result)
-                    response["Payload"] = result
+                    response["payload"] = result
                 except Exception as e:
-                    response["Success"] = False
-                    response["Payload"] = str(e)
+                    response["success"] = False
+                    response["error_message"] = str(e)
             else:
-                response["Success"] = False
-                response["Payload"] = f"Unknown request type: {req_type}"
+                response["success"] = False
+                response["error_message"] = f"Unknown request type: {req_type}"
                 print(f"Unknown request type: {req_type}")
 
             await write_msg(writer, response)

@@ -19,7 +19,7 @@ class LayoutNotSupported(Exception):
 @dataclass
 class Layout:
 
-    SUPPORTED_FORMAT_VERSION: int = 4
+    SUPPORTED_FORMAT_VERSION: int = 8
 
     @dataclass
     class Frame:
@@ -64,8 +64,9 @@ class Layout:
         VEL_X: int = 3
         VEL_Y: int = 4
         HP: int = 5
+        NAME: int = 6
         # Very important - this has to ALWAYS be last and should be included in boolean mask as boolean-type !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        PLAYMAKERS: int = 6
+        PLAYMAKERS: int = 7
         # !!!!!!!!!!!!!!!!!
 
         num_elements = 7

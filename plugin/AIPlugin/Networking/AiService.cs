@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AIPlugin.Utilities;
+using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -28,21 +29,7 @@ namespace AIPlugin.Networking
         private bool _notifyConnected;
         private bool _notifyDisconnected;
 
-        public static class ThreadSafeLog
-        {
-            private static ConcurrentQueue<(string msg, Action<string> logAction)> _queue = new ConcurrentQueue<(string, Action<string>)>();
-            public static void Log(string message, Action<string> unityLog = null)
-            {
-                _queue.Enqueue((message, unityLog ?? Debug.Log));
-            }
-            public static void Flush()
-            {
-                while (_queue.TryDequeue(out var item))
-                {
-                    item.logAction(item.msg);
-                }
-            }
-        }
+      
         public void Initialize(string ip, int port)
         {
             _client = new AiClient(ip, port);
@@ -67,7 +54,6 @@ namespace AIPlugin.Networking
         }
         void Update()
         {
-            ThreadSafeLog.Flush();
             if (_notifyConnected)
             {
                 AIPlugin.Log.LogInfo("NOTIFY CONN");
@@ -100,11 +86,11 @@ namespace AIPlugin.Networking
 
                     if (IsConnected)
                     {
-                        ThreadSafeLog.Log($"Reconnected Succesfully", AIPlugin.Log.LogMessage);
+                        ThreadSafeLogService.Log($"Reconnected Succesfully", AIPlugin.Log.LogMessage);
                         return;
                     }
                 }
-                ThreadSafeLog.Log($"Could not reconnect after {_reconnectAttempts} attempts", AIPlugin.Log.LogMessage);
+                ThreadSafeLogService.Log($"Could not reconnect after {_reconnectAttempts} attempts", AIPlugin.Log.LogMessage);
             }
             finally
             {
@@ -121,7 +107,7 @@ namespace AIPlugin.Networking
             }
             catch (Exception ex)
             {
-                ThreadSafeLog.Log($"Connection failed: {ex.Message}", AIPlugin.Log.LogWarning);
+                ThreadSafeLogService.Log($"Connection failed: {ex.Message}", AIPlugin.Log.LogWarning);
             }
             finally
             {
