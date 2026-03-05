@@ -103,6 +103,7 @@ namespace AIPlugin
         }
         public static FrameEnemyData? GetEnemyData(EnemyInstance enemy)
         {
+            var hero = HeroController.instance;
             if (enemy == null) return null;
             if (enemy.GameObject == null) return null;
             if (enemy.HealthManager == null) return null;
@@ -113,7 +114,9 @@ namespace AIPlugin
             {
                 posX = enemy.GameObject.transform.position.x,
                 posY = enemy.GameObject.transform.position.y,
-                facing = enemy.GameObject.transform.localScale.x >= 0.0 ? 1 : -1,
+                RelPosX = enemy.GameObject.transform.position.x - hero.transform.position.x,
+                RelPosY = enemy.GameObject.transform.position.y - hero.transform.position.y,
+                facing = enemy.GameObject.transform.localScale.x >= 0.0 ? true : false,
                 velX = enemy.Rigidbody2D.linearVelocity.x,
                 velY = enemy.Rigidbody2D.linearVelocity.y,
                 hp = enemy.HealthManager.hp,
@@ -134,11 +137,10 @@ namespace AIPlugin
             return output;
         }
 
-        public static FrameHeroData? GetHeroData()
+        public static FrameHeroData? GetHeroData(EnemyInstance TargetEnemy) //TODO make those take hero etc as parameters
         {
             var hero = HeroController.instance;
             var rigidbody = hero.GetComponent<Rigidbody2D>();
-
             if (rigidbody == null) return null;
 
             FrameHeroData output = new FrameHeroData
@@ -146,11 +148,14 @@ namespace AIPlugin
 
                 posX = hero.transform.position.x,
                 posY = hero.transform.position.y,
-                facing = (int)hero.transform.GetScaleX(),
+                RelPosX = hero.transform.position.x - TargetEnemy.GameObject.transform.position.x,
+                RelPosY = hero.transform.position.y - TargetEnemy.GameObject.transform.position.y,
                 velX = rigidbody.linearVelocity.x,
                 velY = rigidbody.linearVelocity.y,
                 hp = hero.playerData.health,
                 silk = hero.playerData.silk,
+                facing = hero.transform.localScale.x >= 0.0,
+                IsStunned = hero.IsStunned,
                 canJump = hero.CanJump(),
                 canDoubleJump = hero.CanDoubleJump(),
                 canAttack = hero.CanAttack(),

@@ -22,6 +22,9 @@ namespace AIPlugin.Networking
         }
     }
     [MessagePackObject]
+    public struct Empty { }
+
+    [MessagePackObject]
     public class ModelsOverviewResponse
     {
         [Key("selected_model")]
