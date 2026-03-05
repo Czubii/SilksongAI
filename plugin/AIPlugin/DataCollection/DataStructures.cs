@@ -7,17 +7,17 @@ namespace AIPlugin
     [MessagePackObject]
     public class RecordingHeader
     {
-        [Key("FormatVersion")] public int FormatVersion = 9;
-        [Key("RecordFrameDelta")] public int RecordFrameDelta = SessionConfig.RecordFrameDelta;
-        [Key("BossName")] public string BossName;
-        [Key("EnemyNames")] public string[] EnemyNames;
-        [Key("PlayerName")] public string PlayerName;
+        [Key("format_version")] public int FormatVersion = 9;
+        [Key("record_frame_delta")] public int RecordFrameDelta = SessionConfig.RecordFrameDelta;
+        [Key("boss_name")] public string BossName;
+        [Key("nemy_names")] public string[] EnemyNames;
+        [Key("player_name")] public string PlayerName;
     }
     [MessagePackObject]
     public class RecordingFooter
     {
-        [Key("Success")] public bool Success;
-        [Key("FrameCount")] public int FrameCount;
+        [Key("success")] public bool Success;
+        [Key("frame_count")] public int FrameCount;
     }
 
     [MessagePackObject]
