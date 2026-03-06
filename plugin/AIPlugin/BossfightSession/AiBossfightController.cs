@@ -41,10 +41,10 @@ namespace AIPlugin.BossfightSession
         public void OnDisconnected()
         {
             enabled = false;
-            State = AiState.Idle;
         }
         public void OnDisable()
         {
+            AIInputState.AIControlEnabled = false;
             State = AiState.Idle;
         }
         public void OnEnable()
@@ -93,8 +93,8 @@ namespace AIPlugin.BossfightSession
             {
                 var inputs = await RequestInputs();
                 if (inputs == null) return;
+
                 AIInputState.Inputs = inputs;
-                //ThreadSafeLogService.Log(string.Join(", ", inputs), AIPlugin.Log.LogMessage);
             }
             catch (Exception e)
             {
@@ -107,17 +107,26 @@ namespace AIPlugin.BossfightSession
             EnemyInstance boss = _enemyManager?.GetTargetInstance() ?? null;
             List<EnemyInstance> enemies = _enemyManager?.GetNonTargetInstances() ?? null;
 
-            LivePredictionFrameData frameData = FrameDataCollector.GetLive(boss, enemies);
-
-            if (frameData == null)
+            if (boss == null || enemies == null)
             {
-                AIPlugin.Log.LogWarning("AiBossfightController: No frame data. Skipping Frame");
+                ThreadSafeLogService.Log("AIBossfightController: Couldn't get enemies. Skipping Frame", AIPlugin.Log.LogWarning);
+                return null;
+            }
+
+            LivePredictionFrameData frameData;
+
+            try
+            {
+                frameData = FrameDataCollector.GetLive(boss, enemies);
+            }
+            catch (Exception e)
+            {
+                ThreadSafeLogService.Log($"AIBossfightController: Exception {e}. Skipping Frame", AIPlugin.Log.LogError);
                 return null;
             }
 
             return await _service.Gateway.PredictInputsAsync(frameData);
         }
-
     }
 
     public static class AIInputState
@@ -150,6 +159,16 @@ namespace AIPlugin.BossfightSession
                         currentTick,
                         deltaTime });
 
+                    if (AIInputState.Inputs.vertical > 0)
+                    {
+                        ___inputHandler.inputActions.Up.CommitWithValue(AIInputState.Inputs.vertical, currentTick, deltaTime);
+                        ___inputHandler.inputActions.Down.CommitWithValue(0.0f, currentTick, deltaTime);
+                    }
+                    else
+                    {
+                        ___inputHandler.inputActions.Up.CommitWithValue(0.0f, currentTick, deltaTime);
+                        ___inputHandler.inputActions.Down.CommitWithValue(-AIInputState.Inputs.vertical, currentTick, deltaTime);
+                    }
                     ___inputHandler.inputActions.Jump.CommitWithState(AIInputState.Inputs.jump, currentTick, deltaTime);
                     ___inputHandler.inputActions.Dash.CommitWithState(AIInputState.Inputs.dash, currentTick, deltaTime);
                     ___inputHandler.inputActions.Attack.CommitWithState(AIInputState.Inputs.attack, currentTick, deltaTime);
