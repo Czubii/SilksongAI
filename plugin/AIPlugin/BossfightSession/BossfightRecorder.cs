@@ -208,23 +208,31 @@ namespace AIPlugin.BossfightSession
             EnemyInstance boss = _enemyManager?.GetTargetInstance() ?? null;
             List<EnemyInstance> enemies = _enemyManager?.GetNonTargetInstances() ?? null;
 
-            RecordingFrameData frameData = FrameDataCollector.GetRecording(boss, enemies);
-
-            if (frameData == null)
+            if (boss == null || enemies == null)
             {
-                AIPlugin.Log.LogError("BossFightRecorder: No frame data. Stoping Recording");
+                AIPlugin.Log.LogError("BossFightRecorder: Couldn't get enemies. Stoping Recording");
                 StopRecordingPrematurely();
                 return;
             }
+            try
+            {
+                RecordingFrameData frameData = FrameDataCollector.GetRecording(boss, enemies);
 
-            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
-            {
-                var dataBinWithKeys = MessagePackSerializer.Serialize(frameData, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-                _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
+                if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
+                {
+                    var dataBinWithKeys = MessagePackSerializer.Serialize(frameData, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+                    _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
+                }
+                else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
+                {
+                    MessagePackSerializer.Serialize(_outputBIN, frameData); // save the binary frame data
+                }
             }
-            else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
+            catch (Exception e) 
             {
-                MessagePackSerializer.Serialize(_outputBIN, frameData); // save the binary frame data
+                AIPlugin.Log.LogError(e);
+                AIPlugin.Log.LogError("Exception meth when trying to record frame. Stopping Recording.");
+                StopRecordingPrematurely();
             }
         }
     }
