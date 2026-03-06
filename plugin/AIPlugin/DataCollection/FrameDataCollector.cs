@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,108 +9,51 @@ namespace AIPlugin
     {
         public static LivePredictionFrameData GetLive(EnemyInstance boss, List<EnemyInstance> enemies) //TODO avoid repetition with functino bellow
         {
-            FrameHeroData? heroData = GetHeroData(boss);
-            if (heroData == null)
-            {
-                AIPlugin.Log.LogError("FrameDataCollector: heroData missing.");
-                return null;
-            }
-
-            var IH = InputHandler.Instance;
-            if (IH == null)
-            {
-                AIPlugin.Log.LogError("FrameDataCollector: InputHandler.Instance missing.");
-                return null;
-            }
+            HeroController hero = HeroController.instance;
+            FrameHeroData heroData = GetHeroData(hero, boss);
 
             LivePredictionFrameData frameData = new LivePredictionFrameData()
             {
-                Hero = (FrameHeroData)heroData,
+                Hero = heroData,
             };
 
             frameData.Enemies = new FrameEnemyData[enemies.Count + 1];
-
-            FrameEnemyData? bossData = GetEnemyData(boss);
-            if (bossData == null)
-            {
-                AIPlugin.Log.LogError("FrameDataCollector: bossData missing.");
-                return null;
-            }
-
-            frameData.Enemies[0] = (FrameEnemyData)bossData;
+            frameData.Enemies[0] = GetEnemyData(boss, hero);
 
             for (int i = 0; i < enemies.Count; i++)
             {
-                FrameEnemyData? enemyData = GetEnemyData(enemies[i]);
-                if (enemyData == null)
-                {
-                    AIPlugin.Log.LogWarning("BossFightRecorder: enemyData missing");
-                    continue;
-                }
-
-                frameData.Enemies[i + 1] = (FrameEnemyData)enemyData;
+                frameData.Enemies[i + 1] = GetEnemyData(enemies[i], hero);
             }
 
             return frameData;
         }
-        public static RecordingFrameData GetAll(EnemyInstance boss, List<EnemyInstance> enemies)
+        public static RecordingFrameData GetRecording(EnemyInstance boss, List<EnemyInstance> enemies)
         {
-
-            FrameHeroData? heroData = GetHeroData(boss);
-            if (heroData == null)
-            {
-                AIPlugin.Log.LogError("FrameDataCollector: heroData missing.");
-                return null;
-            }
-
-            var IH = InputHandler.Instance;
-            if (IH == null)
-            {
-                AIPlugin.Log.LogError("FrameDataCollector: InputHandler.Instance missing.");
-                return null;
-            }
-
-            FrameUserInputs userInputs = GetInputs(IH);
+            HeroController hero = HeroController.instance;
+            FrameHeroData heroData = GetHeroData(hero, boss);
+            FrameUserInputs userInputs = GetInputs();
 
             RecordingFrameData frameData = new RecordingFrameData()
             {
-                Hero = (FrameHeroData)heroData,
+                Hero = heroData,
                 UserInputs = userInputs
             };
 
             frameData.Enemies = new FrameEnemyData[enemies.Count + 1];
-
-            FrameEnemyData? bossData = GetEnemyData(boss);
-            if (bossData == null)
-            {
-                AIPlugin.Log.LogError("FrameDataCollector: bossData missing.");
-                return null;
-            }
-
-            frameData.Enemies[0] = (FrameEnemyData)bossData;
+            frameData.Enemies[0] = GetEnemyData(boss, hero);
 
             for (int i = 0; i < enemies.Count; i++)
             {
-                FrameEnemyData? enemyData = GetEnemyData(enemies[i]);
-                if (enemyData == null)
-                {
-                    AIPlugin.Log.LogWarning("BossFightRecorder: enemyData missing");
-                    continue;
-                }
-
-                frameData.Enemies[i+1] = (FrameEnemyData)enemyData;
+                frameData.Enemies[i+1] = GetEnemyData(enemies[i], hero);
             }
 
             return frameData;
         }
-        public static FrameEnemyData? GetEnemyData(EnemyInstance enemy)
+        public static FrameEnemyData GetEnemyData(EnemyInstance enemy, HeroController hero)
         {
-            var hero = HeroController.instance;
-            if (enemy == null) return null;
-            if (enemy.GameObject == null) return null;
-            if (enemy.HealthManager == null) return null;
-            if (enemy.PlayMakers == null) return null;
-            if (enemy.Rigidbody2D == null) return null;
+            if (enemy == null || enemy.GameObject == null || enemy.PlayMakers == null || enemy.HealthManager == null
+                || enemy.Rigidbody2D == null)
+                throw new ArgumentNullException($"GetEnemyData: One or more component(s) of enemy: {enemy.Name} is null");
 
             FrameEnemyData output = new FrameEnemyData
             {
@@ -122,7 +66,6 @@ namespace AIPlugin
                 velY = enemy.Rigidbody2D.linearVelocity.y,
                 hp = enemy.HealthManager.hp,
                 Name = enemy.Name,
-                
             };
 
             output.playMakers = new PlayMakerData[enemy.PlayMakers.Length];
@@ -137,12 +80,8 @@ namespace AIPlugin
 
             return output;
         }
-        public static FrameHeroData? GetHeroData(HeroController heroInstance, EnemyInstance targetEnemy) //TODO make those take hero etc as parameters
+        public static FrameHeroData GetHeroData(HeroController hero, EnemyInstance targetEnemy) //TODO make those take hero etc as parameters
         {
-            var hero = HeroController.instance;
-            var rigidbody = hero.GetComponent<Rigidbody2D>();
-            if (rigidbody == null) return null;
-
             FrameHeroData output = new FrameHeroData
             {
                 posX = hero.transform.position.x,
@@ -167,8 +106,9 @@ namespace AIPlugin
             return output;
         }
 
-        public static FrameUserInputs GetInputs(InputHandler IH)
+        public static FrameUserInputs GetInputs()
         {
+            var IH = InputHandler.Instance; // This one is always in game so it should not cause any trouble accessing it this way
             FrameUserInputs controls = new FrameUserInputs()
             {
                 jump = IH.inputActions.Jump,

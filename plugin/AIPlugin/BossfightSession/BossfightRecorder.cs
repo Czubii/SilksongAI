@@ -208,7 +208,7 @@ namespace AIPlugin.BossfightSession
             EnemyInstance boss = _enemyManager?.GetTargetInstance() ?? null;
             List<EnemyInstance> enemies = _enemyManager?.GetNonTargetInstances() ?? null;
 
-            RecordingFrameData frameData = FrameDataCollector.GetAll(boss, enemies);
+            RecordingFrameData frameData = FrameDataCollector.GetRecording(boss, enemies);
 
             if (frameData == null)
             {
