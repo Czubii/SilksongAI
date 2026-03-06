@@ -137,14 +137,7 @@ namespace AIPlugin
 
             return output;
         }
-        public static float GetHeroCooldown(string name)
-        {
-            float? attackCooldown = Traverse.Create(HeroController.instance).Field(name).GetValue() as float?;
-
-            if (attackCooldown == null) return 0.0f;
-            else return attackCooldown < 0.0f ? 0.0f : (float)attackCooldown;
-        }
-        public static FrameHeroData? GetHeroData(EnemyInstance TargetEnemy) //TODO make those take hero etc as parameters
+        public static FrameHeroData? GetHeroData(HeroController heroInstance, EnemyInstance targetEnemy) //TODO make those take hero etc as parameters
         {
             var hero = HeroController.instance;
             var rigidbody = hero.GetComponent<Rigidbody2D>();
@@ -154,18 +147,11 @@ namespace AIPlugin
             {
                 posX = hero.transform.position.x,
                 posY = hero.transform.position.y,
-                RelPosX = hero.transform.position.x - TargetEnemy.GameObject.transform.position.x,
-                RelPosY = hero.transform.position.y - TargetEnemy.GameObject.transform.position.y,
-                velX = rigidbody.linearVelocity.x,
-                velY = rigidbody.linearVelocity.y,
-                AttackCooldown = GetHeroCooldown("attack_cooldown"),
-                DashCooldown = GetHeroCooldown("dashCooldownTimer"),
-                ThrowToolCoodown = GetHeroCooldown("throwToolCooldown"),
-                HarpoonDashCooldown = GetHeroCooldown("harpoonDashCooldown"),
-                WallClingCooldown = GetHeroCooldown("wallClingCooldownTimer"),
+                RelPosX = hero.transform.position.x - targetEnemy.GameObject.transform.position.x,
+                RelPosY = hero.transform.position.y - targetEnemy.GameObject.transform.position.y,
+
                 hp = hero.playerData.health,
                 silk = hero.playerData.silk,
-                facing = hero.transform.localScale.x >= 0.0,
                 IsStunned = hero.IsStunned,
                 canJump = hero.CanJump(),
                 canDoubleJump = hero.CanDoubleJump(),
@@ -175,9 +161,7 @@ namespace AIPlugin
                 canCast = hero.CanCast(),
                 canNailArt = hero.CanNailArt(),
                 canTryHarpoon = hero.CanTryHarpoonDash(),
-                canInput = hero.CanInput(),
                 canBackDash = hero.CanBackDash(),
-
             };
 
             return output;
@@ -188,10 +172,8 @@ namespace AIPlugin
             FrameUserInputs controls = new FrameUserInputs()
             {
                 jump = IH.inputActions.Jump,
-                left = IH.inputActions.Left.RawValue,
-                right = IH.inputActions.Right.RawValue,
-                up = IH.inputActions.Up.RawValue,
-                down = IH.inputActions.Down.RawValue,
+                horizontal = IH.inputActions.MoveVector.Vector.x,
+                vertical = IH.inputActions.MoveVector.Vector.y,
 
                 attack = IH.inputActions.Attack,
                 heal = IH.inputActions.Cast,

@@ -3,8 +3,10 @@ using AIPlugin.Utilities;
 using HarmonyLib;
 using InControl;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -143,15 +145,17 @@ namespace AIPlugin.BossfightSession
                         AIPlugin.Log.LogError("UpdateWithAxes not found");
 
                     method.Invoke(___inputHandler.inputActions.MoveVector, new object[]
-                    { AIInputState.Inputs.right - AIInputState.Inputs.left,
-                  AIInputState.Inputs.up - AIInputState.Inputs.down,
-                    currentTick,
-                    deltaTime });
+                    {   AIInputState.Inputs.horizontal,
+                        AIInputState.Inputs.vertical,
+                        currentTick,
+                        deltaTime });
 
-
-                    AIPlugin.Log.LogMessage($"Move vect: {___inputHandler.inputActions.MoveVector.Vector.x}");
-                    AIPlugin.Log.LogMessage($"Left: {___inputHandler.inputActions.Left.RawValue}");
-                    AIPlugin.Log.LogMessage($"Right: {___inputHandler.inputActions.Right.RawValue}");
+                    ___inputHandler.inputActions.Jump.CommitWithState(AIInputState.Inputs.jump, currentTick, deltaTime);
+                    ___inputHandler.inputActions.Dash.CommitWithState(AIInputState.Inputs.dash, currentTick, deltaTime);
+                    ___inputHandler.inputActions.Attack.CommitWithState(AIInputState.Inputs.attack, currentTick, deltaTime);
+                    ___inputHandler.inputActions.Cast.CommitWithState(AIInputState.Inputs.heal, currentTick, deltaTime);
+                    ___inputHandler.inputActions.QuickCast.CommitWithState(AIInputState.Inputs.skill, currentTick, deltaTime);
+                    ___inputHandler.inputActions.SuperDash.CommitWithState(AIInputState.Inputs.harpoon, currentTick, deltaTime);
                 }
             }
             catch (Exception ex)

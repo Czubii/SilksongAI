@@ -2,6 +2,7 @@ import asyncio
 import msgpack
 import numpy as np
 import torch
+from sympy.codegen.ast import bool_
 from torchvision.models import list_models
 
 from Networks import BossModelArtifact, BossModelFactory
@@ -49,6 +50,8 @@ class ClientSession: #TODO: add permanence in case of disconnect
 
         self._selected_model_name = model_name
         self._selected_boss_name = boss_name
+
+        self.buffer_filled = False
 
     def get_selected_model(self):
         return [self._selected_boss_name, self._selected_model_name]
@@ -102,7 +105,8 @@ class ClientSession: #TODO: add permanence in case of disconnect
         bool_logits = output[Layout.Inputs.float_values:]
 
         bool_probs = torch.sigmoid(bool_logits)
-        bool_values = (bool_probs > 0.5).tolist()
+        print(bool_probs)
+        bool_values = (bool_probs > 0.15).tolist()
 
         float_values = float_outputs.tolist()
 
@@ -173,7 +177,7 @@ async def handle_client(reader, writer):
             if req_type in handlers:
                 try:
                     result = await handlers[req_type](payload, session)
-                    print(result)
+                    #print(result)
                     response["payload"] = result
                 except Exception as e:
                     response["success"] = False

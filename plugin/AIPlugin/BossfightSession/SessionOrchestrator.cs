@@ -71,8 +71,6 @@ namespace AIPlugin.BossfightSession
 
                 while (_sessionRuntime.RemainingFights > 0 && !_cancel.IsRequested)
                 {
-                    _sessionRuntime.RespawnPoint.UseAsTemporary(0);
-
                     Transition(SessionState.StartingNewFight, "Starting new fight");
                     yield return PrepareHero();
                     if (_cancel.IsRequested) break;
@@ -150,6 +148,7 @@ namespace AIPlugin.BossfightSession
                 yield return _teleport.AwaitCanTeleport();
 
             }
+            _sessionRuntime.RespawnPoint.UseAsTemporary(0);
             GameCameras.instance.HUDIn(); // turn on HUD in case some boss disables it after death (for example widow does that)
         }
         private IEnumerator WaitForAttemptFinished()
@@ -203,7 +202,6 @@ namespace AIPlugin.BossfightSession
             
             _sessionRuntime.Dispose();
             _teleport.TeleportToBench();
-            
         }
         public BossMetadata GetTarget() => _sessionContext.Boss;
         public int GetCurrentFightIdx() => _sessionRuntime.AttemptIndex;

@@ -19,7 +19,7 @@ class LayoutNotSupported(Exception):
 @dataclass
 class Layout:
 
-    SUPPORTED_FORMAT_VERSION: int = 9
+    SUPPORTED_FORMAT_VERSION: int = 10
 
     @dataclass
     class RecordingFrame:
@@ -34,34 +34,25 @@ class Layout:
         POS_Y: int = 1
         REL_POS_X: int = 2
         REL_POS_Y: int = 3
-        VEL_X: int = 4
-        VEL_Y: int = 5
-        ATTACK_COOLDOWN: int = 6
-        DASH_COOLDOWN: int = 7
-        THROW_TOOL_COOLDOWN: int = 8
-        HARPOON_DASH_COOLDOWN: int = 9
-        WALL_CLING_COOLDOWN: int = 10
-        HP: int = 11
-        SILK: int = 12
-        FACING: int = 13
-        IS_STUNNED: int = 14
-        CAN_JUMP: int = 15
-        CAN_DOUBLE_JUMP: int = 16
-        CAN_ATTACK: int = 17
-        CAN_SPRINT: int = 18
-        CAN_BIND: int = 19
-        CAN_CAST: int = 20
-        CAN_NAIL_ART: int = 21
-        CAN_TRY_HARPOON: int = 22
-        CAN_INPUT: int = 23
-        CAN_BACK_DASH: int = 24
+        HP: int = 4
+        SILK: int = 5
+        IS_STUNNED: int = 6
+        CAN_JUMP: int = 7
+        CAN_DOUBLE_JUMP: int = 8
+        CAN_ATTACK: int = 9
+        CAN_SPRINT: int = 10
+        CAN_BIND: int = 11
+        CAN_CAST: int = 12
+        CAN_NAIL_ART: int = 13
+        CAN_TRY_HARPOON: int = 14
+        CAN_BACK_DASH: int = 15
 
-        num_elements = 25
+        num_elements = 16
 
         # 1 for boolean-type variables 0 for others - this is used in preprocessor in z-score
         # standardization to affect only the non-boolean variables
         boolean_mask = np.array([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         ], dtype=np.bool)
 
     @dataclass
@@ -89,20 +80,18 @@ class Layout:
 
     @dataclass
     class Inputs:
-        num_elements: int = 10
-        float_values: int = 4
+        num_elements: int = 8
+        float_values: int = 2
 
-        LEFT: int = 0   #float
-        RIGHT: int = 1  #float
-        UP: int = 2     #float
-        DOWN: int = 3   #float
-        JUMP: int = 4   #bool
+        HORIZONTAL: int = 0
+        VERTICAL: int = 1
+        JUMP: int = 2   #bool
 
-        ATTACK: int = 5 #bool
-        HEAL: int = 6   #bool
-        SKILL: int = 7  #bool
-        DASH: int = 8   #bool
-        HARPOON: int = 9#bool
+        ATTACK: int = 3 #bool
+        HEAL: int = 4   #bool
+        SKILL: int = 5  #bool
+        DASH: int = 6   #bool
+        HARPOON: int = 7#bool
 
         # no boolean mask here as this won't be standardised???
 

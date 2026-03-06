@@ -116,8 +116,10 @@ def new_model(target_boss_name: str,
 if __name__ == "__main__":
     new_model(
         "Lace Boss1",
-        "BESTESTMAN",
+        "notsucker_35v2",
         "../recordings/Lace Boss1",
         True,
-                num_testing=8,
-                embedding_dim=120,)
+                num_testing=4,
+                hidden_dim=80,
+                time_window=20,
+                embedding_dim=6)

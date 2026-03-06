@@ -57,10 +57,10 @@ class BehaviorCloningTrainer:
 
         optimizer = optim.Adam(self._model_artifact.model.parameters(), lr=learning_rate)
 
-        regression_loss = nn.SmoothL1Loss()
-        binary_loss = nn.BCEWithLogitsLoss()
+        regression_loss = nn.SmoothL1Loss().to(device)
+        binary_loss = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([35, 20, 15, 13, 15, 15])).to(device)
 
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
 
         dataloader = DataLoader(self._training_dataset, batch_size=batch_size, shuffle=True)
         dataloader_test = DataLoader(self._testing_dataset, batch_size=batch_size, shuffle=True)
@@ -107,7 +107,6 @@ class BehaviorCloningTrainer:
 
                 target_float = target_batch[:, :Layout.Inputs.float_values]
                 target_bool = target_batch[:, Layout.Inputs.float_values:]
-
                 loss_float = regression_loss(pred_float, target_float)
                 loss_bool = binary_loss(pred_bool, target_bool)
 
@@ -152,13 +151,13 @@ def plot_training_testing_loss(training_loss_per_epoch, testing_loss_per_epoch, 
     plt.show()
 
 if __name__ == '__main__':
-    pipeline = BehaviorCloningTrainer("Lace Boss1", "BESTESTMAN")
+    pipeline = BehaviorCloningTrainer("Lace Boss1", "notsucker_35v2")
 
 
-    training_loss_per_epoch, testing_loss_per_epoch = (pipeline.train_network(20,
+    training_loss_per_epoch, testing_loss_per_epoch = (pipeline.train_network(15,
                                use_gpu=True,
-                               batch_size=256,
-                               learning_rate = 5e-4))
+                               batch_size=64,
+                               learning_rate = 1e-3))
 
     plot_training_testing_loss(training_loss_per_epoch, testing_loss_per_epoch,)
 

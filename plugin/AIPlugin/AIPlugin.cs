@@ -107,8 +107,6 @@ namespace AIPlugin
                 //BossFightRecordingSession.ForceStopRecordingSession();
                 _registry.Get<SessionOrchestrator>().RequestStop();
             }
-
-
         }
         private void OnGUI()
         {

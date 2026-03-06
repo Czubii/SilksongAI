@@ -125,7 +125,7 @@ namespace AIPlugin
                 DisplayName = "Lace 1",
                 InternalName = "Lace Boss1",
                 ArenaSceneName = "Bone_East_12",
-                ArenaPosition = new Vector3(85f, 7.57f, 0),
+                ArenaPosition = new Vector3(90f, 7.57f, 0),
                 SetDefeated = (val) =>
                 {
                     PlayerData.instance.defeatedLace1 = val;
