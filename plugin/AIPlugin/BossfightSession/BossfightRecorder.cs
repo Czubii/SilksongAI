@@ -15,6 +15,8 @@ namespace AIPlugin.BossfightSession
 
         private int _frameCount = 0;
 
+        private int _accumulatedReward = 0;
+
         private StreamWriter _outputJSON;
 
         private Stream _outputBIN;
@@ -82,6 +84,7 @@ namespace AIPlugin.BossfightSession
             WriteHeader();
 
             _frameCount = 0;
+            _accumulatedReward = 0;
             _isRecording = true;
         }
         public void OnFightFinished(AttemptResult result) // close files write the info about recording
@@ -119,6 +122,8 @@ namespace AIPlugin.BossfightSession
             if(!_isRecording || !enabled) return;
 
             _frameCount++;
+            _accumulatedReward += frameData.Reward;
+
             if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
             {
                 var dataBinWithKeys = MessagePackSerializer.Serialize(frameData, MessagePack.Resolvers.ContractlessStandardResolver.Options);
@@ -164,7 +169,8 @@ namespace AIPlugin.BossfightSession
             RecordingFooter footer = new RecordingFooter
             {
                 Success = result == AttemptResult.Success,
-                FrameCount = _frameCount
+                FrameCount = _frameCount,
+                TotalReward = _accumulatedReward
             };
 
             // Write the footer:

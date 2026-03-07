@@ -92,6 +92,7 @@ namespace AIPlugin
                 hp = hero.playerData.health,
                 silk = hero.playerData.silk,
                 IsStunned = hero.IsStunned,
+                facing = hero.transform.localScale.x >= 0.0 ? true : false,
                 canJump = hero.CanJump(),
                 canDoubleJump = hero.CanDoubleJump(),
                 canAttack = hero.CanAttack(),

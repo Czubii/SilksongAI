@@ -9,7 +9,7 @@ namespace AIPlugin.Utilities
     public interface IBossBehavior
     {
         void Respawn(TemporaryStateModifier modifier);
-        void SetAbilities(TemporaryStateModifier modifier);
+        void SetAbilities(TemporaryStateModifier modifier); //TODO add loading from file
     }
     public class MossMotherBehavior : IBossBehavior
     {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using static AIPlugin.BossfightSession.BossfightRecorder;
+using AIPlugin.Utilities;
 
 namespace AIPlugin.BossfightSession
 {
@@ -16,6 +17,7 @@ namespace AIPlugin.BossfightSession
 
         private SessionEnemyTracker _enemyTracker;
 
+        private RecordingFrameData _prevFrame = null;
         public void Initialize(SessionEvents sessionEventHandler, SessionEnemyTracker enemyTracker)
         {
             _enemyTracker = enemyTracker; 
@@ -24,6 +26,7 @@ namespace AIPlugin.BossfightSession
         public void OnFightStarted()
         {
             _capturingActive = true;
+            _prevFrame = null;
         }
         public void OnFightFinished(AttemptResult result)
         {
@@ -56,8 +59,15 @@ namespace AIPlugin.BossfightSession
             }
             try
             {
-                RecordingFrameData frameData = FrameDataCollector.GetRecording(boss, enemies);
-                NotifyFrameCaptured(frameData);
+                RecordingFrameData frame = FrameDataCollector.GetRecording(boss, enemies);
+
+                if (_prevFrame != null) 
+                {
+                    frame.Reward = RewardCalculator.Calculate(_prevFrame, frame);
+                }
+
+                NotifyFrameCaptured(frame);
+                _prevFrame = frame;
             }
             catch (Exception e)
             {

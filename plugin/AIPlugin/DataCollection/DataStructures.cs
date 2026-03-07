@@ -2,12 +2,12 @@
 using MessagePack;
 
 
-namespace AIPlugin
+namespace AIPlugin //TODO fix all namespaces
 {
     [MessagePackObject]
     public class RecordingHeader
     {
-        [Key("format_version")] public int FormatVersion = 10;
+        [Key("format_version")] public int FormatVersion = 11;
         [Key("record_frame_delta")] public int RecordFrameDelta = SessionConfig.CaptureFrameDelta;
         [Key("target_name")] public string BossName;
         [Key("enemy_names")] public string[] EnemyNames;
@@ -18,6 +18,7 @@ namespace AIPlugin
     {
         [Key("success")] public bool Success;
         [Key("frame_count")] public int FrameCount;
+        [Key("total_reward")] public int TotalReward;
     }
 
     [MessagePackObject]
@@ -26,6 +27,7 @@ namespace AIPlugin
         [Key(0)] public FrameHeroData Hero;
         [Key(1)] public FrameEnemyData[] Enemies; // The main target (i.e. boss) should always be at the first index
         [Key(2)] public FrameUserInputs UserInputs;
+        [Key(3)] public int Reward = 0;
 
     }
     [MessagePackObject]
@@ -33,13 +35,14 @@ namespace AIPlugin
     {
         [Key(0)] public FrameHeroData Hero;
         [Key(1)] public FrameEnemyData[] Enemies; // The main target (i.e. boss) should always be at the first index
-
+        [Key(2)] public int Reward = 0;
         public static LivePredictionFrameData FromRecordingFrameData(RecordingFrameData data)
         {
             return new LivePredictionFrameData()
             {
                 Hero = data.Hero,
                 Enemies = data.Enemies,
+                Reward = data.Reward,
             };
         }
     }
@@ -74,16 +77,17 @@ namespace AIPlugin
         [Key(3)] public float RelPosY;
         [Key(4)] public int hp;
         [Key(5)] public int silk;
-        [Key(6)] public bool IsStunned;
-        [Key(7)] public bool canJump;
-        [Key(8)] public bool canDoubleJump;
-        [Key(9)] public bool canAttack;
-        [Key(10)] public bool canSprint;
-        [Key(11)] public bool canBind;
-        [Key(12)] public bool canCast;
-        [Key(13)] public bool canNailArt;
-        [Key(14)] public bool canTryHarpoon;
-        [Key(15)] public bool canBackDash;
+        [Key(6)] public bool facing; //(true)->x_scale >= 0
+        [Key(7)] public bool IsStunned;
+        [Key(8)] public bool canJump;
+        [Key(9)] public bool canDoubleJump;
+        [Key(10)] public bool canAttack;
+        [Key(11)] public bool canSprint;
+        [Key(12)] public bool canBind;
+        [Key(13)] public bool canCast;
+        [Key(14)] public bool canNailArt;
+        [Key(15)] public bool canTryHarpoon;
+        [Key(16)] public bool canBackDash;
     }
     [MessagePackObject]
     public class FrameUserInputs

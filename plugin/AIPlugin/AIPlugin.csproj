@@ -191,6 +191,8 @@
     <Compile Include="AIPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\PlayerAbilitySet.cs" />
+    <Compile Include="DataCollection\RewardCalculator.cs" />
+    <Compile Include="DataCollection\RewardConfig.cs" />
     <Compile Include="Utilities\TeleportService.cs" />
     <Compile Include="Utilities\ThreadSafeLogService.cs" />
   </ItemGroup>
