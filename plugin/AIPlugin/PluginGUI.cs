@@ -127,11 +127,7 @@ namespace AIPlugin
                       }
                   ));
         }
-        public class ConfigurationManagerAttributes
-        {
-            public bool? IsAdvanced = null;
-            public Action<ConfigEntryBase> CustomDrawer = null;
-        }
+
         private void DrawGodModeToggle(ConfigEntryBase entry)
         {
             bool prev = AIPlugin.GodModeEnabled;

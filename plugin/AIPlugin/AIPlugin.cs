@@ -30,6 +30,8 @@ namespace AIPlugin
         {
             try
             {
+                PluginConfigManager.LoadConfig(Config);
+
                 Log = Logger;
                 _registry = new ServiceRegistry();
 

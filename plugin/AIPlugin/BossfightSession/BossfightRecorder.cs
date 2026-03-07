@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿using AIPlugin.Utilities;
+using BepInEx;
 using MessagePack;
 using System;
 using System.Collections.Generic;
