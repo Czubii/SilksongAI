@@ -105,10 +105,11 @@ class ClientSession: #TODO: add permanence in case of disconnect
         bool_logits = output[Layout.Inputs.float_values:]
 
         bool_probs = torch.sigmoid(bool_logits)
-        print(bool_probs)
         bool_values = (bool_probs > 0.15).tolist()
 
         float_values = float_outputs.tolist()
+
+        print(float_values)
 
         payload = float_values + bool_values
 

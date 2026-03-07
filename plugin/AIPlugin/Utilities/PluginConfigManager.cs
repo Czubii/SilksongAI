@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace AIPlugin.Utilities
 {
- 
     public static class PluginConfigManager
     {
         public static void LoadConfig(ConfigFile configFile)
@@ -29,7 +28,7 @@ namespace AIPlugin.Utilities
             MSGPACK
         }
         public static readonly int CaptureFrameDelta = 10;
-        public static readonly RecordingOutputTypes RecordingOutputType = RecordingOutputTypes.JSON;
+        public static readonly RecordingOutputTypes RecordingOutputType = RecordingOutputTypes.MSGPACK;
         public static readonly int AwaitBossTimeoutFrames = 2000;
     }
 

@@ -19,7 +19,7 @@ class LayoutNotSupported(Exception):
 @dataclass
 class Layout:
 
-    SUPPORTED_FORMAT_VERSION: int = 10
+    SUPPORTED_FORMAT_VERSION: int = 11
 
     @dataclass
     class RecordingFrame:
@@ -36,23 +36,24 @@ class Layout:
         REL_POS_Y: int = 3
         HP: int = 4
         SILK: int = 5
-        IS_STUNNED: int = 6
-        CAN_JUMP: int = 7
-        CAN_DOUBLE_JUMP: int = 8
-        CAN_ATTACK: int = 9
-        CAN_SPRINT: int = 10
-        CAN_BIND: int = 11
-        CAN_CAST: int = 12
-        CAN_NAIL_ART: int = 13
-        CAN_TRY_HARPOON: int = 14
-        CAN_BACK_DASH: int = 15
+        FACING: int = 6
+        IS_STUNNED: int = 7
+        CAN_JUMP: int = 8
+        CAN_DOUBLE_JUMP: int = 9
+        CAN_ATTACK: int = 10
+        CAN_SPRINT: int = 11
+        CAN_BIND: int = 12
+        CAN_CAST: int = 13
+        CAN_NAIL_ART: int = 14
+        CAN_TRY_HARPOON: int = 15
+        CAN_BACK_DASH: int = 16
 
         num_elements = 16
 
         # 1 for boolean-type variables 0 for others - this is used in preprocessor in z-score
         # standardization to affect only the non-boolean variables
         boolean_mask = np.array([
-            0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         ], dtype=np.bool)
 
     @dataclass

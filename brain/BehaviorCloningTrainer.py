@@ -151,13 +151,13 @@ def plot_training_testing_loss(training_loss_per_epoch, testing_loss_per_epoch, 
     plt.show()
 
 if __name__ == '__main__':
-    pipeline = BehaviorCloningTrainer("Lace Boss1", "notsucker_35v2")
+    pipeline = BehaviorCloningTrainer("Lace Boss1", "safe")
 
 
     training_loss_per_epoch, testing_loss_per_epoch = (pipeline.train_network(15,
                                use_gpu=True,
-                               batch_size=64,
-                               learning_rate = 1e-3))
+                               batch_size=16,
+                               learning_rate = 1e-4))
 
     plot_training_testing_loss(training_loss_per_epoch, testing_loss_per_epoch,)
 

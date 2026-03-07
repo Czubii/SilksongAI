@@ -1,32 +1,89 @@
 import json
+import math
 import os
 import re
-from logging import warning
-from optparse import Option
+from abc import ABC, abstractmethod
+from enum import Enum
 from os import listdir
 from os.path import isfile, join
-from typing import Iterable, Tuple, Generator, Iterator, Optional
+from typing import Iterable, Tuple, Optional, Iterator
 import msgpack
-import numpy as np
 import torch
-from sympy.codegen import Print
+from sympy.physics.units import percent
 
 from Networks import BossModelArtifact
 from RecordingLayout import *
-
 
 @dataclass
 class DatasetFile:
     filename: str
     info: dict
 
+class RecordingQualityFilter(ABC):
+    @staticmethod
+    def _sort_by_reward(files: list[DatasetFile]) -> list[DatasetFile]:
+        """
+        sorts recordings from highest to lowest reward
+        """
+        return sorted(files, key=lambda x: x.info.get("total_reward", 0), reverse=True)
+    @staticmethod
+    def _sort_by_length(files: list[DatasetFile]) -> list[DatasetFile]:
+        """
+        sorts recordings from shortest to longest
+        """
+        return sorted(files, key=lambda x: x.info.get("frame_count", 0))
+    @abstractmethod
+    def apply(self, files: list[DatasetFile]) -> list[DatasetFile]:
+        pass
+
+class ChooseNBest(RecordingQualityFilter):
+    def __init__(self, count: int) -> None:
+        self.count = count
+    def apply(self, files: list[DatasetFile]) -> list[DatasetFile]:
+        return self._sort_by_reward(files)[:self.count]
+
+class ChoosePercentBest(RecordingQualityFilter):
+    def __init__(self, percent: float) -> None:
+        """
+        :param percent: value in range [0, 1]
+        """
+        self.percent = percent
+    def apply(self, files: list[DatasetFile]) -> list[DatasetFile]:
+        count = math.ceil(len(files) * self.percent)
+        count = min(count, len(files))
+        return self._sort_by_reward(files)[:count]
+
+@dataclass
+class RecordingFilters:
+    require_success: bool = True
+    record_frame_delta: int = 10
+    player_name: str = None
+    quality_filter: Optional[RecordingQualityFilter] = None
+
+    def matches(self, info: dict, filename: str):
+        matches = True
+        if self.require_success and info['success'] == False:
+            print(f"Recording {filename} does not match require_success filter")
+            matches = False
+
+        if self.record_frame_delta != info['record_frame_delta']:
+            print(f"Recording {filename} does not match record_frame_delta filter")
+            matches = False
+
+        if self.player_name is not None and info['player_name'] != self.player_name:
+            print(f"Recording {filename} does not match player_name filter")
+            matches = False
+
+        return matches
+
 class RawDatasetReader:
-    def __init__(self, data_path: str, target_boss: str):
+    def __init__(self, data_path: str, target_boss: str, filters: RecordingFilters):
         self._data_path = data_path
         self.target_boss = target_boss
+        self.filters = filters
 
-        self.usable_files = self.get_filtered_dataset_files()
-        if len(self.usable_files) == 0: raise Exception("No Usable Files Found!!!")
+        self.filtered_files = self.get_filtered_dataset_files()
+        if len(self.filtered_files) == 0: raise Exception("No Usable Files Found!!!")
 
     def get_filtered_dataset_files(self) -> list[DatasetFile]:
         filenames = [f for f in listdir(self._data_path) if isfile(join(self._data_path, f))]
@@ -34,7 +91,7 @@ class RawDatasetReader:
         dataset_files: list[DatasetFile] = []
         # group the info and data files together, make sure we have both .info and .msgpack files:
 
-        for id, filename in enumerate(filenames):
+        for idx, filename in enumerate(filenames):
             if not filename.endswith(".msgpack"): continue
 
             with (open(join(self._data_path, filename), "rb") as f):
@@ -43,10 +100,13 @@ class RawDatasetReader:
                     header = next(unpacker)
                 except StopIteration:
                     continue
-                format_version = header.get("format_version", 1)
 
-                if format_version != Layout.SUPPORTED_FORMAT_VERSION or header.get("target_name") != self.target_boss:
+                format_version = header.get("format_version", 1)
+                if format_version != Layout.SUPPORTED_FORMAT_VERSION:
                     print(f"skipping recording {filename}, recording's format version: {format_version}")
+                    continue
+
+                if header.get("target_name") != self.target_boss:
                     continue
 
                 footer = None
@@ -55,26 +115,29 @@ class RawDatasetReader:
 
                 info = dict(header)
                 info.update(footer)
-                info.update({"recording_id": id})
+                info.update({"recording_id": idx})
+
+                if not self.filters.matches(info, filename):
+                    continue
 
                 dataset_files.append(DatasetFile(
                     filename=filename,
                     info=info,
                 ))
 
+        if self.filters.quality_filter is not None:
+            dataset_files = self.filters.quality_filter.apply(dataset_files)
+
         return dataset_files
 
     def get_enemy_count(self) -> int:
-        return len(self.usable_files[0].info["enemy_names"])
+        return len(self.filtered_files[0].info["enemy_names"])
 
-    def iterate_frames(self, require_success) -> Iterable[Tuple[list[any], dict]]:
+    def iterate_frames(self) -> Iterable[Tuple[list[any], dict]]:
         """
-        :param require_success:
-        :return: yields next frame and recording information
+        :return: yields frames and recording information
         """
-        for data_file in self.usable_files:
-            if require_success and data_file.info["success"] != True: continue
-
+        for data_file in self.filtered_files:
             with open(join(self._data_path, data_file.filename), "rb") as f:
                 unpacker = msgpack.Unpacker(f, raw=False)
                 try:
@@ -90,7 +153,7 @@ class RawDatasetReader:
 
     def get_total_frame_count(self, require_success) -> int:
         frame_count: int = 0
-        for dataset in self.usable_files:
+        for dataset in self.filtered_files:
             if require_success and dataset.info["success"] != True: continue
 
             frame_count += dataset.info["frame_count"]
@@ -431,3 +494,9 @@ class ProcessingPipeline:
 
     def get_cont_std(self):
         return self._preprocessor.std
+
+
+if __name__ == "__main__":
+    recording_filter = RecordingFilters()
+    recording_filter.quality_filter = ChoosePercentBest(0.5)
+    reader = RawDatasetReader("../recordings/Lace Boss1", "Lace Boss1", recording_filter)
