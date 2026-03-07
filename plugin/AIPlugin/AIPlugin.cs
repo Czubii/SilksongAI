@@ -38,22 +38,27 @@ namespace AIPlugin
                 aiService.Initialize("127.0.0.1", 5000);
                 var gameStateController = new GameStateController();
                 var sessionEventHandler = new SessionEvents();
-                var sessionEnemyManager = new SessionEnemyManager();
+                var sessionEnemyManager = new SessionEnemyTracker();
 
                 var session = gameObject.AddComponent<SessionOrchestrator>();
                 session.Initialize(sessionEventHandler, gameStateController, teleporter, sessionEnemyManager);
+
+                var frameCapturer = gameObject.AddComponent<FrameCapturer>();
+                frameCapturer.Initialize(sessionEventHandler, sessionEnemyManager);
+                sessionEventHandler.Subscribe(frameCapturer);
 
                 var recorder = gameObject.AddComponent<BossfightRecorder>();
                 recorder.Initialize(sessionEnemyManager);
                 recorder.enabled = false;
                 sessionEventHandler.Subscribe(recorder);
 
-                var aiController = gameObject.AddComponent<AiBossfightController>();
-                aiController.Initialize(sessionEnemyManager, aiService);
+                var aiController = gameObject.AddComponent<AIBossfightController>();
+                aiController.Initialize(aiService);
                 aiController.enabled = false;
                 sessionEventHandler.Subscribe(aiController);
 
                 var coordinator = new AIServerCoordinator(aiService);
+
                 
                 _registry.Add(teleporter);
                 _registry.Add(aiService);
@@ -61,6 +66,7 @@ namespace AIPlugin
                 _registry.Add(sessionEventHandler);
                 _registry.Add(sessionEnemyManager);
                 _registry.Add(session);
+                _registry.Add(frameCapturer);
                 _registry.Add(recorder);
                 _registry.Add(aiController);
                 _registry.Add(coordinator);

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace AIPlugin.BossfightSession
 {
-    public class SessionEnemyManager
+    public class SessionEnemyTracker
     {
         private BossMetadata _target;
         public void SetTargetEnemy(BossMetadata target)

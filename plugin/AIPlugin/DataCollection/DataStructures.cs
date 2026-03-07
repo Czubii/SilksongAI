@@ -8,7 +8,7 @@ namespace AIPlugin
     public class RecordingHeader
     {
         [Key("format_version")] public int FormatVersion = 10;
-        [Key("record_frame_delta")] public int RecordFrameDelta = SessionConfig.RecordFrameDelta;
+        [Key("record_frame_delta")] public int RecordFrameDelta = SessionConfig.CaptureFrameDelta;
         [Key("target_name")] public string BossName;
         [Key("enemy_names")] public string[] EnemyNames;
         [Key("player_name")] public string PlayerName;
@@ -33,6 +33,15 @@ namespace AIPlugin
     {
         [Key(0)] public FrameHeroData Hero;
         [Key(1)] public FrameEnemyData[] Enemies; // The main target (i.e. boss) should always be at the first index
+
+        public static LivePredictionFrameData FromRecordingFrameData(RecordingFrameData data)
+        {
+            return new LivePredictionFrameData()
+            {
+                Hero = data.Hero,
+                Enemies = data.Enemies,
+            };
+        }
     }
 
     [MessagePackObject]

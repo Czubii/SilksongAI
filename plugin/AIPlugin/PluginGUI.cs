@@ -29,7 +29,7 @@ namespace AIPlugin
         private BossfightRecorder _bossfightRecorder;
         private GameStateController _gameStateController;
         private AIServerCoordinator _serverCoordinator;
-        private AiBossfightController _aiBossfightController;
+        private AIBossfightController _aiBossfightController;
 
         private CustomGUILayouts.DropdownState _bossDropdownState = new CustomGUILayouts.DropdownState();
         private CustomGUILayouts.DropdownState _modelDropdownState = new CustomGUILayouts.DropdownState();
@@ -42,7 +42,7 @@ namespace AIPlugin
             _bossfightRecorder = registry.Get<BossfightRecorder>();
             _gameStateController = registry.Get<GameStateController>();
             _serverCoordinator = registry.Get<AIServerCoordinator>();
-            _aiBossfightController = registry.Get<AiBossfightController>();
+            _aiBossfightController = registry.Get<AIBossfightController>();
 
             godModeToggle = config.Bind(
                   "Cheats",

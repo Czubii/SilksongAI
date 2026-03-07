@@ -14,7 +14,7 @@ namespace AIPlugin.BossfightSession
             JSON, // Only for debugging. Python wont be able to load those recording as of now
             MSGPACK
         }
-        public static readonly int RecordFrameDelta = 10;
+        public static readonly int CaptureFrameDelta = 10;
         public static readonly RecordingOutputTypes RecordingOutputType = RecordingOutputTypes.MSGPACK;
         public static readonly int AwaitBossTimeoutFrames = 2000;
     }

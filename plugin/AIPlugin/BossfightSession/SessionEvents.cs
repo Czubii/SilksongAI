@@ -77,7 +77,7 @@ namespace AIPlugin.BossfightSession
                 }
                 catch (Exception ex)
                 {
-                    AIPlugin.Log.LogError(ex);
+                    AIPlugin.Log.LogError($"RaiseFrameCaptured: {ex}");
                 }
         }
     }

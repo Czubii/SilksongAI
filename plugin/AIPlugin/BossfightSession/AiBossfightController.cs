@@ -16,116 +16,73 @@ namespace AIPlugin.BossfightSession
     /// <summary>
     /// Colects the frame data, sends reqest to ai server, and forwards the ai controls further to be applied
     /// </summary>
-    public class AiBossfightController : MonoBehaviour, ISessionListener
+    public class AIBossfightController : MonoBehaviour, ISessionListener, IFrameCaptureListener
     {
-        public enum AiState
-        {
-            Idle,
-            Fighting
-        }
-
-        public AiState State;
-
         private AiService _service;
-        private SessionEnemyManager _enemyManager;
-        private int _framesToNextRequest = 0;
         private Task _aiControllTask = null;
 
-        public void Initialize(SessionEnemyManager enemyManager, AiService service)
+        public void Initialize(AiService service)
         {
-            _enemyManager = enemyManager;
             _service = service;
             enabled = false;
-            service.OnDisconnected += OnDisconnected;
-        }
-        public void OnDisconnected()
-        {
-            enabled = false;
-        }
-        public void OnDisable()
-        {
-            AIInputState.AIControlEnabled = false;
-            State = AiState.Idle;
         }
         public void OnEnable()
         {
+            _service.OnDisconnected += OnDisconnected;
             if (!_service?.IsConnected ?? true)
             {
                 enabled = false;
                 return;
             }
         }
+        public void OnDisable()
+        {
+            _service.OnDisconnected -= OnDisconnected;
+            AIInputState.AIControlEnabled = false;
+        }
+        public void OnDisconnected()
+        {
+            enabled = false;
+        }
         public void OnFightStarted()
         {
-            if (State != AiState.Idle || !enabled) return;
-
-            State = AiState.Fighting;
-            AIInputState.AIControlEnabled = true;
-            _framesToNextRequest = 0;
+            if (enabled)
+            {
+                AIInputState.AIControlEnabled = true;
+            }
         }
         public void OnFightFinished(AttemptResult result)
         {
+            //TODO: add server handshake to verify boss selection etc and proceed only if successful
             AIInputState.AIControlEnabled = false;
-            State = AiState.Idle;
         }
-        public void Update()
+        public void OnFrameCaptured(RecordingFrameData frame)
         {
-            if (State != AiState.Fighting || (GameManager.instance?.IsGamePaused() ?? true)) return;
+            if(!enabled) return;
 
-            _framesToNextRequest--;
-            if (_framesToNextRequest <= 0)
+            if (_aiControllTask == null)
             {
-                if (_aiControllTask == null)
-                {
-                    _aiControllTask = ApplyAIControll();
-                    _framesToNextRequest = SessionConfig.RecordFrameDelta;
-                }
-                else
-                {
-                    AIPlugin.Log.LogWarning($"AiBossfightController: Applying AI controll " +
-                        $"took longer than SessionConfig.RecordFrameDelta + {-_framesToNextRequest} frames");
-                }
+                _aiControllTask = ApplyAIControll(frame);
+            }
+            else
+            {
+                AIPlugin.Log.LogWarning($"AiBossfightController: Obtaining server AI response took longer than expected");
             }
         }
-        private async Task ApplyAIControll()
+        private async Task ApplyAIControll(RecordingFrameData frame)
         {
             try
             {
-                var inputs = await RequestInputs();
+                var inputs = await _service.Gateway.PredictInputsAsync(LivePredictionFrameData.FromRecordingFrameData(frame));
                 if (inputs == null) return;
 
-                AIInputState.Inputs = inputs;
+                AIInputState.Inputs = inputs; //TODO make this thread safe???
             }
             catch (Exception e)
             {
-                ThreadSafeLogService.Log($"Exception while ApplyAIControll: {e.ToString()}");
+                ThreadSafeLogService.Log($"Exception while GetAIPrediction: {e.ToString()}", AIPlugin.Log.LogError);
             }
             finally { _aiControllTask = null; }
-        }
-        private async Task<FrameUserInputs> RequestInputs()
-        {
-            EnemyInstance boss = _enemyManager?.GetTargetInstance() ?? null;
-            List<EnemyInstance> enemies = _enemyManager?.GetNonTargetInstances() ?? null;
-
-            if (boss == null || enemies == null)
-            {
-                ThreadSafeLogService.Log("AIBossfightController: Couldn't get enemies. Skipping Frame", AIPlugin.Log.LogWarning);
-                return null;
-            }
-
-            LivePredictionFrameData frameData;
-
-            try
-            {
-                frameData = FrameDataCollector.GetLive(boss, enemies);
-            }
-            catch (Exception e)
-            {
-                ThreadSafeLogService.Log($"AIBossfightController: Exception {e}. Skipping Frame", AIPlugin.Log.LogError);
-                return null;
-            }
-
-            return await _service.Gateway.PredictInputsAsync(frameData);
         }
     }
 

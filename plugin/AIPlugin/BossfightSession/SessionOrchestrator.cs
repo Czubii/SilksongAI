@@ -28,12 +28,12 @@ namespace AIPlugin.BossfightSession
         private SessionEvents _events;
         private GameStateController _gameStateController;
         private TeleportService _teleport;
-        private SessionEnemyManager _enemyManager;
+        private SessionEnemyTracker _enemyManager;
 
         private CancellationHandle _cancel;
         public SessionState State { get; private set; } = SessionState.Idle;
 
-        public void Initialize(SessionEvents events, GameStateController gameStateController, TeleportService teleport, SessionEnemyManager enemyManager)
+        public void Initialize(SessionEvents events, GameStateController gameStateController, TeleportService teleport, SessionEnemyTracker enemyManager)
         {
             _events = events;
             _gameStateController = gameStateController;
