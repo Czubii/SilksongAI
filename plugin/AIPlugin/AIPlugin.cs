@@ -38,31 +38,33 @@ namespace AIPlugin
                 aiService.Initialize("127.0.0.1", 5000);
                 var gameStateController = new GameStateController();
                 var sessionEventHandler = new SessionEvents();
-                var enemyManager = new SessionEnemyManager();
+                var sessionEnemyManager = new SessionEnemyManager();
 
                 var session = gameObject.AddComponent<SessionOrchestrator>();
-                session.Initialize(sessionEventHandler, gameStateController, teleporter, enemyManager);
+                session.Initialize(sessionEventHandler, gameStateController, teleporter, sessionEnemyManager);
 
                 var recorder = gameObject.AddComponent<BossfightRecorder>();
-                recorder.Initialize(enemyManager);
+                recorder.Initialize(sessionEnemyManager);
                 recorder.enabled = false;
                 sessionEventHandler.Subscribe(recorder);
 
                 var aiController = gameObject.AddComponent<AiBossfightController>();
-                aiController.Initialize(enemyManager, aiService);
+                aiController.Initialize(sessionEnemyManager, aiService);
                 aiController.enabled = false;
                 sessionEventHandler.Subscribe(aiController);
 
                 var coordinator = new AIServerCoordinator(aiService);
                 
-                _registry.Add(teleporter);//TODO add everything to registry
-                _registry.Add(session);
-                _registry.Add(recorder);
+                _registry.Add(teleporter);
                 _registry.Add(aiService);
                 _registry.Add(gameStateController);
                 _registry.Add(sessionEventHandler);
-                _registry.Add(coordinator);
+                _registry.Add(sessionEnemyManager);
+                _registry.Add(session);
+                _registry.Add(recorder);
                 _registry.Add(aiController);
+                _registry.Add(coordinator);
+                
 
                 gui = new PluginGUI(Config, _registry);
 

@@ -175,7 +175,6 @@ namespace AIPlugin
 
             if (GUILayout.Button($"Teleport to {bossReference.DisplayName}"))
             {
-                bossReference.SetDefeated(true);
                 _teleportService.TeleportTo(bossReference, true);
             }
 

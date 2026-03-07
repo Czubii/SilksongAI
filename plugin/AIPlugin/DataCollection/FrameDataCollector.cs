@@ -7,7 +7,7 @@ namespace AIPlugin
 {
     public static class FrameDataCollector
     {
-        public static LivePredictionFrameData GetLive(EnemyInstance boss, List<EnemyInstance> enemies) //TODO avoid repetition with functino bellow
+        public static LivePredictionFrameData GetLive(EnemyInstance boss, List<EnemyInstance> enemies)
         {
             HeroController hero = HeroController.instance;
             FrameHeroData heroData = GetHeroData(hero, boss);
@@ -80,7 +80,7 @@ namespace AIPlugin
 
             return output;
         }
-        public static FrameHeroData GetHeroData(HeroController hero, EnemyInstance targetEnemy) //TODO make those take hero etc as parameters
+        public static FrameHeroData GetHeroData(HeroController hero, EnemyInstance targetEnemy)
         {
             FrameHeroData output = new FrameHeroData
             {

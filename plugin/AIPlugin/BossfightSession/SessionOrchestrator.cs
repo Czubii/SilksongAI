@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using static AIPlugin.BossfightSession.BossfightRecorder;
+using static UnityEngine.GUI;
 
 namespace AIPlugin.BossfightSession
 {
@@ -47,7 +48,6 @@ namespace AIPlugin.BossfightSession
             _sessionRuntime = SessionRuntime.Start(_sessionContext);
             _enemyManager.SetTargetEnemy(_sessionContext.Boss);
             _cancel = new CancellationHandle();
-            _sessionContext.Boss.SetExpectedPlayerAbilities();//TODO MOVE SOMWHERE ELSE AND MAKE COMPATIBLE WITH CONFIG
             StartCoroutine(SessionLoop());
             return true;
         }
@@ -64,45 +64,50 @@ namespace AIPlugin.BossfightSession
         }
 
         private IEnumerator SessionLoop()
-        {
-            try
+        { 
+            using (var scope = new GameStateScope())
             {
-                _gameStateController.RemoveCocoon();
-
-                while (_sessionRuntime.RemainingFights > 0 && !_cancel.IsRequested)
+                try
                 {
-                    Transition(SessionState.StartingNewFight, "Starting new fight");
-                    yield return PrepareHero();
-                    if (_cancel.IsRequested) break;
+                    _sessionContext.Boss.behavior.SetAbilities(scope.Modifier);
+                    _sessionContext.Boss.behavior.Respawn(scope.Modifier);
+                    _gameStateController.RemoveCocoon();
 
-                    Transition(SessionState.AwaitingBoss, "Awaiting boss on scene");
-                    var targetFound = false;
-                    yield return _enemyManager.AwaitTargetOnScene((r) => targetFound = r, () => _cancel.IsRequested);
-                    if (_cancel.IsRequested) break;
-                    if (!targetFound)
+                    while (_sessionRuntime.RemainingFights > 0 && !_cancel.IsRequested)
                     {
-                        _sessionRuntime.LastAttempt = AttemptResult.BossMissing;
-                        continue;
+                        Transition(SessionState.StartingNewFight, "Starting new fight");
+                        yield return PrepareHero(scope.Modifier);
+                        if (_cancel.IsRequested) break;
+
+                        Transition(SessionState.AwaitingBoss, "Awaiting boss on scene");
+                        var targetFound = false;
+                        yield return _enemyManager.AwaitTargetOnScene((r) => targetFound = r, () => _cancel.IsRequested);
+                        if (_cancel.IsRequested) break;
+                        if (!targetFound)
+                        {
+                            _sessionRuntime.LastAttempt = AttemptResult.BossMissing;
+                            continue;
+                        }
+
+                        _sessionRuntime.StartAttempt();
+
+                        Transition(SessionState.Fighting, "Fight has begun");
+                        NotifyStarted();
+                        yield return WaitForAttemptFinished();
+                        NotifyFinished(_sessionRuntime.LastAttempt);
+
+                        if (_sessionRuntime.LastAttempt == AttemptResult.HeroDied)
+                            yield return _gameStateController.AwaitCocoonAndRemove();
                     }
 
-                    _sessionRuntime.StartAttempt();
-
-                    Transition(SessionState.Fighting, "Fight has begun");
-                    NotifyStarted();
-                    yield return WaitForAttemptFinished();
-                    NotifyFinished(_sessionRuntime.LastAttempt);
-
-                    if (_sessionRuntime.LastAttempt == AttemptResult.HeroDied)
-                        yield return AwaitCocoonAndRemove();
+                    Transition(SessionState.FinalizingSession, "Finalizing session");
+                    yield return FinalizeSession();
+                    Transition(SessionState.Idle, "Session Concluded");
                 }
-
-                Transition(SessionState.FinalizingSession, "Finalizing session");
-                yield return FinalizeSession();
-                Transition(SessionState.Idle, "Session Concluded");
-            }
-            finally
-            {
-                _sessionRuntime.Dispose();
+                finally
+                {
+                    _sessionRuntime.Dispose();
+                }
             }
         }
 
@@ -114,7 +119,7 @@ namespace AIPlugin.BossfightSession
         private void NotifyStarted() => _events?.RaiseStarted();
         private void NotifyFinished(AttemptResult result) => _events?.RaiseFinished(result);
 
-        private IEnumerator PrepareHero()
+        private IEnumerator PrepareHero(TemporaryStateModifier modifier)
         {
             yield return _teleport.AwaitCanTeleport(() => _cancel.IsRequested);
 
@@ -143,7 +148,7 @@ namespace AIPlugin.BossfightSession
                     yield return _teleport.AwaitCanTeleport();
                 }
 
-                _sessionContext.Boss.SetDefeated(false);
+                _sessionContext.Boss.behavior.Respawn(modifier);
                 _teleport.TeleportTo(_sessionContext.Boss, true);
                 yield return _teleport.AwaitCanTeleport();
 
@@ -181,20 +186,6 @@ namespace AIPlugin.BossfightSession
                 }
                 return false;
             });
-        }
-        private IEnumerator AwaitCocoonAndRemove() // TODO add some timeout //TODO move ot PlayerUtils or something better
-        {
-            yield return new WaitUntil(() =>
-            {
-                var pd = PlayerData.instance;
-
-                if (pd == null) return false;
-
-                return pd.HeroCorpseMarkerGuid != null;
-            });
-
-            _gameStateController.RemoveCocoon();
-            AIPlugin.Log.LogDebug("Cocoon Removed");
         }
         private IEnumerator FinalizeSession()
         {
