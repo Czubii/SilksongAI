@@ -12,4 +12,4 @@ packages/
 recordings/
 preprocessed/
 __pycache__/
-models/
+artifacts/
