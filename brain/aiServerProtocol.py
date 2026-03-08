@@ -7,10 +7,8 @@ from torchvision.models import list_models
 
 from Networks import BossModelArtifact, BossModelFactory
 from Preprocessing import LivePreprocessor
-from RecordingLayout import Layout
+from layout import Layout
 from model_manager import get_all_models, model_exists, get_model_path
-
-handlers = {}
 
 class ClientSession: #TODO: add permanence in case of disconnect
     def __init__(self):
@@ -61,7 +59,7 @@ class ClientSession: #TODO: add permanence in case of disconnect
             raise ValueError("Artifact is not loaded")
 
         if self._live_preprocessor is None:
-            raise ValueError("LivePreprocessor is not loaded")
+            raise ValueError("FrameProcessor is not loaded")
 
         try:
             processed_cont, processed_playmaker = self._live_preprocessor.process_frame(frame_data)
@@ -101,8 +99,8 @@ class ClientSession: #TODO: add permanence in case of disconnect
 
         output = output.squeeze(0)  # remove batch dimension
 
-        float_outputs = output[:Layout.Inputs.float_values]
-        bool_logits = output[Layout.Inputs.float_values:]
+        float_outputs = output[:Layout.Targets.float_values]
+        bool_logits = output[Layout.Targets.float_values:]
 
         bool_probs = torch.sigmoid(bool_logits)
         bool_values = (bool_probs > 0.15).tolist()
@@ -116,6 +114,7 @@ class ClientSession: #TODO: add permanence in case of disconnect
         return payload
 
 
+handlers = {}
 
 def register_handler(name):
     def decorator(func):

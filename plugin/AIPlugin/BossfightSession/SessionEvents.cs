@@ -15,7 +15,7 @@ namespace AIPlugin.BossfightSession
 
     public interface IFrameCaptureListener
     {
-        void OnFrameCaptured(RecordingFrameData frameData);
+        void OnFrameCaptured(RecordingFrame frameData);
     }
     public class SessionEvents
     {
@@ -68,7 +68,7 @@ namespace AIPlugin.BossfightSession
                 }
         }
 
-        public void RaiseFrameCaptured(RecordingFrameData frameData)
+        public void RaiseFrameCaptured(RecordingFrame frameData)
         {
             foreach (var listener in _frameCaptureListeners)
                 try

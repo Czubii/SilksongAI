@@ -118,7 +118,7 @@ namespace AIPlugin.BossfightSession
 
             _tempFilePath = null;
         }
-        public void OnFrameCaptured(RecordingFrameData frameData) 
+        public void OnFrameCaptured(RecordingFrame frameData) 
         {
             if(!_isRecording || !enabled) return;
 

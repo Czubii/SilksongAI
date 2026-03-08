@@ -1,12 +1,12 @@
 import torch
 from torch.utils.data import Dataset
 
-from RecordingLayout import Layout, LayoutNotSupported
+from layout import LayoutNotSupported
 
 
 class BossFightDataset(Dataset):
     def __init__(self, data, time_window: int = 5):
-        if data["layout_version"] != Layout.SUPPORTED_FORMAT_VERSION:
+        if data["layout_version"] != Layout.SUPPORTED_LAYOUT_VERSION:
             raise LayoutNotSupported(
                 "BehaviorCloningTrainer: Training dataset uses different layout format than currently supported")
 

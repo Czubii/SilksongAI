@@ -17,7 +17,7 @@ namespace AIPlugin.BossfightSession
 
         private SessionEnemyTracker _enemyTracker;
 
-        private RecordingFrameData _prevFrame = null;
+        private RecordingFrame _prevFrame = null;
         public void Initialize(SessionEvents sessionEventHandler, SessionEnemyTracker enemyTracker)
         {
             _enemyTracker = enemyTracker; 
@@ -59,7 +59,7 @@ namespace AIPlugin.BossfightSession
             }
             try
             {
-                RecordingFrameData frame = FrameDataCollector.GetRecording(boss, enemies);
+                RecordingFrame frame = FrameDataCollector.GetRecording(boss, enemies);
 
                 if (_prevFrame != null) 
                 {
@@ -76,6 +76,6 @@ namespace AIPlugin.BossfightSession
             }
         }
 
-        private void NotifyFrameCaptured(RecordingFrameData frameData) => _events.RaiseFrameCaptured(frameData);
+        private void NotifyFrameCaptured(RecordingFrame frameData) => _events.RaiseFrameCaptured(frameData);
     }
 }

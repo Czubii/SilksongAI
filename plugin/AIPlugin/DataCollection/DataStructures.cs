@@ -8,7 +8,7 @@ namespace AIPlugin //TODO fix all namespaces
     [MessagePackObject]
     public class RecordingHeader
     {
-        [Key("format_version")] public int FormatVersion = 11;
+        [Key("format_version")] public int FormatVersion = 13;
         [Key("record_frame_delta")] public int RecordFrameDelta = SessionConfig.CaptureFrameDelta;
         [Key("target_name")] public string BossName;
         [Key("enemy_names")] public string[] EnemyNames;
@@ -23,27 +23,31 @@ namespace AIPlugin //TODO fix all namespaces
     }
 
     [MessagePackObject]
-    public class RecordingFrameData
+    public class FrameData
     {
         [Key(0)] public FrameHeroData Hero;
         [Key(1)] public FrameEnemyData[] Enemies; // The main target (i.e. boss) should always be at the first index
-        [Key(2)] public FrameUserInputs UserInputs;
-        [Key(3)] public int Reward = 0;
+    }
+
+    [MessagePackObject]
+    public class RecordingFrame
+    {
+        [Key(0)] public FrameData Data;
+        [Key(1)] public FrameUserInputs UserInputs;
+        [Key(2)] public int Reward = 0;
 
     }
     [MessagePackObject]
-    public class LivePredictionFrameData
+    public class InferenceFrame
     {
-        [Key(0)] public FrameHeroData Hero;
-        [Key(1)] public FrameEnemyData[] Enemies; // The main target (i.e. boss) should always be at the first index
-        [Key(2)] public int Reward = 0;
-        public static LivePredictionFrameData FromRecordingFrameData(RecordingFrameData data)
+        [Key(0)] public FrameData Data;
+        [Key(1)] public int Reward = 0;
+        public static InferenceFrame FromRecordingFrameData(RecordingFrame recordingFrame)
         {
-            return new LivePredictionFrameData()
+            return new InferenceFrame()
             {
-                Hero = data.Hero,
-                Enemies = data.Enemies,
-                Reward = data.Reward,
+                Data = recordingFrame.Data,
+                Reward = recordingFrame.Reward,
             };
         }
     }
@@ -51,57 +55,63 @@ namespace AIPlugin //TODO fix all namespaces
     [MessagePackObject]
     public struct FrameEnemyData
     {
-        [Key(0)] public float posX;
-        [Key(1)] public float posY;
+        [Key(0)] public float PosX;
+        [Key(1)] public float PosY;
         [Key(2)] public float RelPosX; // relative to hero
         [Key(3)] public float RelPosY; 
-        [Key(4)] public float velX;
-        [Key(5)] public float velY;
-        [Key(6)] public int hp;
-        [Key(7)] public bool facing; //(true)->x_scale >= 0
-        [Key(8)] public string Name;
-        [Key(9)] public PlayMakerData[] playMakers;
+        [Key(4)] public float VelX;
+        [Key(5)] public float VelY;
+        [Key(6)] public int HP;
+        [Key(7)] public bool Facing; //(true)->x_scale >= 0
+        [Key(8)] public NamedStatesContainer PlayMakers; //PlayMakerFSM.FsmName and PlayMakerFSM.ActiveStateName
     }
     [MessagePackObject]
-    public struct PlayMakerData
+    public struct NamedStatesContainer
     {
-        [Key(0)] public string Name; //PlayMakerFSM.FsmName
-        [Key(1)] public string StateName; //PlayMakerFSM.ActiveStateName
+        [Key(0)] public string ParentName;
+        [Key(1)] public NamedState[] NamedStates;
+    }
+
+    [MessagePackObject]
+    public struct NamedState
+    {
+        [Key(0)] public string Name; 
+        [Key(1)] public string StateName; 
     }
 
     [MessagePackObject]
     public struct FrameHeroData 
     {
-        [Key(0)] public float posX;
-        [Key(1)] public float posY;
+        [Key(0)] public float PosX;
+        [Key(1)] public float PosY;
         [Key(2)] public float RelPosX; // relative to targetEnemy
         [Key(3)] public float RelPosY;
-        [Key(4)] public int hp;
-        [Key(5)] public int silk;
-        [Key(6)] public bool facing; //(true)->x_scale >= 0
+        [Key(4)] public int HP;
+        [Key(5)] public int Silk;
+        [Key(6)] public bool Facing; //(true)->x_scale >= 0
         [Key(7)] public bool IsStunned;
-        [Key(8)] public bool canJump;
-        [Key(9)] public bool canDoubleJump;
-        [Key(10)] public bool canAttack;
-        [Key(11)] public bool canSprint;
-        [Key(12)] public bool canBind;
-        [Key(13)] public bool canCast;
-        [Key(14)] public bool canNailArt;
-        [Key(15)] public bool canTryHarpoon;
-        [Key(16)] public bool canBackDash;
+        [Key(8)] public bool CanJump;
+        [Key(9)] public bool CanDoubleJump;
+        [Key(10)] public bool CanAttack;
+        [Key(11)] public bool CanSprint;
+        [Key(12)] public bool CanBind;
+        [Key(13)] public bool CanCast;
+        [Key(14)] public bool CanNailArt;
+        [Key(15)] public bool CanTryHarpoon;
+        [Key(16)] public bool CanBackDash;
     }
     [MessagePackObject]
     public class FrameUserInputs
     {
         // Movement:
-        [Key(0)] public float horizontal;
-        [Key(1)] public float vertical;
-        [Key(2)] public bool jump;
+        [Key(0)] public float Horizontal;
+        [Key(1)] public float Vertical;
+        [Key(2)] public bool Jump;
         //Actions:
-        [Key(3)] public bool attack;
-        [Key(4)] public bool heal;
-        [Key(5)] public bool skill;
-        [Key(6)] public bool dash;
-        [Key(7)] public bool harpoon;
+        [Key(3)] public bool Attack;
+        [Key(4)] public bool Heal;
+        [Key(5)] public bool Skill;
+        [Key(6)] public bool Dash;
+        [Key(7)] public bool Harpoon;
     }
 }

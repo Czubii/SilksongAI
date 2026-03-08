@@ -5,7 +5,6 @@ from torch.utils.data import DataLoader
 from BossFightDataset import BossFightDataset
 from Networks import BossNet, BossModelArtifact, BossModelFactory
 from Preprocessing import ProcessingPipeline
-from RecordingLayout import Layout, LayoutNotSupported
 import matplotlib.pyplot as plt
 from model_manager import model_exists, get_model_root_path, get_model_dataset_path, get_model_path
 
@@ -79,11 +78,11 @@ class BehaviorCloningTrainer:
                 with torch.no_grad():
                     output_batch = self._model_artifact.model(continuous_batch, playmaker_batch)
 
-                pred_float = output_batch[:, :Layout.Inputs.float_values]
-                pred_bool = output_batch[:, Layout.Inputs.float_values:]
+                pred_float = output_batch[:, :Layout.Targets.float_values]
+                pred_bool = output_batch[:, Layout.Targets.float_values:]
 
-                target_float = target_batch[:, :Layout.Inputs.float_values]
-                target_bool = target_batch[:, Layout.Inputs.float_values:]
+                target_float = target_batch[:, :Layout.Targets.float_values]
+                target_bool = target_batch[:, Layout.Targets.float_values:]
 
                 loss_float = regression_loss(pred_float, target_float)
                 loss_bool = binary_loss(pred_bool, target_bool)
@@ -102,11 +101,11 @@ class BehaviorCloningTrainer:
                 optimizer.zero_grad()
                 output_batch = self._model_artifact.model(continuous_batch, playmaker_batch)
 
-                pred_float = output_batch[:, :Layout.Inputs.float_values]
-                pred_bool = output_batch[:, Layout.Inputs.float_values:]
+                pred_float = output_batch[:, :Layout.Targets.float_values]
+                pred_bool = output_batch[:, Layout.Targets.float_values:]
 
-                target_float = target_batch[:, :Layout.Inputs.float_values]
-                target_bool = target_batch[:, Layout.Inputs.float_values:]
+                target_float = target_batch[:, :Layout.Targets.float_values]
+                target_bool = target_batch[:, Layout.Targets.float_values:]
                 loss_float = regression_loss(pred_float, target_float)
                 loss_bool = binary_loss(pred_bool, target_bool)
 

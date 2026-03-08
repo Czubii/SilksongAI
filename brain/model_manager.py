@@ -7,8 +7,6 @@ from operator import contains
 from sympy.printing.pytorch import torch
 
 from Networks import BossNet, BossModelArtifact
-from Preprocessing import ProcessingPipeline
-from RecordingLayout import Layout
 
 
 def get_all_models() -> defaultdict[str, list[str]]:
@@ -16,14 +14,13 @@ def get_all_models() -> defaultdict[str, list[str]]:
     for (dirpath, dirnames, filenames) in os.walk("models"):
         if contains(filenames, "model.pt"):
             checkpoint = torch.load(os.path.join(dirpath, "model.pt"), map_location="cpu", weights_only=False)
-            if checkpoint.get("format_version", 1) != Layout.SUPPORTED_FORMAT_VERSION:
+            if checkpoint.get("format_version", 1) != SUPPORTED_FORMAT_VERSION:
                 continue
 
             folders = dirpath.split("\\")
             output[folders[-2]].append(folders[-1])
 
     return output
-
 
 def model_exists(target_boss_name: str, model_name: str) -> bool:
     models = get_all_models()
@@ -93,7 +90,7 @@ def new_model(target_boss_name: str,
                           dims["vocab_dim"],
                           embedding_dim,
                           hidden_dim,
-                          Layout.Inputs.num_elements)
+                          Layout.Targets.num_elements)
 
         metadata = {
             "epochs": 0,

@@ -56,7 +56,7 @@ namespace AIPlugin.BossfightSession
             //TODO: add server handshake to verify boss selection etc and proceed only if successful
             AIInputState.AIControlEnabled = false;
         }
-        public void OnFrameCaptured(RecordingFrameData frame)
+        public void OnFrameCaptured(RecordingFrame frame)
         {
             if(!enabled) return;
 
@@ -69,11 +69,11 @@ namespace AIPlugin.BossfightSession
                 AIPlugin.Log.LogWarning($"AiBossfightController: Obtaining server AI response took longer than expected");
             }
         }
-        private async Task ApplyAIControll(RecordingFrameData frame)
+        private async Task ApplyAIControll(RecordingFrame frame)
         {
             try
             {
-                var inputs = await _service.Gateway.PredictInputsAsync(LivePredictionFrameData.FromRecordingFrameData(frame));
+                var inputs = await _service.Gateway.PredictInputsAsync(InferenceFrame.FromRecordingFrameData(frame));
                 if (inputs == null) return;
 
                 AIInputState.Inputs = inputs; //TODO make this thread safe???
@@ -111,27 +111,27 @@ namespace AIPlugin.BossfightSession
                         AIPlugin.Log.LogError("UpdateWithAxes not found");
 
                     method.Invoke(___inputHandler.inputActions.MoveVector, new object[]
-                    {   AIInputState.Inputs.horizontal,
-                        AIInputState.Inputs.vertical,
+                    {   AIInputState.Inputs.Horizontal,
+                        AIInputState.Inputs.Vertical,
                         currentTick,
                         deltaTime });
 
-                    if (AIInputState.Inputs.vertical > 0)
+                    if (AIInputState.Inputs.Vertical > 0)
                     {
-                        ___inputHandler.inputActions.Up.CommitWithValue(AIInputState.Inputs.vertical, currentTick, deltaTime);
+                        ___inputHandler.inputActions.Up.CommitWithValue(AIInputState.Inputs.Vertical, currentTick, deltaTime);
                         ___inputHandler.inputActions.Down.CommitWithValue(0.0f, currentTick, deltaTime);
                     }
                     else
                     {
                         ___inputHandler.inputActions.Up.CommitWithValue(0.0f, currentTick, deltaTime);
-                        ___inputHandler.inputActions.Down.CommitWithValue(-AIInputState.Inputs.vertical, currentTick, deltaTime);
+                        ___inputHandler.inputActions.Down.CommitWithValue(-AIInputState.Inputs.Vertical, currentTick, deltaTime);
                     }
-                    ___inputHandler.inputActions.Jump.CommitWithState(AIInputState.Inputs.jump, currentTick, deltaTime);
-                    ___inputHandler.inputActions.Dash.CommitWithState(AIInputState.Inputs.dash, currentTick, deltaTime);
-                    ___inputHandler.inputActions.Attack.CommitWithState(AIInputState.Inputs.attack, currentTick, deltaTime);
-                    ___inputHandler.inputActions.Cast.CommitWithState(AIInputState.Inputs.heal, currentTick, deltaTime);
-                    ___inputHandler.inputActions.QuickCast.CommitWithState(AIInputState.Inputs.skill, currentTick, deltaTime);
-                    ___inputHandler.inputActions.SuperDash.CommitWithState(AIInputState.Inputs.harpoon, currentTick, deltaTime);
+                    ___inputHandler.inputActions.Jump.CommitWithState(AIInputState.Inputs.Jump, currentTick, deltaTime);
+                    ___inputHandler.inputActions.Dash.CommitWithState(AIInputState.Inputs.Dash, currentTick, deltaTime);
+                    ___inputHandler.inputActions.Attack.CommitWithState(AIInputState.Inputs.Attack, currentTick, deltaTime);
+                    ___inputHandler.inputActions.Cast.CommitWithState(AIInputState.Inputs.Heal, currentTick, deltaTime);
+                    ___inputHandler.inputActions.QuickCast.CommitWithState(AIInputState.Inputs.Skill, currentTick, deltaTime);
+                    ___inputHandler.inputActions.SuperDash.CommitWithState(AIInputState.Inputs.Harpoon, currentTick, deltaTime);
                 }
             }
             catch (Exception ex)
