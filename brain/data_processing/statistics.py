@@ -1,7 +1,5 @@
 from typing import List
-
 import numpy as np
-from sympy.plotting.intervalmath import interval
 from data_processing.recording_reader import RecordingReader
 
 
