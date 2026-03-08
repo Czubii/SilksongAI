@@ -37,13 +37,13 @@ def test_processing():
 
     pp = ProcessingPipeline("../recordings/Mossbone Mother", "Mossbone Mother", recording_filter)
 
-    pp.process("data_processing/temp", 1)
+    pp.process("temp/dataset", 1)
 
-    a = torch.load("data_processing/temp/training_data.pt", weights_only=False)
-    print("\n\n\n\n\n\n\n\n")
-    pprint(a["frame_processor"])
-
-    procesor = FrameProcessor.from_dict(a["frame_processor"])
+    # a = torch.load("data_processing/temp/training_data.pt", weights_only=False)
+    # print("\n\n\n\n\n\n\n\n")
+    # pprint(a["frame_processor"])
+    #
+    # procesor = FrameProcessor.from_dict(a["frame_processor"])
 
 if __name__ == "__main__":
     #test_layout()

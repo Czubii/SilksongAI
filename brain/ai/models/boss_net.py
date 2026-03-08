@@ -1,8 +1,8 @@
 import torch
 from torch import nn
+from .base_model import BaseBossNet
+from .registry import register_model
 from model_dimensions import ModelDimensions
-from ai.base_model import BaseBossNet
-from ai.registry import register_model
 
 
 @register_model
@@ -13,6 +13,11 @@ class BossNet(BaseBossNet):
                  embedding_dim: int,
                  hidden_dim):
         super().__init__()
+
+        self.base_dimensions = base_dimensions
+        self.time_window = time_window
+        self.embedding_dim = embedding_dim
+        self.hidden_dim = hidden_dim
 
         self.embedding = nn.Embedding(base_dimensions.vocab_word_count, embedding_dim)
         self.embedded_size = base_dimensions.input_named_state * embedding_dim * time_window
@@ -53,8 +58,8 @@ class BossNet(BaseBossNet):
 
     def get_dict_config(self) -> dict:
         return {
-            "type": self.__class__.__name__,
-            "base_dimensions": self.base_dimensions,
+            "model_type": self.__class__.__name__,
+            "base_dims": self.base_dimensions,
             "time_window": self.time_window,
             "embedding_dim": self.embedding_dim,
             "hidden_dim": self.hidden_dim,
