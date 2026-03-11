@@ -37,7 +37,7 @@ class FrameProcessor:
 
         self._bool_buffer = np.array(frame.get_all_booleans(), dtype=np.float32)
 
-        containers = frame.get_all_of_type([NamedStatesContainer])
+        containers = frame.get_all_of_type(NamedStatesContainer)
 
         self._named_state_idx_buffer = np.array([
             self._vocabulary.get(container.ParentName, named_state.Name, named_state.StateName) for container in containers

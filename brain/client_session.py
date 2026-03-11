@@ -18,6 +18,7 @@ class AIClientSession:
         self._bool_buffer = torch.tensor([])
         self._named_state_buffer = torch.tensor([])
         self._buffer_filled = False
+        self._live_frame_buffer = None
 
     def select_model(self, boss_name: str, model_name: str, load_artifact: bool = True):
 
@@ -40,6 +41,7 @@ class AIClientSession:
         self._bool_buffer = torch.zeros([model.time_window, model.base_dimensions.input_boolean], dtype=torch.float32)
         self._named_state_buffer = torch.zeros([model.time_window, model.base_dimensions.input_named_state], dtype=torch.long)
         self._buffer_filled = False
+        self._live_frame_buffer = None
 
 
     def get_selected_model(self):
@@ -63,10 +65,13 @@ class AIClientSession:
         if self._artifact is None:
             raise ValueError("Artifact is not loaded")
 
-        frame = LiveInferenceFrame.from_indexed_list(frame_raw)
+        if self._live_frame_buffer is None:
+            self._live_frame_buffer = LiveInferenceFrame.from_indexed_list(frame_raw)
+        else:
+            self._live_frame_buffer.update(frame_raw)
 
         try:
-            continuous, boolean, named_state = self._artifact.frame_processor.process_frame(frame.FrameData)
+            continuous, boolean, named_state = self._artifact.frame_processor.process_frame(self._live_frame_buffer.FrameData)
         except Exception as e:
             raise Exception(f"Got exception while processing frame: {e}")
 

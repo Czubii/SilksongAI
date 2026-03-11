@@ -49,7 +49,7 @@ class RecordingProcessor:
 
         for frame, _ in self._data_reader.frames():
             cont_dim = frame.FrameData.continuous_count()
-            ns_dim = frame.FrameData.type_count([NamedState])
+            ns_dim = frame.FrameData.type_count(NamedState)
             bool_dim = frame.FrameData.boolean_count()
 
             target_cont_dim = frame.Targets.continuous_count()

@@ -26,7 +26,7 @@ class Vocabulary:
     @staticmethod
     def _named_state_generator(reader: RecordingReader) -> Iterable[tuple[str, str, str]]:
         for frame, _ in reader.frames():
-            named_state_containers = frame.FrameData.get_all_of_type([NamedStatesContainer])
+            named_state_containers = frame.FrameData.get_all_of_type(NamedStatesContainer)
 
             for container in named_state_containers:
                 for named_state in container.NamedStates:
