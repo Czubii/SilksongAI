@@ -30,6 +30,8 @@ namespace AIPlugin
         {
             try
             {
+                PluginConfigManager.LoadConfig(Config);
+
                 Log = Logger;
                 _registry = new ServiceRegistry();
 
@@ -38,31 +40,41 @@ namespace AIPlugin
                 aiService.Initialize("127.0.0.1", 5000);
                 var gameStateController = new GameStateController();
                 var sessionEventHandler = new SessionEvents();
-                var enemyManager = new SessionEnemyManager();
+                var sessionEnemyManager = new SessionEnemyTracker();
 
                 var session = gameObject.AddComponent<SessionOrchestrator>();
-                session.Initialize(sessionEventHandler, gameStateController, teleporter, enemyManager);
+                session.Initialize(sessionEventHandler, gameStateController, teleporter, sessionEnemyManager);
+
+                var frameCapturer = gameObject.AddComponent<FrameCapturer>();
+                frameCapturer.Initialize(sessionEventHandler, sessionEnemyManager);
+                sessionEventHandler.Subscribe(frameCapturer);
 
                 var recorder = gameObject.AddComponent<BossfightRecorder>();
-                recorder.Initialize(enemyManager);
+                recorder.Initialize(sessionEnemyManager);
                 recorder.enabled = false;
                 sessionEventHandler.Subscribe(recorder);
 
-                var aiController = gameObject.AddComponent<AiBossfightController>();
-                aiController.Initialize(enemyManager, aiService);
+                var aiController = gameObject.AddComponent<AIBossfightController>();
+                aiController.Initialize(aiService);
                 aiController.enabled = false;
                 sessionEventHandler.Subscribe(aiController);
 
+                var test = gameObject.AddComponent<ArtifactCreationWindow>();
+
                 var coordinator = new AIServerCoordinator(aiService);
+
                 
-                _registry.Add(teleporter);//TODO add everything to registry
-                _registry.Add(session);
-                _registry.Add(recorder);
+                _registry.Add(teleporter);
                 _registry.Add(aiService);
                 _registry.Add(gameStateController);
                 _registry.Add(sessionEventHandler);
-                _registry.Add(coordinator);
+                _registry.Add(sessionEnemyManager);
+                _registry.Add(session);
+                _registry.Add(frameCapturer);
+                _registry.Add(recorder);
                 _registry.Add(aiController);
+                _registry.Add(coordinator);
+                
 
                 gui = new PluginGUI(Config, _registry);
 
@@ -78,6 +90,29 @@ namespace AIPlugin
 
             Log.LogInfo("Plugin loaded and initialized");
         }
+
+        public class ArtifactCreationWindow : MonoBehaviour
+        {
+            Rect windowRect = new Rect(20, 20, 120, 50);
+
+            void OnGUI()
+            {
+                // Register the window. Notice the 3rd parameter
+                windowRect = GUILayout.Window(0, windowRect, DoMyWindow, "My Window");
+            }
+
+            // Make the contents of the window
+            void DoMyWindow(int windowID)
+            {
+                // This button will size to fit the window
+                if (GUILayout.Button("Hello World"))
+                {
+                    print("Got a click");
+                }
+            }
+        }
+
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(SteamAPI), "Init")]
         private static void SteamAPIInitPostFix()
@@ -107,8 +142,6 @@ namespace AIPlugin
                 //BossFightRecordingSession.ForceStopRecordingSession();
                 _registry.Get<SessionOrchestrator>().RequestStop();
             }
-
-
         }
         private void OnGUI()
         {

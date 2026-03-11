@@ -3,8 +3,10 @@ using AIPlugin.Utilities;
 using HarmonyLib;
 using InControl;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -14,108 +16,74 @@ namespace AIPlugin.BossfightSession
     /// <summary>
     /// Colects the frame data, sends reqest to ai server, and forwards the ai controls further to be applied
     /// </summary>
-    public class AiBossfightController : MonoBehaviour, ISessionListener
+    public class AIBossfightController : MonoBehaviour, ISessionListener, IFrameCaptureListener
     {
-        public enum AiState
-        {
-            Idle,
-            Fighting
-        }
-
-        public AiState State;
-
         private AiService _service;
-        private SessionEnemyManager _enemyManager;
-        private int _framesToNextRequest = 0;
         private Task _aiControllTask = null;
 
-        public void Initialize(SessionEnemyManager enemyManager, AiService service)
+        public void Initialize(AiService service)
         {
-            _enemyManager = enemyManager;
             _service = service;
             enabled = false;
-            service.OnDisconnected += OnDisconnected;
-        }
-        public void OnDisconnected()
-        {
-            enabled = false;
-            State = AiState.Idle;
-        }
-        public void OnDisable()
-        {
-            State = AiState.Idle;
         }
         public void OnEnable()
         {
+            _service.OnDisconnected += OnDisconnected;
             if (!_service?.IsConnected ?? true)
             {
                 enabled = false;
                 return;
             }
         }
+        public void OnDisable()
+        {
+            _service.OnDisconnected -= OnDisconnected;
+            AIInputState.AIControlEnabled = false;
+        }
+        public void OnDisconnected()
+        {
+            enabled = false;
+        }
         public void OnFightStarted()
         {
-            if (State != AiState.Idle || !enabled) return;
-
-            State = AiState.Fighting;
-            AIInputState.AIControlEnabled = true;
-            _framesToNextRequest = 0;
+            if (enabled)
+            {
+                AIInputState.AIControlEnabled = true;
+            }
         }
         public void OnFightFinished(AttemptResult result)
         {
+            //TODO: add server handshake to verify boss selection etc and proceed only if successful
             AIInputState.AIControlEnabled = false;
-            State = AiState.Idle;
         }
-        public void Update()
+        public void OnFrameCaptured(RecordingFrame frame)
         {
-            if (State != AiState.Fighting || (GameManager.instance?.IsGamePaused() ?? true)) return;
+            if(!enabled) return;
 
-            _framesToNextRequest--;
-            if (_framesToNextRequest <= 0)
+            if (_aiControllTask == null)
             {
-                if (_aiControllTask == null)
-                {
-                    _aiControllTask = ApplyAIControll();
-                    _framesToNextRequest = SessionConfig.RecordFrameDelta;
-                }
-                else
-                {
-                    AIPlugin.Log.LogWarning($"AiBossfightController: Applying AI controll " +
-                        $"took longer than SessionConfig.RecordFrameDelta + {-_framesToNextRequest} frames");
-                }
+                _aiControllTask = ApplyAIControll(frame);
+            }
+            else
+            {
+                AIPlugin.Log.LogWarning($"AiBossfightController: Obtaining server AI response took longer than expected");
             }
         }
-        private async Task ApplyAIControll()
+        private async Task ApplyAIControll(RecordingFrame frame)
         {
             try
             {
-                var inputs = await RequestInputs();
+                var inputs = await _service.Gateway.PredictInputsAsync(InferenceFrame.FromRecordingFrameData(frame));
                 if (inputs == null) return;
-                AIInputState.Inputs = inputs;
-                //ThreadSafeLogService.Log(string.Join(", ", inputs), AIPlugin.Log.LogMessage);
+
+                AIInputState.Inputs = inputs; //TODO make this thread safe???
             }
             catch (Exception e)
             {
-                ThreadSafeLogService.Log($"Exception while ApplyAIControll: {e.ToString()}");
+                ThreadSafeLogService.Log($"Exception while GetAIPrediction: {e.ToString()}", AIPlugin.Log.LogError);
             }
             finally { _aiControllTask = null; }
         }
-        private async Task<FrameUserInputs> RequestInputs()
-        {
-            EnemyInstance boss = _enemyManager?.GetTargetInstance() ?? null;
-            List<EnemyInstance> enemies = _enemyManager?.GetNonTargetInstances() ?? null;
-
-            LivePredictionFrameData frameData = FrameDataCollector.GetLive(boss, enemies);
-
-            if (frameData == null)
-            {
-                AIPlugin.Log.LogWarning("AiBossfightController: No frame data. Skipping Frame");
-                return null;
-            }
-
-            return await _service.Gateway.PredictInputsAsync(frameData);
-        }
-
     }
 
     public static class AIInputState
@@ -143,15 +111,27 @@ namespace AIPlugin.BossfightSession
                         AIPlugin.Log.LogError("UpdateWithAxes not found");
 
                     method.Invoke(___inputHandler.inputActions.MoveVector, new object[]
-                    { AIInputState.Inputs.right - AIInputState.Inputs.left,
-                  AIInputState.Inputs.up - AIInputState.Inputs.down,
-                    currentTick,
-                    deltaTime });
+                    {   AIInputState.Inputs.Horizontal,
+                        AIInputState.Inputs.Vertical,
+                        currentTick,
+                        deltaTime });
 
-
-                    AIPlugin.Log.LogMessage($"Move vect: {___inputHandler.inputActions.MoveVector.Vector.x}");
-                    AIPlugin.Log.LogMessage($"Left: {___inputHandler.inputActions.Left.RawValue}");
-                    AIPlugin.Log.LogMessage($"Right: {___inputHandler.inputActions.Right.RawValue}");
+                    if (AIInputState.Inputs.Vertical > 0)
+                    {
+                        ___inputHandler.inputActions.Up.CommitWithValue(AIInputState.Inputs.Vertical, currentTick, deltaTime);
+                        ___inputHandler.inputActions.Down.CommitWithValue(0.0f, currentTick, deltaTime);
+                    }
+                    else
+                    {
+                        ___inputHandler.inputActions.Up.CommitWithValue(0.0f, currentTick, deltaTime);
+                        ___inputHandler.inputActions.Down.CommitWithValue(-AIInputState.Inputs.Vertical, currentTick, deltaTime);
+                    }
+                    ___inputHandler.inputActions.Jump.CommitWithState(AIInputState.Inputs.Jump, currentTick, deltaTime);
+                    ___inputHandler.inputActions.Dash.CommitWithState(AIInputState.Inputs.Dash, currentTick, deltaTime);
+                    ___inputHandler.inputActions.Attack.CommitWithState(AIInputState.Inputs.Attack, currentTick, deltaTime);
+                    ___inputHandler.inputActions.Cast.CommitWithState(AIInputState.Inputs.Heal, currentTick, deltaTime);
+                    ___inputHandler.inputActions.QuickCast.CommitWithState(AIInputState.Inputs.Skill, currentTick, deltaTime);
+                    ___inputHandler.inputActions.SuperDash.CommitWithState(AIInputState.Inputs.Harpoon, currentTick, deltaTime);
                 }
             }
             catch (Exception ex)

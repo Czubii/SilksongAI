@@ -163,22 +163,24 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BossfightSession\AiBossfightController.cs" />
+    <Compile Include="BossfightSession\AIBossfightController.cs" />
     <Compile Include="BossfightSession\AttemptResult.cs" />
     <Compile Include="BossfightSession\CancellationHandle.cs" />
-    <Compile Include="BossfightSession\SessionConfig.cs" />
+    <Compile Include="BossfightSession\FrameCapturer.cs" />
     <Compile Include="BossfightSession\SessionContext.cs" />
-    <Compile Include="BossfightSession\SessionEnemyManager.cs" />
+    <Compile Include="BossfightSession\SessionEnemyTracker.cs" />
     <Compile Include="BossfightSession\SessionEvents.cs" />
     <Compile Include="BossfightSession\SessionOrchestrator.cs" />
     <Compile Include="BossfightSession\SessionRuntime.cs" />
     <Compile Include="Infrastructure\ServiceRegistry.cs" />
     <Compile Include="Utilities\AIServerCoordinator.cs" />
+    <Compile Include="Utilities\BossBehavior.cs" />
     <Compile Include="Utilities\BossReferenceDatabase.cs" />
+    <Compile Include="Utilities\PluginConfigManager.cs" />
     <Compile Include="Utilities\CustomRespawnPoint.cs" />
     <Compile Include="DataCollection\EnemyTracker.cs" />
     <Compile Include="DataCollection\FrameDataCollector.cs" />
-    <Compile Include="DataCollection\DataStructures.cs" />
+    <Compile Include="DataCollection\Layout.cs" />
     <Compile Include="Utilities\GameStateController.cs" />
     <Compile Include="Networking\AiGateway.cs" />
     <Compile Include="Networking\AiService.cs" />
@@ -188,6 +190,8 @@
     <Compile Include="BossfightSession\BossfightRecorder.cs" />
     <Compile Include="AIPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utilities\PlayerAbilitySet.cs" />
+    <Compile Include="DataCollection\RewardCalculator.cs" />
     <Compile Include="Utilities\TeleportService.cs" />
     <Compile Include="Utilities\ThreadSafeLogService.cs" />
   </ItemGroup>

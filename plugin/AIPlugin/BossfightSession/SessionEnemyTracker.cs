@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AIPlugin.Utilities;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using UnityEngine;
 
 namespace AIPlugin.BossfightSession
 {
-    public class SessionEnemyManager
+    public class SessionEnemyTracker
     {
         private BossMetadata _target;
         public void SetTargetEnemy(BossMetadata target)
@@ -15,11 +16,11 @@ namespace AIPlugin.BossfightSession
         }
         public EnemyInstance GetTargetInstance()
         {
-            return EnemyTracker.GetAll().FirstOrDefault(e => e.Name == _target.InternalName);
+            return EnemyTracker.GetAllEnemies().FirstOrDefault(e => e.Name == _target.InternalName);
         }
         public List<EnemyInstance> GetNonTargetInstances()
         {
-            List <EnemyInstance> all = EnemyTracker.GetAll().ToList();
+            List <EnemyInstance> all = EnemyTracker.GetAllEnemies().ToList();
             all.Remove(GetTargetInstance());
             return all;
         }
@@ -41,7 +42,7 @@ namespace AIPlugin.BossfightSession
                     return true;
                 }
                 var boss = EnemyTracker
-                    .GetAll()
+                    .GetAllEnemies()
                     .FirstOrDefault(e => e.Name == _target.InternalName);
 
                 if (boss != null)

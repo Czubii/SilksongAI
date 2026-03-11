@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿using AIPlugin.Utilities;
+using BepInEx;
 using MessagePack;
 using System;
 using System.Collections.Generic;
@@ -9,16 +10,13 @@ using UnityEngine;
 
 namespace AIPlugin.BossfightSession
 {
-    public class BossfightRecorder : MonoBehaviour, ISessionListener
+    public class BossfightRecorder : MonoBehaviour, ISessionListener, IFrameCaptureListener
     {
-        public enum RecordingState
-        {
-            Idle,
-            Recording
-        }
+        private bool _isRecording = false;
 
-        private int _framesToNextRecord = 0;
-        public RecordingState State {  get; private set; } = RecordingState.Idle;
+        private int _frameCount = 0;
+
+        private int _accumulatedReward = 0;
 
         private StreamWriter _outputJSON;
 
@@ -26,24 +24,22 @@ namespace AIPlugin.BossfightSession
 
         private string _tempFilePath;
 
-        private int _frameCount = 0;
+        private SessionEnemyTracker _enemyManager; 
 
-        private SessionEnemyManager _enemyManager;
-
-        public void Initialize(SessionEnemyManager enemyManager)
+        public void Initialize(SessionEnemyTracker enemyManager)
         {
-            _enemyManager = enemyManager;
+            _enemyManager = enemyManager; // TODO try to remove this somehow
         }
         private void OnDisable()
         {
-            if (State == RecordingState.Recording)
+            if (_isRecording)
             {
                 StopRecordingPrematurely(); // closes streams, writes footer as failure, renames temp
             }
         }
         public void OnFightStarted()
         {
-            if(State != RecordingState.Idle || !enabled) return;
+            if(_isRecording || !enabled) return;
 
             var path = GetOutputPath(_enemyManager.GetTargetInstance().Name);
             var baseFilename = GetBaseOutputFilename();
@@ -89,68 +85,14 @@ namespace AIPlugin.BossfightSession
             WriteHeader();
 
             _frameCount = 0;
-            _framesToNextRecord = 0;
-            State = RecordingState.Recording;
+            _accumulatedReward = 0;
+            _isRecording = true;
         }
-
-        private void WriteHeader()
-        {
-            EnemyInstance boss = _enemyManager.GetTargetInstance();
-            List<EnemyInstance> enemies = _enemyManager.GetNonTargetInstances();
-
-            RecordingHeader header = new RecordingHeader 
-            { 
-                PlayerName = AIPlugin.SteamUserName,
-                BossName = boss.Name,
-            };
-
-            header.EnemyNames = new string[enemies.Count + 1];
-            header.EnemyNames[0] = boss.Name;
-
-            for (int i = 0; i < enemies.Count; i++)
-            {
-                header.EnemyNames[i+1] = enemies[i].Name;
-            }
-
-            // Write the header:
-            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
-            {
-                var dataBinWithKeys = MessagePackSerializer.Serialize(header, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-                _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
-            }
-            else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
-            {
-                MessagePackSerializer.Serialize(_outputBIN, header); // save the binary frame data
-            }
-        }
-
-        private void WriteFooter(AttemptResult result)
-        {
-            RecordingFooter footer = new RecordingFooter
-            {
-                Success = result == AttemptResult.Success,
-                FrameCount = _frameCount
-            };
-
-            // Write the footer:
-            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
-            {
-                var dataBinWithKeys = MessagePackSerializer.Serialize(footer, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-                _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
-            }
-            else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
-            {
-                MessagePackSerializer.Serialize(_outputBIN, footer); // save the binary frame data
-            }
-        }
-
         public void OnFightFinished(AttemptResult result) // close files write the info about recording
         {
-            if (State != RecordingState.Recording) return;
-
+            if (!_isRecording) return;
+            _isRecording = false;
             WriteFooter(result);
-
-            State = RecordingState.Idle;
 
             _outputJSON?.Dispose();
             _outputBIN?.Dispose();
@@ -176,6 +118,73 @@ namespace AIPlugin.BossfightSession
 
             _tempFilePath = null;
         }
+        public void OnFrameCaptured(RecordingFrame frameData) 
+        {
+            if(!_isRecording || !enabled) return;
+
+            _frameCount++;
+            _accumulatedReward += frameData.Reward;
+
+            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
+            {
+                var dataBinWithKeys = MessagePackSerializer.Serialize(frameData, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+                _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
+            }
+            else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
+            {
+                MessagePackSerializer.Serialize(_outputBIN, frameData); // save the binary frame data
+            }
+        }
+        private void WriteHeader()
+        {
+            EnemyInstance boss = _enemyManager.GetTargetInstance();
+            List<EnemyInstance> enemies = _enemyManager.GetNonTargetInstances();
+
+            RecordingHeader header = new RecordingHeader
+            {
+                PlayerName = AIPlugin.SteamUserName,
+                BossName = boss.Name,
+            };
+
+            header.EnemyNames = new string[enemies.Count + 1];
+            header.EnemyNames[0] = boss.Name;
+
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                header.EnemyNames[i + 1] = enemies[i].Name;
+            }
+
+            // Write the header:
+            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
+            {
+                var dataBinWithKeys = MessagePackSerializer.Serialize(header, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+                _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
+            }
+            else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
+            {
+                MessagePackSerializer.Serialize(_outputBIN, header); // save the binary frame data
+            }
+        }
+        private void WriteFooter(AttemptResult result)
+        {
+            RecordingFooter footer = new RecordingFooter
+            {
+                Success = result == AttemptResult.Success,
+                FrameCount = _frameCount,
+                TotalReward = _accumulatedReward
+            };
+
+            // Write the footer:
+            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
+            {
+                var dataBinWithKeys = MessagePackSerializer.Serialize(footer, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+                _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
+            }
+            else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
+            {
+                MessagePackSerializer.Serialize(_outputBIN, footer); // save the binary frame data
+            }
+        }
         private void StopRecordingPrematurely()
         {
             OnFightFinished(AttemptResult.ForcedStop);
@@ -187,45 +196,6 @@ namespace AIPlugin.BossfightSession
         private string GetBaseOutputFilename()
         {
             return $"session_{DateTime.Now:yyyyMMdd_HHmmss}";
-        }
-        private void Update()
-        {
-            if (State != RecordingState.Recording 
-                || (GameManager.instance?.IsGamePaused() ?? true)) return;
-
-            _framesToNextRecord--;
-
-            if (_framesToNextRecord <= 0)
-            {
-                RecordFrame();
-                _framesToNextRecord = SessionConfig.RecordFrameDelta;
-            }
-        }
-        public void RecordFrame()
-        {
-            _frameCount++;
-
-            EnemyInstance boss = _enemyManager?.GetTargetInstance() ?? null;
-            List<EnemyInstance> enemies = _enemyManager?.GetNonTargetInstances() ?? null;
-
-            RecordingFrameData frameData = FrameDataCollector.GetAll(boss, enemies);
-
-            if (frameData == null)
-            {
-                AIPlugin.Log.LogError("BossFightRecorder: No frame data. Stoping Recording");
-                StopRecordingPrematurely();
-                return;
-            }
-
-            if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.JSON)
-            {
-                var dataBinWithKeys = MessagePackSerializer.Serialize(frameData, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-                _outputJSON.WriteLine(MessagePackSerializer.ConvertToJson(dataBinWithKeys));
-            }
-            else if (SessionConfig.RecordingOutputType == SessionConfig.RecordingOutputTypes.MSGPACK)
-            {
-                MessagePackSerializer.Serialize(_outputBIN, frameData); // save the binary frame data
-            }
         }
     }
 }

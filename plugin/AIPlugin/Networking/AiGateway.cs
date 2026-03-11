@@ -19,13 +19,13 @@ namespace AIPlugin.Networking
 
             _pendingRequests = new ConcurrentDictionary<string, object>();
         }
-        public async Task<FrameUserInputs> PredictInputsAsync(LivePredictionFrameData frameData)
+        public async Task<FrameUserInputs> PredictInputsAsync(InferenceFrame frameData)
         {
             if (_client == null || !_client.IsConnected) return null;
 
             try
             {
-                return await SendRequestAsync<FrameUserInputs, LivePredictionFrameData >("predict_inputs", frameData);
+                return await SendRequestAsync<FrameUserInputs, InferenceFrame >("predict_inputs", frameData);
             }
             catch (Exception ex)
             {

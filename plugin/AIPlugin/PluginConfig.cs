@@ -29,7 +29,7 @@ namespace AIPlugin
         private BossfightRecorder _bossfightRecorder;
         private GameStateController _gameStateController;
         private AIServerCoordinator _serverCoordinator;
-        private AiBossfightController _aiBossfightController;
+        private AIBossfightController _aiBossfightController;
 
         private CustomGUILayouts.DropdownState _bossDropdownState = new CustomGUILayouts.DropdownState();
         private CustomGUILayouts.DropdownState _modelDropdownState = new CustomGUILayouts.DropdownState();
@@ -42,7 +42,7 @@ namespace AIPlugin
             _bossfightRecorder = registry.Get<BossfightRecorder>();
             _gameStateController = registry.Get<GameStateController>();
             _serverCoordinator = registry.Get<AIServerCoordinator>();
-            _aiBossfightController = registry.Get<AiBossfightController>();
+            _aiBossfightController = registry.Get<AIBossfightController>();
 
             godModeToggle = config.Bind(
                   "Cheats",
@@ -127,11 +127,7 @@ namespace AIPlugin
                       }
                   ));
         }
-        public class ConfigurationManagerAttributes
-        {
-            public bool? IsAdvanced = null;
-            public Action<ConfigEntryBase> CustomDrawer = null;
-        }
+
         private void DrawGodModeToggle(ConfigEntryBase entry)
         {
             bool prev = AIPlugin.GodModeEnabled;
@@ -175,7 +171,6 @@ namespace AIPlugin
 
             if (GUILayout.Button($"Teleport to {bossReference.DisplayName}"))
             {
-                bossReference.SetDefeated(true);
                 _teleportService.TeleportTo(bossReference, true);
             }
 
@@ -229,8 +224,10 @@ namespace AIPlugin
                 }
             }
             GUILayout.EndVertical();
+
             GUI.enabled = oldGUIenabled;
         }
+
         private void DrawSessionSettings(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
@@ -390,7 +387,7 @@ namespace AIPlugin
             }
 
 
-            int numEnemies = EnemyTracker.GetCount();
+            int numEnemies = EnemyTracker.GetEnemyCount();
             int labelEnemiesStartY = Screen.height - ((numEnemies + 2) * _GUILabelOffsetY);
             Rect labelEnemiesRect0 = new Rect(20, labelEnemiesStartY, 180, 9);
 
@@ -401,12 +398,33 @@ namespace AIPlugin
                 else
                     GUI.Label(labelEnemiesRect0, $"Enemies: None", labelStyleLeft);
 
-                foreach(var enemy in EnemyTracker.GetAll())
+                foreach(var enemy in EnemyTracker.GetAllEnemies())
                 {
                     labelEnemiesRect0.y += _GUILabelOffsetY;
 
                     GUI.Label(labelEnemiesRect0, $"{enemy.Name}", labelStyleLeft);
                     
+                }
+            }
+
+
+            int numDmgSources = EnemyTracker.GetDmgSourceCount();
+            int labelDmgStartY = Screen.height - ((numDmgSources + numEnemies + 4) * _GUILabelOffsetY);
+            Rect labelDmgRect0 = new Rect(20, labelDmgStartY, 180, 9);
+
+            if (showEnemiesToggle.Value)
+            {
+                if (numDmgSources > 0)
+                    GUI.Label(labelDmgRect0, $"Damage Sources: ", labelStyleLeft);
+                else
+                    GUI.Label(labelDmgRect0, $"Damage Sources: None", labelStyleLeft);
+
+                foreach (var dmg in EnemyTracker.GetAllDmgSources())
+                {
+                    labelDmgRect0.y += _GUILabelOffsetY;
+
+                    GUI.Label(labelDmgRect0, $"{dmg.Name}", labelStyleLeft);
+
                 }
             }
         }
