@@ -59,6 +59,8 @@ namespace AIPlugin
                 aiController.enabled = false;
                 sessionEventHandler.Subscribe(aiController);
 
+                var test = gameObject.AddComponent<ArtifactCreationWindow>();
+
                 var coordinator = new AIServerCoordinator(aiService);
 
                 
@@ -88,6 +90,29 @@ namespace AIPlugin
 
             Log.LogInfo("Plugin loaded and initialized");
         }
+
+        public class ArtifactCreationWindow : MonoBehaviour
+        {
+            Rect windowRect = new Rect(20, 20, 120, 50);
+
+            void OnGUI()
+            {
+                // Register the window. Notice the 3rd parameter
+                windowRect = GUILayout.Window(0, windowRect, DoMyWindow, "My Window");
+            }
+
+            // Make the contents of the window
+            void DoMyWindow(int windowID)
+            {
+                // This button will size to fit the window
+                if (GUILayout.Button("Hello World"))
+                {
+                    print("Got a click");
+                }
+            }
+        }
+
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(SteamAPI), "Init")]
         private static void SteamAPIInitPostFix()

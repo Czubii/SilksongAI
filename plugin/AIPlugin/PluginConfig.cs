@@ -224,8 +224,10 @@ namespace AIPlugin
                 }
             }
             GUILayout.EndVertical();
+
             GUI.enabled = oldGUIenabled;
         }
+
         private void DrawSessionSettings(ConfigEntryBase entry)
         {
             int bossIdx = bossSelectionDropdown.Value;
