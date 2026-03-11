@@ -31,7 +31,6 @@ namespace AIPlugin.Utilities
         public static readonly RecordingOutputTypes RecordingOutputType = RecordingOutputTypes.MSGPACK;
         public static readonly int AwaitBossTimeoutFrames = 2000;
     }
-
     public static class RewardConfig
     {
         // the squaring of damage delt per single frame encourages the use of skills as they deal 

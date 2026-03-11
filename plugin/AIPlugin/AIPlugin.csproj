@@ -180,7 +180,7 @@
     <Compile Include="Utilities\CustomRespawnPoint.cs" />
     <Compile Include="DataCollection\EnemyTracker.cs" />
     <Compile Include="DataCollection\FrameDataCollector.cs" />
-    <Compile Include="DataCollection\DataStructures.cs" />
+    <Compile Include="DataCollection\Layout.cs" />
     <Compile Include="Utilities\GameStateController.cs" />
     <Compile Include="Networking\AiGateway.cs" />
     <Compile Include="Networking\AiService.cs" />

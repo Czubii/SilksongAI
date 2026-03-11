@@ -1,8 +1,8 @@
 from typing import Iterable
 import re
 
-from data_processing.layout import NamedStatesContainer
-from data_processing.recording_reader import RecordingReader
+from .layout import NamedStatesContainer
+from .recording_reader import RecordingReader
 
 
 class Vocabulary:

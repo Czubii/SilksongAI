@@ -2,10 +2,8 @@ from pprint import pprint
 
 import torch
 
-from data_processing.layout import UserInputs, NamedState
-from data_processing.preprocessing import ProcessingPipeline, FrameProcessor
-from data_processing.recording_reader import RecordingFilters, ChoosePercentBest, RecordingReader
-from data_processing.vocabulary import Vocabulary
+from data_processing import UserInputs, NamedState, RecordingFilters, ChoosePercentBest, RecordingReader, Vocabulary, \
+    RecordingProcessor
 
 
 def test_layout():
@@ -31,13 +29,14 @@ def test_vocab():
 
     print(vocab.dictionary)
 
+
 def test_processing():
     recording_filter = RecordingFilters()
     recording_filter.quality_filter = ChoosePercentBest(0.5)
 
-    pp = ProcessingPipeline("../recordings/Mossbone Mother", "Mossbone Mother", recording_filter)
+    pp = RecordingProcessor("../recordings/Mossbone Mother", "Mossbone Mother", recording_filter)
 
-    pp.process("temp/dataset", 1)
+    pp.process_and_save("temp/dataset", 1)
 
     # a = torch.load("data_processing/temp/training_data.pt", weights_only=False)
     # print("\n\n\n\n\n\n\n\n")

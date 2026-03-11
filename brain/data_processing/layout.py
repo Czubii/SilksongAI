@@ -1,7 +1,7 @@
-from dataclasses import dataclass, fields
-from typing import List, Any, Type, TypeVar
+from dataclasses import dataclass
+from typing import List
 
-from data_processing.base_layout import BaseLayout
+from .base_layout import BaseLayout
 
 
 ###------------------------------------------------------------------------------------------###
@@ -11,7 +11,7 @@ from data_processing.base_layout import BaseLayout
 #   String variables, like enemy playmakers, MUST be stored inside NamedStatesContainer as vocabulary will be created only
 #   for this class.
 #
-#   Supported Types: int, float, bool, NamedStatesContainer and lists containing those - any of those should automatically be converted and
+#   Supported Types: int, float, bool_input, NamedStatesContainer and lists containing those - any of those should automatically be converted and
 #   standardized. Any variable with unsupported type will just get skipped.
 #
 #   Difference between continuous types (i.e. int-s and float-s) and the booleans is that the booleans won't be standardized
@@ -25,7 +25,7 @@ from data_processing.base_layout import BaseLayout
 class LayoutNotSupported(Exception):
     pass
 
-SUPPORTED_LAYOUT_VERSION: int = 13
+SUPPORTED_LAYOUT_VERSION: int = 16
 
 @dataclass
 class NamedState(BaseLayout):
@@ -45,7 +45,6 @@ class Hero(BaseLayout):
     RelPosY: float
     HP: int
     Silk: int
-    Facing: bool
     IsStunned: bool
     CanJump: bool
     CanDoubleJump: bool
@@ -56,6 +55,9 @@ class Hero(BaseLayout):
     CanNailArt: bool
     CanTryHarpoon: bool
     CanBackDash: bool
+
+    InvDistX: float
+    InvDistY: float
 
 @dataclass
 class Enemy(BaseLayout):

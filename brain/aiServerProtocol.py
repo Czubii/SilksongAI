@@ -5,114 +5,8 @@ import torch
 from sympy.codegen.ast import bool_
 from torchvision.models import list_models
 
-from Networks import BossModelArtifact, BossModelFactory
-from Preprocessing import LivePreprocessor
-from layout import Layout
-from model_manager import get_all_models, model_exists, get_model_path
-
-class ClientSession: #TODO: add permanence in case of disconnect
-    def __init__(self):
-        self._selected_boss_name = ""
-        self._selected_model_name = ""
-        self._artifact: BossModelArtifact = None
-        self._live_preprocessor: LivePreprocessor = None
-
-
-        self.cont_buffer = None
-        self.playmaker_buffer = None
-        self.buffer_index = 0
-        self.buffer_filled = False
-        self.time_window = 1
-
-    def select_model(self, boss_name: str, model_name: str, load_artifact: bool = True):
-
-        self._artifact: BossModelArtifact = None
-        self._live_preprocessor: LivePreprocessor = None
-
-        if not model_exists(boss_name, model_name):
-            self._selected_boss_name = ""
-            self._selected_model_name = ""
-            return
-
-        self._artifact = BossModelFactory.load(get_model_path(boss_name, model_name)) #TODO add separate button for loading or load when starting session
-
-        self._live_preprocessor = LivePreprocessor(self._artifact)
-
-        config = self._artifact.model.config
-        self.time_window = config["time_window"]
-        cont_feature_size = config["cont_dim"]
-        playmaker_feature_size = config["playmaker_dim"]
-
-        self.cont_buffer = torch.zeros((self.time_window, cont_feature_size), dtype=torch.float32)
-        self.playmaker_buffer = torch.zeros((self.time_window, playmaker_feature_size), dtype=torch.int32)
-
-        self._selected_model_name = model_name
-        self._selected_boss_name = boss_name
-
-        self.buffer_filled = False
-
-    def get_selected_model(self):
-        return [self._selected_boss_name, self._selected_model_name]
-
-    def predict_inputs(self, frame_data):
-        if self._artifact is None:
-            raise ValueError("Artifact is not loaded")
-
-        if self._live_preprocessor is None:
-            raise ValueError("FrameProcessor is not loaded")
-
-        try:
-            processed_cont, processed_playmaker = self._live_preprocessor.process_frame(frame_data)
-        except Exception as e:
-            raise Exception(f"Got exception while processing frame: {e}")
-
-        self.cont_buffer[self.buffer_index] = torch.from_numpy(processed_cont)
-        self.playmaker_buffer[self.buffer_index] = torch.from_numpy(processed_playmaker)
-
-        self.buffer_index += 1
-
-        if self.buffer_index == self.time_window:
-            self.buffer_index = 0
-            self.buffer_filled = True
-
-        if self.buffer_filled:
-            cont_window = torch.roll(self.cont_buffer, -self.buffer_index, dims=0)
-            playmaker_window = torch.roll(self.playmaker_buffer, -self.buffer_index, dims=0)
-        else:
-            cont_window = self.cont_buffer[:self.buffer_index]
-            playmaker_window = self.playmaker_buffer[:self.buffer_index]
-
-            return None
-
-        try:
-            cont_window_batched = cont_window.unsqueeze(0)
-            playmaker_window_batched = playmaker_window.unsqueeze(0)
-
-            with torch.no_grad():
-                output = self._artifact.model(cont_window_batched, playmaker_window_batched)
-        except Exception as e:
-            raise Exception(
-                f"Got exception while predicting inputs: {e} | "
-                f"cont_shape={cont_window.shape} "
-                f"playmaker_shape={playmaker_window.shape}"
-            ) from e
-
-        output = output.squeeze(0)  # remove batch dimension
-
-        float_outputs = output[:Layout.Targets.float_values]
-        bool_logits = output[Layout.Targets.float_values:]
-
-        bool_probs = torch.sigmoid(bool_logits)
-        bool_values = (bool_probs > 0.15).tolist()
-
-        float_values = float_outputs.tolist()
-
-        print(float_values)
-
-        payload = float_values + bool_values
-
-        return payload
-
+from ai.models import get_available_artifacts
+from client_session import AIClientSession
 
 handlers = {}
 
@@ -123,26 +17,25 @@ def register_handler(name):
     return decorator
 
 @register_handler("get_models")
-async def get_models(payload, session: ClientSession):
+async def get_models(payload, session: AIClientSession):
     output = {
         "selected_model": session.get_selected_model(),
-        "models": get_all_models()
+        "models": get_available_artifacts()
     }
     return output
 
 @register_handler("select_model")
-async def select_model(payload, session: ClientSession):
-
+async def select_model(payload, session: AIClientSession):
     session.select_model(payload["boss_name"], payload["model_name"])
 
     output = {
         "selected_model": session.get_selected_model(),
-        "models": get_all_models()
+        "models": get_available_artifacts()
     }
     return output
 
 @register_handler("predict_inputs")
-async def predict_inputs(payload, session: ClientSession):
+async def predict_inputs(payload, session: AIClientSession):
     return session.predict_inputs(payload)
 
 
@@ -161,7 +54,7 @@ async def write_msg(writer, msg):
     await writer.drain()
 
 async def handle_client(reader, writer):
-    session = ClientSession()
+    session = AIClientSession()
     addr = writer.get_extra_info("peername")
     print(f"Client connected: {addr}")
     try:
@@ -182,6 +75,7 @@ async def handle_client(reader, writer):
                 except Exception as e:
                     response["success"] = False
                     response["error_message"] = str(e)
+                    print(f"Error: {e}")
             else:
                 response["success"] = False
                 response["error_message"] = f"Unknown request type: {req_type}"

@@ -1,6 +1,6 @@
 from typing import List
 import numpy as np
-from data_processing.recording_reader import RecordingReader
+from .recording_reader import RecordingReader
 
 
 class OnlineSampleStatistics: #

@@ -6,7 +6,7 @@ from os import listdir
 from os.path import isfile, join
 from typing import Optional, Iterable, Tuple, List
 
-from data_processing.layout import SUPPORTED_LAYOUT_VERSION, RecordingFrame
+from .layout import SUPPORTED_LAYOUT_VERSION, RecordingFrame
 
 
 @dataclass

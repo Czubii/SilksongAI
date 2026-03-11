@@ -74,11 +74,11 @@ namespace AIPlugin
                 PosY = hero.transform.position.y,
                 RelPosX = hero.transform.position.x - targetEnemy.GameObject.transform.position.x,
                 RelPosY = hero.transform.position.y - targetEnemy.GameObject.transform.position.y,
-
+                InvDistX = 1.0f / (Mathf.Abs(hero.transform.position.x - targetEnemy.GameObject.transform.position.y) + 0.1f),
+                InvDistY = 1.0f / (Mathf.Abs(hero.transform.position.y - targetEnemy.GameObject.transform.position.y) + 0.1f),
                 HP = hero.playerData.health,
                 Silk = hero.playerData.silk,
                 IsStunned = hero.IsStunned,
-                Facing = hero.transform.localScale.x >= 0.0 ? true : false,
                 CanJump = hero.CanJump(),
                 CanDoubleJump = hero.CanDoubleJump(),
                 CanAttack = hero.CanAttack(),

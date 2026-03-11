@@ -1,9 +1,6 @@
-import pkgutil
-import importlib
-from .base_model import BaseBossNet
-from .registry import model_registry, register_model
-from .model_factory import ModelFactory
-
-for _, module_name, is_pkg in pkgutil.iter_modules(__path__):
-    if module_name not in {"registry", "base"}:
-        importlib.import_module(f"{__name__}.{module_name}")
+from .base_model import *
+from .registry import *
+from .model_factory import *
+from .model_artifact import *
+from .artifact_manager import *
+from  .architectures import *
