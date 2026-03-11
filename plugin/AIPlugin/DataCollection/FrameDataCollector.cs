@@ -116,7 +116,7 @@ namespace AIPlugin
 
             public static GameObject[] GetAllDamageSources()
             {
-                var damageSources = GameObject.FindObjectsByType<DamageHero>(FindObjectsSortMode.None);
+                var damageSources = GameObject.FindObjectsByType<DamageHero>(FindObjectsSortMode.InstanceID);
                 GameObject[] damageSourcesGo = new GameObject[damageSources.Length];
 
                 for (int i = 0; i < damageSources.Length; i++)

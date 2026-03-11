@@ -385,7 +385,7 @@ namespace AIPlugin
             }
 
 
-            int numEnemies = EnemyTracker.GetCount();
+            int numEnemies = EnemyTracker.GetEnemyCount();
             int labelEnemiesStartY = Screen.height - ((numEnemies + 2) * _GUILabelOffsetY);
             Rect labelEnemiesRect0 = new Rect(20, labelEnemiesStartY, 180, 9);
 
@@ -396,12 +396,33 @@ namespace AIPlugin
                 else
                     GUI.Label(labelEnemiesRect0, $"Enemies: None", labelStyleLeft);
 
-                foreach(var enemy in EnemyTracker.GetAll())
+                foreach(var enemy in EnemyTracker.GetAllEnemies())
                 {
                     labelEnemiesRect0.y += _GUILabelOffsetY;
 
                     GUI.Label(labelEnemiesRect0, $"{enemy.Name}", labelStyleLeft);
                     
+                }
+            }
+
+
+            int numDmgSources = EnemyTracker.GetDmgSourceCount();
+            int labelDmgStartY = Screen.height - ((numDmgSources + numEnemies + 4) * _GUILabelOffsetY);
+            Rect labelDmgRect0 = new Rect(20, labelDmgStartY, 180, 9);
+
+            if (showEnemiesToggle.Value)
+            {
+                if (numDmgSources > 0)
+                    GUI.Label(labelDmgRect0, $"Damage Sources: ", labelStyleLeft);
+                else
+                    GUI.Label(labelDmgRect0, $"Damage Sources: None", labelStyleLeft);
+
+                foreach (var dmg in EnemyTracker.GetAllDmgSources())
+                {
+                    labelDmgRect0.y += _GUILabelOffsetY;
+
+                    GUI.Label(labelDmgRect0, $"{dmg.Name}", labelStyleLeft);
+
                 }
             }
         }
