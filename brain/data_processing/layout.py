@@ -20,12 +20,14 @@ from .base_layout import BaseLayout
 #   Without it the network will have trouble learning to "use the buttons" so it's very important to implement everything
 #   correctly here.
 #
+#   Also, lists should not contain lists inside :)
+#
 ###------------------------------------------------------------------------------------------###
 
 class LayoutNotSupported(Exception):
     pass
 
-SUPPORTED_LAYOUT_VERSION: int = 16
+SUPPORTED_LAYOUT_VERSION: int = 17
 
 @dataclass
 class NamedState(BaseLayout):
@@ -55,7 +57,6 @@ class Hero(BaseLayout):
     CanNailArt: bool
     CanTryHarpoon: bool
     CanBackDash: bool
-
     InvDistX: float
     InvDistY: float
 

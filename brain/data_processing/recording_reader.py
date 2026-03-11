@@ -138,10 +138,18 @@ class RecordingReader:
                 except StopIteration:
                     continue
 
+                buffer = None
                 prev_raw_frame = None
                 for raw_frame in unpacker:
                     if prev_raw_frame is not None:
-                        yield RecordingFrame.from_indexed_list(prev_raw_frame), recording.info
+                        if buffer is None:
+                            buffer = RecordingFrame.from_indexed_list(prev_raw_frame)
+                        else:
+                            buffer.update(prev_raw_frame)
+
+                        yield buffer, recording.info
+
+
                     prev_raw_frame = raw_frame
 
     def get_frame_count(self) -> int:
