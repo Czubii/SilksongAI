@@ -14,13 +14,15 @@ using GenericVariableExtension;
 using System.Reflection;
 using HutongGames.PlayMaker.Actions;
 using UnityEngine.EventSystems;
+using AIPlugin.PluginConfig;
+using AIPlugin.PluginGUI;
 
 namespace AIPlugin
 {
     [BepInPlugin("com.czubii.AIPlugin", "AI Plugin", "1.0.0")]
     public class AIPlugin : BaseUnityPlugin
     {
-        private PluginGUI gui;
+        //private PluginGUI gui;
         private Task test;
         public static ManualLogSource Log { get; private set; }
         public static string SteamUserName = "Unknown";
@@ -30,7 +32,7 @@ namespace AIPlugin
         {
             try
             {
-                PluginConfigManager.LoadConfig(Config);
+                PluginConfigManager.Bind(Config);
 
                 Log = Logger;
                 _registry = new ServiceRegistry();
@@ -54,15 +56,22 @@ namespace AIPlugin
                 recorder.enabled = false;
                 sessionEventHandler.Subscribe(recorder);
 
-                var aiController = gameObject.AddComponent<AIBossfightController>();
+                var aiController = gameObject.AddComponent<AIBossfightAgent>();
                 aiController.Initialize(aiService);
                 aiController.enabled = false;
                 sessionEventHandler.Subscribe(aiController);
 
-                var test = gameObject.AddComponent<ArtifactCreationWindow>();
+                var sessionControlsWindow = gameObject.AddComponent<SessionControlsWindow>();
+                sessionControlsWindow.Initialize(Config, session, recorder, aiController);
+
+                var artifcatCreatorWindow = gameObject.AddComponent<ArtifactCreatorWindow>();
+                artifcatCreatorWindow.Initialize(Config, aiService);
 
                 var coordinator = new AIServerCoordinator(aiService);
 
+                var windowManager = gameObject.AddComponent<PluginWindowManager>();
+                windowManager.Register(sessionControlsWindow);
+                windowManager.Register(artifcatCreatorWindow);
                 
                 _registry.Add(teleporter);
                 _registry.Add(aiService);
@@ -74,9 +83,10 @@ namespace AIPlugin
                 _registry.Add(recorder);
                 _registry.Add(aiController);
                 _registry.Add(coordinator);
+                _registry.Add(sessionControlsWindow);
                 
 
-                gui = new PluginGUI(Config, _registry);
+                //gui = new PluginGUI(Config, _registry);
 
                 Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
                 Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
@@ -90,28 +100,10 @@ namespace AIPlugin
 
             Log.LogInfo("Plugin loaded and initialized");
         }
-
-        public class ArtifactCreationWindow : MonoBehaviour
+        void Update()
         {
-            Rect windowRect = new Rect(20, 20, 120, 50);
-
-            void OnGUI()
-            {
-                // Register the window. Notice the 3rd parameter
-                windowRect = GUILayout.Window(0, windowRect, DoMyWindow, "My Window");
-            }
-
-            // Make the contents of the window
-            void DoMyWindow(int windowID)
-            {
-                // This button will size to fit the window
-                if (GUILayout.Button("Hello World"))
-                {
-                    print("Got a click");
-                }
-            }
+            ThreadSafeLogService.Flush();
         }
-
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(SteamAPI), "Init")]
@@ -130,22 +122,10 @@ namespace AIPlugin
                 AIPlugin.Log.LogWarning($"Steam name failed: {e}");
             }
         }
-        private void Update()
-        {
-            ThreadSafeLogService.Flush();
-            if (Input.GetKeyDown(KeyCode.F11))
-            {
-
-            }
-            if (Input.GetKeyDown(KeyCode.F10))
-            {
-                //BossFightRecordingSession.ForceStopRecordingSession();
-                _registry.Get<SessionOrchestrator>().RequestStop();
-            }
-        }
+        
         private void OnGUI()
         {
-            gui.OnGUIDrawStateLabel();
+            //gui.OnGUIDrawStateLabel();
         }
         [HarmonyPostfix]
         [HarmonyPatch(typeof(PlayerData), "TakeHealth")]

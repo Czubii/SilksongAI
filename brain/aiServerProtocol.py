@@ -5,6 +5,7 @@ import torch
 from sympy.codegen.ast import bool_
 from torchvision.models import list_models
 
+import ai.models.registry
 from ai.models import get_available_artifacts
 from client_session import AIClientSession
 
@@ -38,12 +39,18 @@ async def select_model(payload, session: AIClientSession):
 async def predict_inputs(payload, session: AIClientSession):
     return session.predict_inputs(payload)
 
+@register_handler("get_architectures")
+async def get_architectures(payload, session: AIClientSession):
+    payload = {}
+    for name, architecture_cls in ai.models.registry.model_registry.items():
+        payload[name] = architecture_cls.get_additional_param_definitions()
+    return {"architectures": payload}
+
 
 async def read_msg(reader):
     length_bytes = await reader.readexactly(4)
     length = int.from_bytes(length_bytes, byteorder='big')
     data = await reader.readexactly(length)
-
     out = msgpack.unpackb(data, raw=False)
 
     return out
@@ -98,3 +105,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+

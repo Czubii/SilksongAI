@@ -16,7 +16,7 @@ namespace AIPlugin.BossfightSession
     /// <summary>
     /// Colects the frame data, sends reqest to ai server, and forwards the ai controls further to be applied
     /// </summary>
-    public class AIBossfightController : MonoBehaviour, ISessionListener, IFrameCaptureListener
+    public class AIBossfightAgent : MonoBehaviour, ISessionListener, IFrameCaptureListener
     {
         private AiService _service;
         private Task _aiControllTask = null;

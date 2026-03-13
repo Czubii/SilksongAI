@@ -163,7 +163,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BossfightSession\AIBossfightController.cs" />
+    <Compile Include="BossfightSession\AIBossfightAgent.cs" />
     <Compile Include="BossfightSession\AttemptResult.cs" />
     <Compile Include="BossfightSession\CancellationHandle.cs" />
     <Compile Include="BossfightSession\FrameCapturer.cs" />
@@ -172,7 +172,14 @@
     <Compile Include="BossfightSession\SessionEvents.cs" />
     <Compile Include="BossfightSession\SessionOrchestrator.cs" />
     <Compile Include="BossfightSession\SessionRuntime.cs" />
+    <Compile Include="PluginConfig\ConfigEntries.cs" />
+    <Compile Include="PluginConfig\PluginConfigManager.cs" />
+    <Compile Include="PluginGUI\ArtifactCreatorWindow.cs" />
+    <Compile Include="PluginGUI\SessionControlsWindow.cs" />
+    <Compile Include="PluginGUI\CustomGUIElements.cs" />
     <Compile Include="Infrastructure\ServiceRegistry.cs" />
+    <Compile Include="PluginConfig.cs" />
+    <Compile Include="PluginGUI\WindowManager.cs" />
     <Compile Include="Utilities\AIServerCoordinator.cs" />
     <Compile Include="Utilities\BossBehavior.cs" />
     <Compile Include="Utilities\BossReferenceDatabase.cs" />
@@ -186,7 +193,6 @@
     <Compile Include="Networking\AiService.cs" />
     <Compile Include="Networking\AiClient.cs" />
     <Compile Include="Networking\Protocol.cs" />
-    <Compile Include="PluginGUI.cs" />
     <Compile Include="BossfightSession\BossfightRecorder.cs" />
     <Compile Include="AIPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

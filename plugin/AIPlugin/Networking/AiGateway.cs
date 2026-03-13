@@ -3,7 +3,9 @@ using MessagePack;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using UnityEngine.Playables;
 
 namespace AIPlugin.Networking
 {
@@ -34,67 +36,64 @@ namespace AIPlugin.Networking
 
             return null;
         }
-        public async Task<ModelsOverviewResponse> ListModelsAsync()
+        public async Task<Payloads.ModelsOverviewResponse> ListModelsAsync()
         {
-            if (_client == null || !_client.IsConnected) return null;
-
-            try
-            {
-                return await SendRequestAsync<ModelsOverviewResponse>("get_models");
-            }
-            catch (Exception ex)
-            {
-                ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
-            }
-
-            return null;
+            return await SendRequestAsync<Payloads.ModelsOverviewResponse>("get_models");
         }
-        public async Task<ModelsOverviewResponse> SelectModel(string BossName, string ModelName)
+        public async Task<Payloads.ModelsOverviewResponse> SelectModel(string BossName, string ModelName)
         {
-            if (_client == null || !_client.IsConnected) return null;
-
-            try
-            {
-                var payload = new SelectModelRequest(){
-                    BossName = BossName,
-                    ModelName = ModelName
-                };
-                return await SendRequestAsync<ModelsOverviewResponse, SelectModelRequest>("select_model", payload);
-            }
-            catch (Exception ex)
-            {
-                ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
-            }
-
-            return null;
+            var payload = new Payloads.SelectModelRequest(){
+                BossName = BossName,
+                ModelName = ModelName
+            };
+            return await SendRequestAsync<Payloads.ModelsOverviewResponse, Payloads.SelectModelRequest>("select_model", payload);
         }
+
+        public async Task<Payloads.GetArchitecturesResponse> GetArchitecturesAsync()
+        {
+            return await SendRequestAsync<Payloads.GetArchitecturesResponse>("get_architectures");
+        }
+
         private async Task<TResponse> SendRequestAsync<TResponse>(string type)
         {
             return await SendRequestAsync<TResponse, Empty>(type, default);
         }
         private async Task<TResponse> SendRequestAsync<TResponse, TPayload>(string type, TPayload payload)
         {
-            string ID = Guid.NewGuid().ToString(); 
+            if (_client == null || !_client.IsConnected) return default;
 
-            var request = new Protocol.RequestEnvelope<TPayload>()
+            try
             {
-                RequestId = ID,
-                Type = type,
-                Payload = payload
-            };
+                string ID = Guid.NewGuid().ToString();
 
-            var taskCompletion = new TaskCompletionSource<Protocol.ResponseEnvelope<TResponse>>();
-            _pendingRequests[ID] = taskCompletion;
+                var request = new Protocol.RequestEnvelope<TPayload>()
+                {
+                    RequestId = ID,
+                    Type = type,
+                    Payload = payload
+                };
 
-            byte[] bytes = MessagePackSerializer.Serialize(request, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-            await _client.SendAsync(bytes);
+                var taskCompletion = new TaskCompletionSource<Protocol.ResponseEnvelope<TResponse>>();
+                _pendingRequests[ID] = taskCompletion;
 
-            var envelope = await taskCompletion.Task;
+                byte[] bytes = MessagePackSerializer.Serialize(request);
+                ThreadSafeLogService.Log(BitConverter.ToString(bytes.Take(8).ToArray()), AIPlugin.Log.LogWarning);
+                await _client.SendAsync(bytes);
 
-            if(!envelope.Success)
-                throw new Exception("Server Error: " + envelope.ErrorMessage);
+                var envelope = await taskCompletion.Task;
 
-            return envelope.Payload;
+                if (!envelope.Success)
+                    throw new Exception("Server Error: " + envelope.ErrorMessage);
+
+                return envelope.Payload;
+            }
+            catch (Exception ex)
+            {
+                ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
+            }
+
+            return default;
+            
         }
         public void OnMessageRecieved(byte[] data)
         {

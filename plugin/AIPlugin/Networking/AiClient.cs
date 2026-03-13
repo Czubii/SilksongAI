@@ -22,6 +22,7 @@ namespace AIPlugin.Networking
         public event Action OnDisconnect;
         public event Action<byte[]> OnMessageRecieved;
 
+        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
         public AiClient(string host, int port)
         {
             _host = host;
@@ -57,10 +58,21 @@ namespace AIPlugin.Networking
 
             byte[] lengthPrefix = BitConverter.GetBytes(bytes.Length);
             if (BitConverter.IsLittleEndian)
-                Array.Reverse(lengthPrefix); // now big-endian
+                Array.Reverse(lengthPrefix);
 
-            await _stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
-            await _stream.WriteAsync(bytes, 0, bytes.Length);
+            byte[] frame = new byte[4 + bytes.Length];
+            Buffer.BlockCopy(lengthPrefix, 0, frame, 0, 4);
+            Buffer.BlockCopy(bytes, 0, frame, 4, bytes.Length);
+
+            await _sendLock.WaitAsync();
+            try
+            {
+                await _stream.WriteAsync(frame, 0, frame.Length);
+            }
+            finally
+            {
+                _sendLock.Release();
+            }
         }
 
         public async Task RecieveLoopAsync(CancellationToken token)

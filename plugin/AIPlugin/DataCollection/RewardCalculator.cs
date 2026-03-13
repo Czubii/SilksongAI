@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AIPlugin.PluginConfig;
 
 namespace AIPlugin.Utilities
 {
@@ -20,17 +21,17 @@ namespace AIPlugin.Utilities
             {
                 damageDelt += prev.Enemies[i].HP - curr.Enemies[i].HP;
             }
-            total += damageDelt * damageDelt * RewardConfig.DAMAGE_DELT.Value;
+            total += damageDelt * damageDelt * ConfigEntries.Rewards.DAMAGE_DELT.Value;
 
             int damageTaken = prev.Hero.HP - curr.Hero.HP;
-            total += damageTaken * RewardConfig.DAMAGE_TAKEN.Value;
+            total += damageTaken * ConfigEntries.Rewards.DAMAGE_TAKEN.Value;
 
-            total += RewardConfig.TIME_PENALTY.Value;
+            total += ConfigEntries.Rewards.TIME_PENALTY.Value;
 
-            if (curr.Hero.HP <= RewardConfig.LOW_HEALTH_THRESHOLD.Value) 
-                total += RewardConfig.LOW_HEALTH_PENALTY.Value;
-            if (curr.Hero.Silk >= RewardConfig.HIGH_SLIK_THRESHOLD.Value) 
-                total += RewardConfig.HIGH_SLIK_PENALTY.Value;
+            if (curr.Hero.HP <= ConfigEntries.Rewards.LOW_HEALTH_THRESHOLD.Value) 
+                total += ConfigEntries.Rewards.LOW_HEALTH_PENALTY.Value;
+            if (curr.Hero.Silk >= ConfigEntries.Rewards.HIGH_SLIK_THRESHOLD.Value) 
+                total += ConfigEntries.Rewards.HIGH_SLIK_PENALTY.Value;
             return total;
         }
     }

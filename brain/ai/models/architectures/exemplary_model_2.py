@@ -5,12 +5,12 @@ from shared import ModelDimensions
 
 
 @register_model # You need to register every model you implement!!!
-class ExemplaryNet(BaseBossNet):
+class ExemplaryNet2(BaseBossNet):
     def __init__(self,
                  base_dimensions: ModelDimensions,
-                 time_window: int,
-                 embedding_dim: int,
-                 hidden_dim: int = 3):
+                 time_window: int = 11,
+                 embedding_dim: int = 666,
+                 hidden_dim: int = 420):
         # we need to pass the arguments used in this constructor to base class as keyword arguments, together with base
         # dimensions:
         super().__init__(base_dimensions, time_window=time_window, embedding_dim=embedding_dim, hidden_dim=hidden_dim)

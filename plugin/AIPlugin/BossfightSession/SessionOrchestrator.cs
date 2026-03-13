@@ -198,5 +198,13 @@ namespace AIPlugin.BossfightSession
         public int GetCurrentFightIdx() => _sessionRuntime.AttemptIndex;
         public int GetTotalFightCount() => _sessionRuntime.TotalFights;
 
+        public bool CanStart()
+        {
+            if (State != SessionState.Idle || !_teleport.CanTeleport()) return false;
+            return true;
+        }
+
+        public bool IsSessionActive() => State != SessionState.Idle;
+
     }
 }
