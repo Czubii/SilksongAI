@@ -22,7 +22,7 @@ namespace AIPlugin.Networking
         }
     }
     [MessagePackObject]
-    public struct Empty { }
+    public class Empty { }
 
 
     public static class Payloads
@@ -67,6 +67,9 @@ namespace AIPlugin.Networking
             [Key("name")] public string ModelName { get; set; }
             [Key("params")] public List<FunctionParam> Params { get; set; }
             [Key("override")] public bool Overwrite {  get; set; } = false;
+            [Key("require_success")] public bool RequireSuccess { get; set; } = true;
+            [Key("player_name")] public string PlayerName { get; set; } = "";
+            [Key("percent_best")] public float UsePercentBest { get; set; } = 0.8f;
 
         }
     }

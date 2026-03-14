@@ -23,7 +23,7 @@ namespace AIPlugin.PluginGUI
             TrainModel
         }
         private CurrentWindow currentWindow;
-        public override Vector2 Size { get; } = new Vector2(250, 300);
+        public override Vector2 Size { get; } = new Vector2(250, 500);
         public override Vector2 Position { get; set; } = new Vector2(0, 0);
 
         private Vector2 _scroll = new Vector2();
@@ -36,21 +36,20 @@ namespace AIPlugin.PluginGUI
         private Payloads.GetArchitecturesResponse _serverAIArchitectures = null;
         private Payloads.NewModelRequest _newModelConfig = null;
         private Task _architectureRequestTask = null;
+        private Task _newModelTask = null;
+        private bool _modelCreationResultsDisplayed = true;
+        private string _modelCreationResults = null;
 
         private CustomGUI.DropdownState _architectureDropdownState = new CustomGUI.DropdownState();
         private CustomGUI.DropdownState _newModelBossDropdownState = new CustomGUI.DropdownState();
         public void Initialize(ConfigFile config, AiService service)
         {
             _service = service;
-            _enableKey = config.Bind("Windows", "Enable Artifact Creation Window", new KeyboardShortcut(KeyCode.F3));
+            _enableKey = config.Bind("Windows", "Show/Hide Artifact Creation Window", new KeyboardShortcut(KeyCode.F3));
             service.OnConnected += OnConnected;
             service.OnDisconnected += OnDisconnected;
         }
         public override bool EnableKeyDown() => _enableKey.Value.IsDown();
-        void OnEnable() 
-        { 
-            currentWindow = CurrentWindow.Main;
-        }
 
         private void OnConnected()
         {
@@ -70,7 +69,6 @@ namespace AIPlugin.PluginGUI
         void Draw(int windowID)
         {
             GUILayout.BeginVertical();
-            _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.ExpandHeight(true));
 
             if (!_service.IsConnected)
             {
@@ -97,20 +95,31 @@ namespace AIPlugin.PluginGUI
                     currentWindow = CurrentWindow.TrainModel;
                 }
             }
-            else if (currentWindow == CurrentWindow.NewModel) DrawModelCreationSettings();
+            else if (currentWindow == CurrentWindow.NewModel) DrawModelCreation();
             else if (currentWindow == CurrentWindow.TrainModel) DrawModelTrainingSettings();
 
 
-            GUILayout.EndScrollView();
+            
             GUILayout.EndVertical();
             GUI.enabled = true;
         }
+        private void DrawModelCreation()
+        {
+            if (_modelCreationResultsDisplayed) DrawModelCreationSettings();
+            else DrawModelCreationProgress();
+        }
         private void DrawModelCreationSettings()
         {
+            _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.ExpandHeight(true));
+
+            GUILayout.Label("The dataset used to train the model using behavioral " +
+                "cloning is created based on recordings at the time of creating the " +
+                "artifact and cannot be changed later (unless done manually). Make sure all the recordings " +
+                "you want to use exist in the respecive directory before creating the model.");
 
             bool anyParamEmpty = false;
             List<string> architectureNames = _serverAIArchitectures.ArchitectureParams.Keys.ToList();
-            GUILayout.Label("Architecture Selection: ");
+            GUILayout.Label("Architecture: ");
             var oldIdx = _architectureDropdownState.SelectedIdx;
             _architectureDropdownState =
                 CustomGUI.Dropdown(_architectureDropdownState, architectureNames);
@@ -128,7 +137,7 @@ namespace AIPlugin.PluginGUI
                     Overwrite = false
                 };
             }
-            GUILayout.Label("Target Boss Selection:");
+            GUILayout.Label("Target Boss:");
             List<string> bossNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToList();
             oldIdx = _newModelBossDropdownState.SelectedIdx;
             _newModelBossDropdownState = CustomGUI.Dropdown(_newModelBossDropdownState, bossNames);
@@ -138,10 +147,10 @@ namespace AIPlugin.PluginGUI
                         ToList()[_newModelBossDropdownState.SelectedIdx];
             }
 
-            GUILayout.Space(10.0f);
+            GUILayout.Space(20.0f);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Name:");
+            GUILayout.Label("Artifact Name:");
             GUILayout.FlexibleSpace();
             _newModelConfig.ModelName = GUILayout.TextField(_newModelConfig.ModelName, GUILayout.Width(110));
             if (_newModelConfig.ModelName.Trim().Length == 0) anyParamEmpty = true;
@@ -150,7 +159,7 @@ namespace AIPlugin.PluginGUI
             _newModelConfig.Overwrite = CustomGUI.LabelToggle(_newModelConfig.Overwrite, 
                 "Overwrite if name exists: ");
 
-            GUILayout.Space(10.0f);
+            GUILayout.Space(20.0f);
             
             GUILayout.Label("Required Model Parameters: ");
             for (int i = 0; i < _newModelConfig.Params.Count(); i++)
@@ -161,16 +170,58 @@ namespace AIPlugin.PluginGUI
                 if (_newModelConfig.Params[i].Value.Trim().Length == 0) anyParamEmpty = true;
             }
 
-            GUILayout.Space(10.0f);
+            GUILayout.Space(20.0f);
+            GUILayout.Label("Recording Filters (Leave category empty to not filter): ");
+
+            _newModelConfig.RequireSuccess = CustomGUI.LabelToggle(_newModelConfig.RequireSuccess,
+                "Require Success:");
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Player Name:");
+            GUILayout.FlexibleSpace();
+            _newModelConfig.PlayerName = GUILayout.TextField(_newModelConfig.PlayerName, GUILayout.Width(110));
+            GUILayout.EndHorizontal();
+            
+            GUILayout.Label($"Use top {_newModelConfig.UsePercentBest * 100:0.}% Recordings:");
+            _newModelConfig.UsePercentBest = GUILayout.HorizontalSlider(
+                _newModelConfig.UsePercentBest, 0.1f, 1.0f);
+            _newModelConfig.UsePercentBest = Mathf.Round(_newModelConfig.UsePercentBest / 0.05f) * 0.05f;
+
+            GUILayout.EndScrollView();
 
             GUILayout.FlexibleSpace();
-            if (anyParamEmpty) GUI.enabled = false;
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Cancel"))  currentWindow = CurrentWindow.Main;
+            if (anyParamEmpty || _newModelTask != null) GUI.enabled = false;
             if (GUILayout.Button("Create"))
             {
-                //TODO
+                _newModelTask = NewModelAsync();
+                _modelCreationResultsDisplayed = false;
+                _modelCreationResults = null;
             }
             GUI.enabled = true;
-            if (GUILayout.Button("Cancel"))  currentWindow = CurrentWindow.Main;
+
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawModelCreationProgress()
+        {
+            if (_modelCreationResults == null)
+            {
+                GUILayout.Label("Model creation in progress. This may take up to a minute based on number " +
+                "of used recordings.");
+            }
+            else
+            {
+                GUILayout.Label("Model creation process finished. Result: ");
+                GUILayout.Label(_modelCreationResults);
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Go Back"))
+                {
+                    _modelCreationResultsDisplayed = true;
+                }
+            }
         }
 
         private void DrawModelTrainingSettings()
@@ -184,6 +235,23 @@ namespace AIPlugin.PluginGUI
             if (GUILayout.Button("Cancel")) currentWindow = CurrentWindow.Main;
         }
 
+        private async Task NewModelAsync()
+        {
+
+            try
+            {
+                await _service.Gateway.NewModelAsync(_newModelConfig);
+                _modelCreationResults = "ASDASDASD";
+            }
+            catch (Exception ex)
+            {
+                _modelCreationResults = $"Exception occured: {ex.Message}";
+            }
+            finally
+            {
+                _newModelTask = null;
+            }
+        }
         private async Task GetArchitecturesAsync()
         {
             try

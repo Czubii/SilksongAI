@@ -18,8 +18,18 @@ namespace AIPlugin.Networking
             _client = client;
 
             _client.OnMessageRecieved += OnMessageRecieved;
+            _client.OnDisconnect += OnDisconnect;
 
             _pendingRequests = new ConcurrentDictionary<string, object>();
+        }
+        private void OnDisconnect()
+        {
+            foreach (var request in _pendingRequests)
+            {
+                var tcsType = request.Value.GetType();
+                tcsType.GetMethod("SetException", new[] { typeof(Exception) })?.
+                    Invoke(request.Value, new[] { new Exception("Server disconnected before sending the response")});
+            }
         }
         public async Task<FrameUserInputs> PredictInputsAsync(InferenceFrame frameData)
         {
@@ -53,12 +63,18 @@ namespace AIPlugin.Networking
         {
             return await SendRequestAsync<Payloads.GetArchitecturesResponse>("get_architectures");
         }
-
+        public async Task<Empty> NewModelAsync(Payloads.NewModelRequest modelConfig)
+        {
+            return await SendRequestAsync<Empty, Payloads.NewModelRequest>("new_model", modelConfig);
+        }
         private async Task<TResponse> SendRequestAsync<TResponse>(string type)
+            where TResponse : class
         {
             return await SendRequestAsync<TResponse, Empty>(type, default);
         }
-        private async Task<TResponse> SendRequestAsync<TResponse, TPayload>(string type, TPayload payload)
+        private async Task<TResponse> SendRequestAsync<TResponse, TPayload>(string type, TPayload payload) 
+            where TResponse : class
+            where TPayload: class
         {
             if (_client == null || !_client.IsConnected) return default;
 
@@ -89,11 +105,10 @@ namespace AIPlugin.Networking
             }
             catch (Exception ex)
             {
-                ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
+                ThreadSafeLogService.Log($"There was an error when contacting the server: \n {ex}", 
+                    AIPlugin.Log.LogError);
+                throw ex;
             }
-
-            return default;
-            
         }
         public void OnMessageRecieved(byte[] data)
         {
@@ -124,16 +139,18 @@ namespace AIPlugin.Networking
             }
             catch (Exception ex)
             {
+                
                 try
                 {
-                    tcsType.GetMethod("SetException")?.Invoke(boxedTcs, new[] { ex });
+                    tcsType.GetMethod("SetException", new[] {typeof(Exception)})?.
+                        Invoke(boxedTcs, new[] { ex });
                 }
-                catch
+                catch (Exception ex2)
                 {
-                    ThreadSafeLogService.Log("Failed to invoke SetException on TCS", AIPlugin.Log.LogError);
+                    ThreadSafeLogService.Log($"Failed to process message: {ex}", AIPlugin.Log.LogError);
+                    ThreadSafeLogService.Log($"Failed to invoke SetException on TCS: {ex2}", 
+                        AIPlugin.Log.LogError);
                 }
-
-                ThreadSafeLogService.Log($"Failed to process message: {ex}", AIPlugin.Log.LogError);
             }
             finally 
             {
@@ -146,3 +163,6 @@ namespace AIPlugin.Networking
         }
     }
 }
+
+
+
