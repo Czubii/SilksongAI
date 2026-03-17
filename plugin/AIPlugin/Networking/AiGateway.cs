@@ -99,7 +99,7 @@ namespace AIPlugin.Networking
                 var envelope = await taskCompletion.Task;
 
                 if (!envelope.Success)
-                    throw new Exception("Server Error: " + envelope.ErrorMessage);
+                    throw new Exception("Server Error:\n" + envelope.ErrorMessage);
 
                 return envelope.Payload;
             }

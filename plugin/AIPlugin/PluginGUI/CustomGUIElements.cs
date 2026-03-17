@@ -1,4 +1,5 @@
 ﻿using AIPlugin.Networking;
+using HutongGames.PlayMaker;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,30 @@ namespace AIPlugin.PluginGUI
 {
     public static class CustomGUI
     {
+        public static bool TopBar(string text)
+        {
+            bool pressed = false;
+            GUILayout.BeginHorizontal(GUI.skin.label);
+
+            GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+            labelStyle.fontStyle = FontStyle.Bold;
+            labelStyle.fontSize = 15;
+            labelStyle.alignment = TextAnchor.MiddleCenter;
+
+            GUILayout.Label(text, labelStyle, GUILayout.ExpandWidth(true));
+
+            GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("✕", Styles.CloseButton, GUILayout.Width(20), GUILayout.Height(20)))
+            {
+                pressed = true;
+            }
+
+            GUILayout.EndHorizontal();
+
+            return pressed;
+        }
+
         public class DropdownState
         {
             public int SelectedIdx = 0;
@@ -31,7 +56,7 @@ namespace AIPlugin.PluginGUI
                 if (options.Count > 0)
                 {
                     // Button showing current selection
-                    if (GUILayout.Button(options[state.SelectedIdx]))
+                    if (GUILayout.Button(options[state.SelectedIdx], Styles.Button))
                     {
                         state.Expanded = !state.Expanded;
                     }
@@ -51,9 +76,7 @@ namespace AIPlugin.PluginGUI
                     // Draw a highlight box for the current selection
                     if (i == state.SelectedIdx)
                     {
-                        var rect = GUILayoutUtility.GetRect(new GUIContent(options[i]), GUI.skin.button);
-                        GUI.Box(rect, "", GUI.skin.box); // TODO MAKE THIS MORE VISIBLE Draw an empty box behind the button
-                        if (GUI.Button(rect, options[i]))
+                        if (GUILayout.Button(options[i], Styles.GreenButton))
                         {
                             state.SelectedIdx = i;
                             state.Expanded = false;
@@ -61,7 +84,7 @@ namespace AIPlugin.PluginGUI
                     }
                     else
                     {
-                        if (GUILayout.Button(options[i]))
+                        if (GUILayout.Button(options[i], Styles.Button))
                         {
                             state.SelectedIdx = i;
                             state.Expanded = false;
@@ -77,12 +100,12 @@ namespace AIPlugin.PluginGUI
             return state;
         }
 
-        public static bool LabelToggle(bool value, string text)
+        public static bool Toggle(bool value, string text)
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label(text, GUILayout.ExpandWidth(true));
             GUILayout.FlexibleSpace();
-            value = GUILayout.Toggle(value, "");
+            value = GUILayout.Toggle(value, "", Styles.Toggle);
             GUILayout.EndHorizontal();
             return value;
         }
@@ -97,7 +120,7 @@ namespace AIPlugin.PluginGUI
             if (value != 0)
                 val_str = value.ToString();
 
-            val_str = GUILayout.TextField(val_str, options);
+            val_str = GUILayout.TextField(val_str, Styles.TextField, options);
             if (val_str.Length == 0) return 0;
 
             bool negative = val_str[0] == '-';
@@ -123,12 +146,12 @@ namespace AIPlugin.PluginGUI
             switch (param.Type)
             {
                 case "int":
-                    param.Value = GUILayout.TextField(param.Value, options);
+                    param.Value = GUILayout.TextField(param.Value, Styles.TextField, options);
                     param.Value = RemoveNonNumberChar(param.Value);
                     break;
 
                 default:
-                    param.Value = GUILayout.TextField(param.Value, options);
+                    param.Value = GUILayout.TextField(param.Value, Styles.TextField, options);
                     break;
             }
 

@@ -14,7 +14,6 @@ using GenericVariableExtension;
 using System.Reflection;
 using HutongGames.PlayMaker.Actions;
 using UnityEngine.EventSystems;
-using AIPlugin.PluginConfig;
 using AIPlugin.PluginGUI;
 
 namespace AIPlugin
@@ -32,7 +31,7 @@ namespace AIPlugin
         {
             try
             {
-                PluginConfigManager.Bind(Config);
+                RewardCalculator.Bind(Config);
 
                 Log = Logger;
                 _registry = new ServiceRegistry();
@@ -61,17 +60,21 @@ namespace AIPlugin
                 aiController.enabled = false;
                 sessionEventHandler.Subscribe(aiController);
 
-                var sessionControlsWindow = gameObject.AddComponent<SessionControlsWindow>();
-                sessionControlsWindow.Initialize(Config, session, recorder, aiController);
-
-                var artifcatCreatorWindow = gameObject.AddComponent<ArtifactCreatorWindow>();
-                artifcatCreatorWindow.Initialize(Config, aiService);
+                var sessionControlsWindow = new SessionControlsWindow("Session Controls", session, recorder, aiController);
+                var serverControlsWindow = new ServerControlsWindow("Server Controls", aiService);
+                var artifactCreatorWindow = new ArtifactCreatorWindow("Artfiact Creator", aiService);
 
                 var coordinator = new AIServerCoordinator(aiService);
 
+                var enemyTrackerScreenLabel = gameObject.AddComponent<EnemyTrackerScreenLabel>();
+                enemyTrackerScreenLabel.Initialize(Config);
+
                 var windowManager = gameObject.AddComponent<PluginWindowManager>();
+                windowManager.Initialize(Config);
                 windowManager.Register(sessionControlsWindow);
-                windowManager.Register(artifcatCreatorWindow);
+                windowManager.Register(serverControlsWindow);
+                windowManager.Register(artifactCreatorWindow);
+                windowManager.Register(enemyTrackerScreenLabel);
                 
                 _registry.Add(teleporter);
                 _registry.Add(aiService);
@@ -91,6 +94,7 @@ namespace AIPlugin
                 Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
                 Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
                 Harmony.CreateAndPatchAll(typeof(HeroController_LookForInput_Patch), null);
+                Harmony.CreateAndPatchAll(typeof(CursorManager), null);
             }
             catch (Exception e)
             {

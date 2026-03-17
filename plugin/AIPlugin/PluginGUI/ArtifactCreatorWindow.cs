@@ -1,11 +1,13 @@
 ﻿using AIPlugin.BossfightSession;
 using AIPlugin.Networking;
 using BepInEx.Configuration;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,103 +16,69 @@ namespace AIPlugin.PluginGUI
     /// <summary>
     /// Responsible for starting session / selecting boss / basic session settings like the number of trials and boss selection
     /// </summary>
-    public class ArtifactCreatorWindow : BasePluginWindow//TODO: ENABLE CURSOUR WHEN WINDOW ACTIVE
+    public class ArtifactCreatorWindow : BaseWindow//TODO: ENABLE CURSOUR WHEN WINDOW ACTIVE
     {
-        private enum CurrentWindow
+        private enum State
         {
-            Main,
-            NewModel,
-            TrainModel
+            ArtifactSetup,
+            ArtifactCreationResults
         }
-        private CurrentWindow currentWindow;
-        public override Vector2 Size { get; } = new Vector2(250, 500);
-        public override Vector2 Position { get; set; } = new Vector2(0, 0);
+
+        private State _state = State.ArtifactSetup;
 
         private Vector2 _scroll = new Vector2();
 
         AiService _service;
 
-        private ConfigFile _configFile;
-        private ConfigEntry<KeyboardShortcut> _enableKey;
-
         private Payloads.GetArchitecturesResponse _serverAIArchitectures = null;
         private Payloads.NewModelRequest _newModelConfig = null;
+
         private Task _architectureRequestTask = null;
         private Task _newModelTask = null;
-        private bool _modelCreationResultsDisplayed = true;
-        private string _modelCreationResults = null;
 
         private CustomGUI.DropdownState _architectureDropdownState = new CustomGUI.DropdownState();
         private CustomGUI.DropdownState _newModelBossDropdownState = new CustomGUI.DropdownState();
-        public void Initialize(ConfigFile config, AiService service)
+
+        private string _modelCreationResults = null;
+
+        public ArtifactCreatorWindow(string name, AiService service):
+            base(name, new Rect(100, 300, 250, 500))
         {
             _service = service;
-            _enableKey = config.Bind("Windows", "Show/Hide Artifact Creation Window", new KeyboardShortcut(KeyCode.F3));
+
             service.OnConnected += OnConnected;
             service.OnDisconnected += OnDisconnected;
         }
-        public override bool EnableKeyDown() => _enableKey.Value.IsDown();
 
         private void OnConnected()
         {
-            if(_architectureRequestTask == null)
-            _architectureRequestTask = GetArchitecturesAsync();
+            if (_architectureRequestTask == null)
+                _architectureRequestTask = GetArchitecturesAsync();
         }
         private void OnDisconnected()
         {
             _newModelConfig = null;
             _serverAIArchitectures = null;
         }
-        public void OnGUI()
+        public override bool CanEnable() => _service.IsConnected;
+        public override void DrawContent()
         {
-            GUILayout.Window(1, new Rect(Position, Size), Draw, "Artifact Creator");
+            switch (_state)
+            {
+                case State.ArtifactSetup:
+                    DrawArtifactSetup();
+                    break;
+                case State.ArtifactCreationResults:
+                    DrawArtifactCreationResults();
+                    break;
+            }
         }
 
-        void Draw(int windowID)
+        private void DrawArtifactSetup()
         {
             GUILayout.BeginVertical();
-
-            if (!_service.IsConnected)
-            {
-                if (GUILayout.Button("Connect to AI Server"))
-                {
-                    _service.ConnectToServer();
-                }
-            }
-            else if (currentWindow == CurrentWindow.Main)
-            {
-                if (_serverAIArchitectures == null)
-                {
-                    GUI.enabled = false;
-                }
-                if (GUILayout.Button("New Artifact"))
-                {
-                    currentWindow = CurrentWindow.NewModel;
-                }
-                GUI.enabled = true;
-
-
-                if (GUILayout.Button("Train Existing Artifact"))
-                {
-                    currentWindow = CurrentWindow.TrainModel;
-                }
-            }
-            else if (currentWindow == CurrentWindow.NewModel) DrawModelCreation();
-            else if (currentWindow == CurrentWindow.TrainModel) DrawModelTrainingSettings();
-
-
-            
-            GUILayout.EndVertical();
-            GUI.enabled = true;
-        }
-        private void DrawModelCreation()
-        {
-            if (_modelCreationResultsDisplayed) DrawModelCreationSettings();
-            else DrawModelCreationProgress();
-        }
-        private void DrawModelCreationSettings()
-        {
-            _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.ExpandHeight(true));
+            _scroll = GUILayout.BeginScrollView(_scroll, Styles.ScrollView, Styles.VerticalScrollbar, GUILayout.ExpandHeight(true));
+            GUI.skin.verticalScrollbarThumb = Styles.VerticalScrollbarThumb;
 
             GUILayout.Label("The dataset used to train the model using behavioral " +
                 "cloning is created based on recordings at the time of creating the " +
@@ -126,10 +94,10 @@ namespace AIPlugin.PluginGUI
 
             var selectedArchitectureName = architectureNames[_architectureDropdownState.SelectedIdx];
 
-            if (oldIdx != _architectureDropdownState.SelectedIdx || _newModelConfig == null) 
+            if (oldIdx != _architectureDropdownState.SelectedIdx || _newModelConfig == null)
             {
-                _newModelConfig = new Payloads.NewModelRequest() 
-                { 
+                _newModelConfig = new Payloads.NewModelRequest()
+                {
                     ArchitectureName = selectedArchitectureName,
                     TargetBossName = "",
                     ModelName = "",
@@ -152,15 +120,15 @@ namespace AIPlugin.PluginGUI
             GUILayout.BeginHorizontal();
             GUILayout.Label("Artifact Name:");
             GUILayout.FlexibleSpace();
-            _newModelConfig.ModelName = GUILayout.TextField(_newModelConfig.ModelName, GUILayout.Width(110));
+            _newModelConfig.ModelName = GUILayout.TextField(_newModelConfig.ModelName, Styles.TextField, GUILayout.Width(110));
             if (_newModelConfig.ModelName.Trim().Length == 0) anyParamEmpty = true;
             GUILayout.EndHorizontal();
 
-            _newModelConfig.Overwrite = CustomGUI.LabelToggle(_newModelConfig.Overwrite, 
+            _newModelConfig.Overwrite = CustomGUI.Toggle(_newModelConfig.Overwrite,
                 "Overwrite if name exists: ");
 
             GUILayout.Space(20.0f);
-            
+
             GUILayout.Label("Required Model Parameters: ");
             for (int i = 0; i < _newModelConfig.Params.Count(); i++)
             {
@@ -173,40 +141,41 @@ namespace AIPlugin.PluginGUI
             GUILayout.Space(20.0f);
             GUILayout.Label("Recording Filters (Leave category empty to not filter): ");
 
-            _newModelConfig.RequireSuccess = CustomGUI.LabelToggle(_newModelConfig.RequireSuccess,
+            _newModelConfig.RequireSuccess = CustomGUI.Toggle(_newModelConfig.RequireSuccess,
                 "Require Success:");
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("Player Name:");
             GUILayout.FlexibleSpace();
-            _newModelConfig.PlayerName = GUILayout.TextField(_newModelConfig.PlayerName, GUILayout.Width(110));
+            _newModelConfig.PlayerName = GUILayout.TextField(_newModelConfig.PlayerName, Styles.TextField, GUILayout.Width(110));
             GUILayout.EndHorizontal();
-            
+
             GUILayout.Label($"Use top {_newModelConfig.UsePercentBest * 100:0.}% Recordings:");
             _newModelConfig.UsePercentBest = GUILayout.HorizontalSlider(
-                _newModelConfig.UsePercentBest, 0.1f, 1.0f);
+                _newModelConfig.UsePercentBest, 0.1f, 1.0f,
+                Styles.SliderTrack, Styles.SliderThumb);
             _newModelConfig.UsePercentBest = Mathf.Round(_newModelConfig.UsePercentBest / 0.05f) * 0.05f;
 
             GUILayout.EndScrollView();
 
-            GUILayout.FlexibleSpace();
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Cancel"))  currentWindow = CurrentWindow.Main;
+            bool prevEnabled = GUI.enabled;
             if (anyParamEmpty || _newModelTask != null) GUI.enabled = false;
-            if (GUILayout.Button("Create"))
+            if (GUILayout.Button("Create", Styles.Button))
             {
                 _newModelTask = NewModelAsync();
-                _modelCreationResultsDisplayed = false;
+                _state = State.ArtifactCreationResults;
                 _modelCreationResults = null;
             }
-            GUI.enabled = true;
-
+            GUI.enabled = prevEnabled;
             GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
         }
 
-        private void DrawModelCreationProgress()
+        private void DrawArtifactCreationResults()
         {
+            GUILayout.BeginVertical();
             if (_modelCreationResults == null)
             {
                 GUILayout.Label("Model creation in progress. This may take up to a minute based on number " +
@@ -217,27 +186,16 @@ namespace AIPlugin.PluginGUI
                 GUILayout.Label("Model creation process finished. Result: ");
                 GUILayout.Label(_modelCreationResults);
                 GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Go Back"))
+                if (GUILayout.Button("Go Back", Styles.Button))
                 {
-                    _modelCreationResultsDisplayed = true;
+                    _state = State.ArtifactSetup;
                 }
             }
-        }
-
-        private void DrawModelTrainingSettings()
-        {
-
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Train"))
-            {
-
-            }
-            if (GUILayout.Button("Cancel")) currentWindow = CurrentWindow.Main;
+            GUILayout.EndVertical();
         }
 
         private async Task NewModelAsync()
         {
-
             try
             {
                 await _service.Gateway.NewModelAsync(_newModelConfig);

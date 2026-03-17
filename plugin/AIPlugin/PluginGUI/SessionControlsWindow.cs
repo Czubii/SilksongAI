@@ -15,10 +15,8 @@ namespace AIPlugin.PluginGUI
     /// <summary>
     /// Responsible for starting session / selecting boss / basic session settings like the number of trials and boss selection
     /// </summary>
-    public class SessionControlsWindow: BasePluginWindow//TODO: ENABLE CURSOUR WHEN WINDOW ACTIVE
+    public class SessionControlsWindow: BaseWindow//TODO: ENABLE CURSOUR WHEN WINDOW ACTIVE
     {
-        public override Vector2 Size { get; } = new Vector2(200, 300);
-        public override Vector2 Position { get; set; } = new Vector2(0, 0);
         private Vector2 _scroll = new Vector2();
         private CustomGUI.DropdownState _bossDropdownState = new CustomGUI.DropdownState();
 
@@ -31,31 +29,21 @@ namespace AIPlugin.PluginGUI
         private BossfightRecorder _recorder;
         private AIBossfightAgent _aiBossfightAgent;
 
-        private ConfigFile _configFile;
-        private ConfigEntry<KeyboardShortcut> _enableKey;
-
- 
-        public void Initialize(ConfigFile config, SessionOrchestrator sessionOrchestrator, BossfightRecorder recorder, AIBossfightAgent aiAgent)
+        public SessionControlsWindow(string name, SessionOrchestrator sessionOrchestrator, BossfightRecorder recorder, AIBossfightAgent aiAgent): 
+            base(name, new Rect(100, 100, 200, 300))
         {
             _sessionOrchestrator = sessionOrchestrator;
-            _configFile = config;
             _recorder = recorder;
             _aiBossfightAgent = aiAgent;
-
-            _enableKey = config.Bind("Windows", "Enable Session Controls Window", new KeyboardShortcut(KeyCode.F2));
         }
-        public override bool EnableKeyDown() => _enableKey.Value.IsDown();
-        public void OnGUI()
-        { 
-            GUILayout.Window(0, new Rect(Position, Size), Draw, "Session settings");
-        }
-
-        void Draw(int windowID)
+        public override bool CanEnable() => true;
+        public override void DrawContent()
         {
             GUILayout.BeginVertical();
-            _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.ExpandHeight(true));
+            _scroll = GUILayout.BeginScrollView(_scroll, Styles.ScrollView, Styles.VerticalScrollbar, GUILayout.ExpandHeight(true));
+            GUI.skin.verticalScrollbarThumb = Styles.VerticalScrollbarThumb;
 
-            if(_sessionOrchestrator.IsSessionActive())
+            if (_sessionOrchestrator.IsSessionActive())
                 GUI.enabled = false;
 
             GUILayout.Label("Boss Selection:");
@@ -69,20 +57,20 @@ namespace AIPlugin.PluginGUI
             GUILayout.EndHorizontal();
 
 
-            _recordingEnabled = CustomGUI.LabelToggle(_recordingEnabled, "Record: ");
+            _recordingEnabled = CustomGUI.Toggle(_recordingEnabled, "Record: ");
             if (_recorder.enabled != _recordingEnabled) _recorder.enabled = _recordingEnabled;
 
-            _aiEnabled = CustomGUI.LabelToggle(_aiEnabled, "Enable AI: ");
+            _aiEnabled = CustomGUI.Toggle(_aiEnabled, "Enable AI: ");
             if (_aiBossfightAgent.enabled != _aiEnabled) _aiBossfightAgent.enabled = _aiEnabled;
 
-            _keepTools = CustomGUI.LabelToggle(_keepTools, "Keep Tools: ");
+            _keepTools = CustomGUI.Toggle(_keepTools, "Keep Tools: ");
 
             GUILayout.EndScrollView();
             if (!_sessionOrchestrator.CanStart()) // TODO add check if game is paused as it breaks 
             {
                 GUI.enabled = false;
             }
-            if (GUILayout.Button("Start Session") && _sessionOrchestrator.CanStart())
+            if (GUILayout.Button("Start Session", Styles.Button) && _sessionOrchestrator.CanStart())
             {
                 var boss = BossReferenceDatabase.All.ToList()[_bossDropdownState.SelectedIdx];
                 var context = new SessionContext(boss, _num_fights, 
@@ -97,7 +85,7 @@ namespace AIPlugin.PluginGUI
             {
                 GUI.enabled = false;
             }
-            if (GUILayout.Button("Stop Session") && _sessionOrchestrator.IsSessionActive())
+            if (GUILayout.Button("Stop Session", Styles.Button) && _sessionOrchestrator.IsSessionActive())
             {
                 _sessionOrchestrator.RequestStop();
             }
@@ -105,6 +93,5 @@ namespace AIPlugin.PluginGUI
             GUILayout.EndVertical();
             GUI.enabled = true;
         }
-
     }
 }
