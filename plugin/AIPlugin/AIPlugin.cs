@@ -64,8 +64,6 @@ namespace AIPlugin
                 var serverControlsWindow = new ServerControlsWindow("Server Controls", aiService);
                 var artifactCreatorWindow = new ArtifactCreatorWindow("Artfiact Creator", aiService);
 
-                var coordinator = new AIServerCoordinator(aiService);
-
                 var enemyTrackerScreenLabel = gameObject.AddComponent<EnemyTrackerScreenLabel>();
                 enemyTrackerScreenLabel.Initialize(Config);
 
@@ -85,7 +83,6 @@ namespace AIPlugin
                 _registry.Add(frameCapturer);
                 _registry.Add(recorder);
                 _registry.Add(aiController);
-                _registry.Add(coordinator);
                 _registry.Add(sessionControlsWindow);
                 
 

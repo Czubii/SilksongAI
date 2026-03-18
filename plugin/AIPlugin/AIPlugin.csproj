@@ -172,7 +172,9 @@
     <Compile Include="BossfightSession\SessionEvents.cs" />
     <Compile Include="BossfightSession\SessionOrchestrator.cs" />
     <Compile Include="BossfightSession\SessionRuntime.cs" />
+    <Compile Include="Networking\ServerRequestTask.cs" />
     <Compile Include="PluginGUI\ArtifactCreatorWindow.cs" />
+    <Compile Include="PluginGUI\ArtifactTrainingWindow.cs" />
     <Compile Include="PluginGUI\CursorManager.cs" />
     <Compile Include="PluginGUI\EnemyTrackerScreenLabel.cs" />
     <Compile Include="PluginGUI\GameStateScreenLabel.cs" />
@@ -183,7 +185,6 @@
     <Compile Include="PluginConfig.cs" />
     <Compile Include="PluginGUI\Styles.cs" />
     <Compile Include="PluginGUI\WindowManager.cs" />
-    <Compile Include="Utilities\AIServerCoordinator.cs" />
     <Compile Include="Utilities\BossBehavior.cs" />
     <Compile Include="Utilities\BossReferenceDatabase.cs" />
     <Compile Include="Utilities\PluginConfigManager.cs" />

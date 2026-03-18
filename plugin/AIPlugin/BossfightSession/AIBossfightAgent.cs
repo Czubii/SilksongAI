@@ -73,10 +73,10 @@ namespace AIPlugin.BossfightSession
         {
             try
             {
-                var inputs = await _service.Gateway.PredictInputsAsync(InferenceFrame.FromRecordingFrameData(frame));
-                if (inputs == null) return;
+                //var inputs = await _service.Gateway.PredictInputsAsync(InferenceFrame.FromRecordingFrameData(frame));
+                //if (inputs == null) return;
 
-                AIInputState.Inputs = inputs; //TODO make this thread safe???
+                //AIInputState.Inputs = inputs; //TODO make this thread safe???
             }
             catch (Exception e)
             {

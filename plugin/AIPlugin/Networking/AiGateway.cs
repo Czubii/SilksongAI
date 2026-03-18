@@ -1,5 +1,6 @@
 ﻿using AIPlugin.Utilities;
 using MessagePack;
+using Steamworks;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -31,49 +32,8 @@ namespace AIPlugin.Networking
                     Invoke(request.Value, new[] { new Exception("Server disconnected before sending the response")});
             }
         }
-        public async Task<FrameUserInputs> PredictInputsAsync(InferenceFrame frameData)
-        {
-            if (_client == null || !_client.IsConnected) return null;
-
-            try
-            {
-                return await SendRequestAsync<FrameUserInputs, InferenceFrame >("predict_inputs", frameData);
-            }
-            catch (Exception ex)
-            {
-                ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
-            }
-
-            return null;
-        }
-        public async Task<Payloads.ModelsOverviewResponse> ListModelsAsync()
-        {
-            return await SendRequestAsync<Payloads.ModelsOverviewResponse>("get_models");
-        }
-        public async Task<Payloads.ModelsOverviewResponse> SelectModel(string BossName, string ModelName)
-        {
-            var payload = new Payloads.SelectModelRequest(){
-                BossName = BossName,
-                ModelName = ModelName
-            };
-            return await SendRequestAsync<Payloads.ModelsOverviewResponse, Payloads.SelectModelRequest>("select_model", payload);
-        }
-
-        public async Task<Payloads.GetArchitecturesResponse> GetArchitecturesAsync()
-        {
-            return await SendRequestAsync<Payloads.GetArchitecturesResponse>("get_architectures");
-        }
-        public async Task<Empty> NewModelAsync(Payloads.NewModelRequest modelConfig)
-        {
-            return await SendRequestAsync<Empty, Payloads.NewModelRequest>("new_model", modelConfig);
-        }
-        private async Task<TResponse> SendRequestAsync<TResponse>(string type)
-            where TResponse : class
-        {
-            return await SendRequestAsync<TResponse, Empty>(type, default);
-        }
-        private async Task<TResponse> SendRequestAsync<TResponse, TPayload>(string type, TPayload payload) 
-            where TResponse : class
+        public async Task<(TResponse, string)> SendRequestAsync<TResponse, TPayload>(string type, TPayload payload) 
+            where TResponse: class
             where TPayload: class
         {
             if (_client == null || !_client.IsConnected) return default;
@@ -93,15 +53,14 @@ namespace AIPlugin.Networking
                 _pendingRequests[ID] = taskCompletion;
 
                 byte[] bytes = MessagePackSerializer.Serialize(request);
-                ThreadSafeLogService.Log(BitConverter.ToString(bytes.Take(8).ToArray()), AIPlugin.Log.LogWarning);
                 await _client.SendAsync(bytes);
 
                 var envelope = await taskCompletion.Task;
 
                 if (!envelope.Success)
-                    throw new Exception("Server Error:\n" + envelope.ErrorMessage);
+                    throw new Exception("Server Error:\n" + envelope.ServerLog);
 
-                return envelope.Payload;
+                return (envelope.Payload, envelope.ServerLog);
             }
             catch (Exception ex)
             {

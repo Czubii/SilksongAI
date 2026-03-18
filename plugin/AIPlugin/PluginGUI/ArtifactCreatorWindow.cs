@@ -30,16 +30,13 @@ namespace AIPlugin.PluginGUI
 
         AiService _service;
 
-        private Payloads.GetArchitecturesResponse _serverAIArchitectures = null;
-        private Payloads.NewModelRequest _newModelConfig = null;
-
-        private Task _architectureRequestTask = null;
-        private Task _newModelTask = null;
-
         private CustomGUI.DropdownState _architectureDropdownState = new CustomGUI.DropdownState();
         private CustomGUI.DropdownState _newModelBossDropdownState = new CustomGUI.DropdownState();
 
-        private string _modelCreationResults = null;
+        private ServerRequestTask<Responses.Architectures> _architectureRequest = null;
+        private ServerRequestTask<EmptyPayload, Requests.NewModel> _newModelRequest = null;
+
+        private Requests.NewModel _newModelConfig = null;
 
         public ArtifactCreatorWindow(string name, AiService service):
             base(name, new Rect(100, 300, 250, 500))
@@ -52,17 +49,18 @@ namespace AIPlugin.PluginGUI
 
         private void OnConnected()
         {
-            if (_architectureRequestTask == null)
-                _architectureRequestTask = GetArchitecturesAsync();
+            if (_architectureRequest == null)
+                _architectureRequest = new ServerRequestTask<Responses.Architectures>(_service.Gateway,
+                    RequestType.get_architectures);
         }
         private void OnDisconnected()
         {
-            _newModelConfig = null;
-            _serverAIArchitectures = null;
+            _architectureRequest = null;
         }
         public override bool CanEnable() => _service.IsConnected;
         public override void DrawContent()
         {
+            if (_architectureRequest == null || !_architectureRequest.FinishedWithSuccess()) return;
             switch (_state)
             {
                 case State.ArtifactSetup:
@@ -76,6 +74,9 @@ namespace AIPlugin.PluginGUI
 
         private void DrawArtifactSetup()
         {
+
+            var architectures = _architectureRequest.Result;
+
             GUILayout.BeginVertical();
             _scroll = GUILayout.BeginScrollView(_scroll, Styles.ScrollView, Styles.VerticalScrollbar, GUILayout.ExpandHeight(true));
             GUI.skin.verticalScrollbarThumb = Styles.VerticalScrollbarThumb;
@@ -86,7 +87,7 @@ namespace AIPlugin.PluginGUI
                 "you want to use exist in the respecive directory before creating the model.");
 
             bool anyParamEmpty = false;
-            List<string> architectureNames = _serverAIArchitectures.ArchitectureParams.Keys.ToList();
+            List<string> architectureNames = architectures.ArchitectureParams.Keys.ToList();
             GUILayout.Label("Architecture: ");
             var oldIdx = _architectureDropdownState.SelectedIdx;
             _architectureDropdownState =
@@ -96,12 +97,13 @@ namespace AIPlugin.PluginGUI
 
             if (oldIdx != _architectureDropdownState.SelectedIdx || _newModelConfig == null)
             {
-                _newModelConfig = new Payloads.NewModelRequest()
+                _newModelConfig = new Requests.NewModel()
                 {
                     ArchitectureName = selectedArchitectureName,
-                    TargetBossName = "",
+                    TargetBossName = BossReferenceDatabase.All.Select(s => s.InternalName).
+                        ToList()[_newModelBossDropdownState.SelectedIdx],
                     ModelName = "",
-                    Params = _serverAIArchitectures.ArchitectureParams[selectedArchitectureName],
+                    Params = architectures.ArchitectureParams[selectedArchitectureName],
                     Overwrite = false
                 };
             }
@@ -161,12 +163,12 @@ namespace AIPlugin.PluginGUI
             GUILayout.BeginHorizontal();
 
             bool prevEnabled = GUI.enabled;
-            if (anyParamEmpty || _newModelTask != null) GUI.enabled = false;
+            if (anyParamEmpty || (!_newModelRequest?.Finished() ?? false)) GUI.enabled = false;
             if (GUILayout.Button("Create", Styles.Button))
             {
-                _newModelTask = NewModelAsync();
                 _state = State.ArtifactCreationResults;
-                _modelCreationResults = null;
+                _newModelRequest = new ServerRequestTask<EmptyPayload, Requests.NewModel>
+                    (_service.Gateway, RequestType.new_model, _newModelConfig);
             }
             GUI.enabled = prevEnabled;
             GUILayout.EndHorizontal();
@@ -176,7 +178,9 @@ namespace AIPlugin.PluginGUI
         private void DrawArtifactCreationResults()
         {
             GUILayout.BeginVertical();
-            if (_modelCreationResults == null)
+
+
+            if (!_newModelRequest.Finished())
             {
                 GUILayout.Label("Model creation in progress. This may take up to a minute based on number " +
                 "of used recordings.");
@@ -184,7 +188,12 @@ namespace AIPlugin.PluginGUI
             else
             {
                 GUILayout.Label("Model creation process finished. Result: ");
-                GUILayout.Label(_modelCreationResults);
+
+                _scroll = GUILayout.BeginScrollView(_scroll, Styles.ScrollView, Styles.VerticalScrollbar, GUILayout.ExpandHeight(true));
+                GUI.skin.verticalScrollbarThumb = Styles.VerticalScrollbarThumb;
+                GUILayout.Label(_newModelRequest.Log);
+
+                GUILayout.EndScrollView();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Go Back", Styles.Button))
                 {
@@ -192,34 +201,6 @@ namespace AIPlugin.PluginGUI
                 }
             }
             GUILayout.EndVertical();
-        }
-
-        private async Task NewModelAsync()
-        {
-            try
-            {
-                await _service.Gateway.NewModelAsync(_newModelConfig);
-                _modelCreationResults = "ASDASDASD";
-            }
-            catch (Exception ex)
-            {
-                _modelCreationResults = $"Exception occured: {ex.Message}";
-            }
-            finally
-            {
-                _newModelTask = null;
-            }
-        }
-        private async Task GetArchitecturesAsync()
-        {
-            try
-            {
-                _serverAIArchitectures = await _service.Gateway.GetArchitecturesAsync();
-            }
-            finally
-            {
-                _architectureRequestTask = null;
-            }
         }
     }
 }

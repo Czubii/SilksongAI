@@ -137,7 +137,8 @@ namespace AIPlugin.PluginGUI
             return value;
         }
 
-        public static Payloads.FunctionParam ServerFunctionParamField(Payloads.FunctionParam param, GUILayoutOption[] options)
+        public static ServerFunctionParam ServerFunctionParamField(ServerFunctionParam param, 
+            GUILayoutOption[] options)
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label(param.VariableName, GUILayout.ExpandWidth(true));

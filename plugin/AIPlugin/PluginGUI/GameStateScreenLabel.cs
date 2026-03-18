@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace AIPlugin.PluginGUI
 {
-    //public class GameStateScreenLabel: BaseScreenLabel
+    //public class GameStateScreenLabel: BaseScreenLabel TODO
     //{
 
     //}

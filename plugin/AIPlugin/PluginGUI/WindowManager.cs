@@ -33,7 +33,15 @@ namespace AIPlugin.PluginGUI
 
         public void MakeWindow(int ID)
         {
-            if (Enabled) _windowRect = GUILayout.Window(ID, _windowRect, DrawBase, GUIContent.none, Styles.Window);
+            if (Enabled)
+            {
+                if (!CanEnable())
+                {
+                    Enabled = false;
+                    return;
+                }
+                _windowRect = GUILayout.Window(ID, _windowRect, DrawBase, GUIContent.none, Styles.Window);
+            }
         }
         public void DrawBase(int ID)
         {
