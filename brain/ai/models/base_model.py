@@ -29,7 +29,7 @@ class BaseBossNet(nn.Module, ABC):
         :return: dictionary containing blueprint to recreate the model inside model_factory
         """
         return {
-            "model_type": self.__class__.__name__,
+            "architecture_name": self.__class__.__name__,
             "base_dims": self.base_dimensions,
             **self._additional_params
         }

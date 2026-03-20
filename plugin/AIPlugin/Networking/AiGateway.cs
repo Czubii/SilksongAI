@@ -14,6 +14,7 @@ namespace AIPlugin.Networking
     {
         private AiClient _client;
         private ConcurrentDictionary<string, object> _pendingRequests;
+        public ServerEvents Events = new ServerEvents();
         public AiGateway(AiClient client)
         {
             _client = client;
@@ -69,7 +70,81 @@ namespace AIPlugin.Networking
                 throw ex;
             }
         }
+        private string GetMessageKind(byte[] data)
+        {
+            string kind = null;
+            try
+            {
+                var reader = new MessagePackReader(data);
+                int mapLength = reader.ReadMapHeader();
+
+                for (int i = 0; i < mapLength; i++)
+                {
+                    var key = reader.ReadString();
+                    if (key == "kind")
+                    {
+                        kind = reader.ReadString();
+                        break;
+                    }
+
+                    reader.Skip();
+                }
+            }
+            catch (Exception ex)
+            {
+                ThreadSafeLogService.Log(
+                    $"Exception occured when trying to determine the server message kind: {ex}",
+                    AIPlugin.Log.LogError);
+            }
+
+            return kind;
+        }
         public void OnMessageRecieved(byte[] data)
+        {
+            var kind = GetMessageKind(data);
+
+            if(kind == null)
+            {
+                ThreadSafeLogService.Log(
+                    $"Incoming message lacks kind",
+                    AIPlugin.Log.LogError);
+            }
+            
+            switch (kind)
+            {
+                case "response":
+                    HandleResponseMessage(data);
+                    break;
+
+                case "event":
+                    HandleEventMessage(data);
+                    break;
+
+                default:
+                    ThreadSafeLogService.Log(
+                    $"Unknown server message kind: {kind}",
+                    AIPlugin.Log.LogError);
+                    break;
+            }
+        }
+
+        private void HandleEventMessage(byte[] data)
+        {
+            try
+            {
+                var envelope = MessagePackSerializer.Deserialize<Protocol.EventEnvelope>(data);
+
+                if (envelope.EventType == null) throw new ArgumentNullException("envelope.EventType cannot be null");
+                Events.RaiseEvent(envelope.EventType);
+            }
+            catch (Exception ex)
+            {
+                ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
+            }
+
+        }
+
+        private void HandleResponseMessage(byte[] data)
         {
             Protocol.ResponseEnvelope<object> header;
             try
@@ -98,24 +173,24 @@ namespace AIPlugin.Networking
             }
             catch (Exception ex)
             {
-                
+
                 try
                 {
-                    tcsType.GetMethod("SetException", new[] {typeof(Exception)})?.
+                    tcsType.GetMethod("SetException", new[] { typeof(Exception) })?.
                         Invoke(boxedTcs, new[] { ex });
                 }
                 catch (Exception ex2)
                 {
                     ThreadSafeLogService.Log($"Failed to process message: {ex}", AIPlugin.Log.LogError);
-                    ThreadSafeLogService.Log($"Failed to invoke SetException on TCS: {ex2}", 
+                    ThreadSafeLogService.Log($"Failed to invoke SetException on TCS: {ex2}",
                         AIPlugin.Log.LogError);
                 }
             }
-            finally 
+            finally
             {
                 _pendingRequests.TryRemove(header.RequestId, out _);
             }
-        }   
+        }
         public void Dispose()
         {
             _client.OnMessageRecieved -= OnMessageRecieved;

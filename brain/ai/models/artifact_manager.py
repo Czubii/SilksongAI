@@ -27,7 +27,6 @@ def get_available_artifacts() -> defaultdict[str, list[str]]:
         if contains(filenames, "artifact.pt"):
             checkpoint = torch.load(os.path.join(dirpath, "artifact.pt"), map_location="cpu", weights_only=False)
             if checkpoint.get("layout_version", 1) != SUPPORTED_LAYOUT_VERSION:
-                print("CHUJ")
                 continue
 
             folders = dirpath.split("\\")
@@ -75,7 +74,7 @@ def prepare_dataset_and_artifact(target_boss_name: str,
                                  filters: RecordingFilters,
                                  overwrite = False,
                                  testing_percent = 0.2,
-                                 model_type = "ExemplaryNet",
+                                 architecture_name ="ExemplaryNet",
                                  **kwargs) -> None:
 
     output_root = get_artifact_root_path(target_boss_name, artifact_name)
@@ -97,7 +96,7 @@ def prepare_dataset_and_artifact(target_boss_name: str,
 
     pp.process_and_save(dataset_path, testing_percent=testing_percent)
 
-    artifact = ArtifactFactory.from_dataset(dataset_path, model_type, **kwargs)
+    artifact = ArtifactFactory.from_dataset(dataset_path, architecture_name, **kwargs)
     artifact.save(get_artifact_path(target_boss_name, artifact_name))
 
 if __name__ == '__main__':
@@ -107,7 +106,7 @@ if __name__ == '__main__':
                                  "test1",
                                  filters,
                                  overwrite=True,
-                                 model_type="ExemplaryNet",
+                                 architecture_name="ExemplaryNet",
                                  time_window=5,
                                  embedding_dim=4,
                                  hidden_dim=120,

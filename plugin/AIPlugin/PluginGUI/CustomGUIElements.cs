@@ -39,11 +39,15 @@ namespace AIPlugin.PluginGUI
         public class DropdownState
         {
             public int SelectedIdx = 0;
+            public bool SelectionChanged = false;  
             public bool Expanded = false;
             public Vector2 Scroll;
         }
         public static DropdownState Dropdown(DropdownState state, List<string> options)
         {
+            var oldSelection = state.SelectedIdx;
+            state.SelectionChanged = false;
+
             var oldEnabled = GUI.enabled;
 
             state.SelectedIdx = options.Count <= 0 ? 0 : Mathf.Clamp(state.SelectedIdx, 0, options.Count - 1);
@@ -64,7 +68,7 @@ namespace AIPlugin.PluginGUI
                 else
                 {
                     GUI.enabled = false;
-                    GUILayout.Button("No options available");
+                    GUILayout.Button("No options available", Styles.Button);
                 }
             }
             else
@@ -97,48 +101,32 @@ namespace AIPlugin.PluginGUI
 
             GUI.enabled = oldEnabled;
 
+            if (state.SelectedIdx != oldSelection) state.SelectionChanged = true;
+
             return state;
         }
 
-        public static bool Toggle(bool value, string text)
+        public static bool LabeledToggle(bool value, string text, params GUILayoutOption[] options)
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label(text, GUILayout.ExpandWidth(true));
             GUILayout.FlexibleSpace();
-            value = GUILayout.Toggle(value, "", Styles.Toggle);
+            value = GUILayout.Toggle(value, "", Styles.Toggle, options);
             GUILayout.EndHorizontal();
             return value;
         }
-        private static string RemoveNonNumberChar(string input)
+        public static int IntegerField(int value, params GUILayoutOption[] options)
         {
-            return new string(input.Where(c => { return char.IsDigit(c); }).ToArray());
+            string text = GUILayout.TextField(value.ToString(), Styles.TextField, options);
+
+            if (int.TryParse(text, out int parsed))
+                return parsed;
+
+            return value; // keep previous value if invalid
         }
 
-        public static int IntegerField(int value, GUILayoutOption[] options) //TODO add min and max
-        {
-            string val_str = "";
-            if (value != 0)
-                val_str = value.ToString();
-
-            val_str = GUILayout.TextField(val_str, Styles.TextField, options);
-            if (val_str.Length == 0) return 0;
-
-            bool negative = val_str[0] == '-';
-            val_str = RemoveNonNumberChar(val_str);
-
-            if (val_str.Length > 0)
-                value = int.Parse(val_str, System.Globalization.NumberStyles.Integer);
-            else value = 0;
-
-            if (negative) value = -value;//TODO fix this if needed ever
-
-            //value = Math.Min(max, Math.Max(min, value)); TODO
-
-            return value;
-        }
-
-        public static ServerFunctionParam ServerFunctionParamField(ServerFunctionParam param, 
-            GUILayoutOption[] options)
+        public static ArchitectureConstructorParams ArchitectureConstructorParamField(ArchitectureConstructorParams param,
+            params GUILayoutOption[] options)
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label(param.VariableName, GUILayout.ExpandWidth(true));
@@ -147,8 +135,10 @@ namespace AIPlugin.PluginGUI
             switch (param.Type)
             {
                 case "int":
-                    param.Value = GUILayout.TextField(param.Value, Styles.TextField, options);
-                    param.Value = RemoveNonNumberChar(param.Value);
+                    if(int.TryParse(param.Value, out int parsed))
+                        param.Value = IntegerField(parsed, options).ToString();
+                    else
+                        param.Value = IntegerField(0, options).ToString();
                     break;
 
                 default:

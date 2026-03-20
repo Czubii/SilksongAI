@@ -33,34 +33,25 @@ namespace AIPlugin.PluginGUI
         private CustomGUI.DropdownState _architectureDropdownState = new CustomGUI.DropdownState();
         private CustomGUI.DropdownState _newModelBossDropdownState = new CustomGUI.DropdownState();
 
-        private ServerRequestTask<Responses.Architectures> _architectureRequest = null;
-        private ServerRequestTask<EmptyPayload, Requests.NewModel> _newModelRequest = null;
+        private readonly ServerRequest.Refreshable<Responses.Architectures> _architectureRequester;
+        private ServerRequest.NewArtifact _newModelRequest = null;
 
-        private Requests.NewModel _newModelConfig = null;
+        private Requests.NewArtifact _newModelConfig = null;
 
         public ArtifactCreatorWindow(string name, AiService service):
             base(name, new Rect(100, 300, 250, 500))
         {
             _service = service;
 
-            service.OnConnected += OnConnected;
-            service.OnDisconnected += OnDisconnected;
-        }
+            _architectureRequester = ServerRequest.Refreshable.Watch(service.Gateway, 
+                () => new ServerRequest.GetArchitectures(service.Gateway));
 
-        private void OnConnected()
-        {
-            if (_architectureRequest == null)
-                _architectureRequest = new ServerRequestTask<Responses.Architectures>(_service.Gateway,
-                    RequestType.get_architectures);
-        }
-        private void OnDisconnected()
-        {
-            _architectureRequest = null;
+            service.OnConnected += _architectureRequester.Send;
         }
         public override bool CanEnable() => _service.IsConnected;
         public override void DrawContent()
         {
-            if (_architectureRequest == null || !_architectureRequest.FinishedWithSuccess()) return;
+            if (!_architectureRequester.AnyResponse()) return;
             switch (_state)
             {
                 case State.ArtifactSetup:
@@ -74,8 +65,7 @@ namespace AIPlugin.PluginGUI
 
         private void DrawArtifactSetup()
         {
-
-            var architectures = _architectureRequest.Result;
+            var architectures = _architectureRequester.Result;
 
             GUILayout.BeginVertical();
             _scroll = GUILayout.BeginScrollView(_scroll, Styles.ScrollView, Styles.VerticalScrollbar, GUILayout.ExpandHeight(true));
@@ -89,29 +79,26 @@ namespace AIPlugin.PluginGUI
             bool anyParamEmpty = false;
             List<string> architectureNames = architectures.ArchitectureParams.Keys.ToList();
             GUILayout.Label("Architecture: ");
-            var oldIdx = _architectureDropdownState.SelectedIdx;
             _architectureDropdownState =
                 CustomGUI.Dropdown(_architectureDropdownState, architectureNames);
 
-            var selectedArchitectureName = architectureNames[_architectureDropdownState.SelectedIdx];
-
-            if (oldIdx != _architectureDropdownState.SelectedIdx || _newModelConfig == null)
+            if (_architectureDropdownState.SelectionChanged || _newModelConfig == null)
             {
-                _newModelConfig = new Requests.NewModel()
+                var selectedArchitectureName = architectureNames[_architectureDropdownState.SelectedIdx];
+                _newModelConfig = new Requests.NewArtifact()
                 {
                     ArchitectureName = selectedArchitectureName,
                     TargetBossName = BossReferenceDatabase.All.Select(s => s.InternalName).
                         ToList()[_newModelBossDropdownState.SelectedIdx],
-                    ModelName = "",
+                    ArtifactName = "",
                     Params = architectures.ArchitectureParams[selectedArchitectureName],
                     Overwrite = false
                 };
             }
             GUILayout.Label("Target Boss:");
             List<string> bossNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToList();
-            oldIdx = _newModelBossDropdownState.SelectedIdx;
             _newModelBossDropdownState = CustomGUI.Dropdown(_newModelBossDropdownState, bossNames);
-            if (oldIdx != _newModelBossDropdownState.SelectedIdx)
+            if (_newModelBossDropdownState.SelectionChanged)
             {
                 _newModelConfig.TargetBossName = BossReferenceDatabase.All.Select(s => s.InternalName).
                         ToList()[_newModelBossDropdownState.SelectedIdx];
@@ -122,11 +109,11 @@ namespace AIPlugin.PluginGUI
             GUILayout.BeginHorizontal();
             GUILayout.Label("Artifact Name:");
             GUILayout.FlexibleSpace();
-            _newModelConfig.ModelName = GUILayout.TextField(_newModelConfig.ModelName, Styles.TextField, GUILayout.Width(110));
-            if (_newModelConfig.ModelName.Trim().Length == 0) anyParamEmpty = true;
+            _newModelConfig.ArtifactName = GUILayout.TextField(_newModelConfig.ArtifactName, Styles.TextField, GUILayout.Width(110));
+            if (_newModelConfig.ArtifactName.Trim().Length == 0) anyParamEmpty = true;
             GUILayout.EndHorizontal();
 
-            _newModelConfig.Overwrite = CustomGUI.Toggle(_newModelConfig.Overwrite,
+            _newModelConfig.Overwrite = CustomGUI.LabeledToggle(_newModelConfig.Overwrite,
                 "Overwrite if name exists: ");
 
             GUILayout.Space(20.0f);
@@ -134,7 +121,7 @@ namespace AIPlugin.PluginGUI
             GUILayout.Label("Required Model Parameters: ");
             for (int i = 0; i < _newModelConfig.Params.Count(); i++)
             {
-                _newModelConfig.Params[i] = CustomGUI.ServerFunctionParamField(_newModelConfig.Params[i],
+                _newModelConfig.Params[i] = CustomGUI.ArchitectureConstructorParamField(_newModelConfig.Params[i],
                     new GUILayoutOption[] { GUILayout.Width(50) });
 
                 if (_newModelConfig.Params[i].Value.Trim().Length == 0) anyParamEmpty = true;
@@ -143,7 +130,7 @@ namespace AIPlugin.PluginGUI
             GUILayout.Space(20.0f);
             GUILayout.Label("Recording Filters (Leave category empty to not filter): ");
 
-            _newModelConfig.RequireSuccess = CustomGUI.Toggle(_newModelConfig.RequireSuccess,
+            _newModelConfig.RequireSuccess = CustomGUI.LabeledToggle(_newModelConfig.RequireSuccess,
                 "Require Success:");
 
             GUILayout.BeginHorizontal();
@@ -167,8 +154,7 @@ namespace AIPlugin.PluginGUI
             if (GUILayout.Button("Create", Styles.Button))
             {
                 _state = State.ArtifactCreationResults;
-                _newModelRequest = new ServerRequestTask<EmptyPayload, Requests.NewModel>
-                    (_service.Gateway, RequestType.new_model, _newModelConfig);
+                _newModelRequest = new ServerRequest.NewArtifact(_service.Gateway, _newModelConfig);
             }
             GUI.enabled = prevEnabled;
             GUILayout.EndHorizontal();

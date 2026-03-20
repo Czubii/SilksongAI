@@ -11,8 +11,7 @@ namespace AIPlugin.PluginGUI
 {
     public class ServerControlsWindow : BaseWindow//TODO: ENABLE CURSOUR WHEN WINDOW ACTIVE
     {
-        
-        private Vector2 _scroll = new Vector2();
+       
 
         private AiService _service;
 
@@ -28,7 +27,7 @@ namespace AIPlugin.PluginGUI
                 _service.ConnectToServer();
             else if(_service.IsConnected && GUILayout.Button("Disconnect From Server", Styles.GreenButton))
             {
-
+                //TODO
             }
 
 

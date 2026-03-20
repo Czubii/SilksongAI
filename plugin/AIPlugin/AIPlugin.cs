@@ -6,7 +6,6 @@ using UnityEngine;
 using Steamworks;
 using AIPlugin.Networking;
 using System.Threading.Tasks;
-using AIPlugin.Infrastructure;
 using AIPlugin.BossfightSession;
 using System.Collections.Generic;
 using AIPlugin.Utilities;
@@ -21,12 +20,8 @@ namespace AIPlugin
     [BepInPlugin("com.czubii.AIPlugin", "AI Plugin", "1.0.0")]
     public class AIPlugin : BaseUnityPlugin
     {
-        //private PluginGUI gui;
-        private Task test;
         public static ManualLogSource Log { get; private set; }
         public static string SteamUserName = "Unknown";
-        public static bool GodModeEnabled { get; set; } = false;
-        private ServiceRegistry _registry;
         private void Awake()
         {
             try
@@ -34,7 +29,6 @@ namespace AIPlugin
                 RewardCalculator.Bind(Config);
 
                 Log = Logger;
-                _registry = new ServiceRegistry();
 
                 var teleporter = gameObject.AddComponent<TeleportService>();
                 var aiService = gameObject.AddComponent<AiService>();
@@ -63,6 +57,7 @@ namespace AIPlugin
                 var sessionControlsWindow = new SessionControlsWindow("Session Controls", session, recorder, aiController);
                 var serverControlsWindow = new ServerControlsWindow("Server Controls", aiService);
                 var artifactCreatorWindow = new ArtifactCreatorWindow("Artfiact Creator", aiService);
+                var artifactTrainingWindow = new ArtifactTrainingWindow("Artifact Trainer", aiService);
 
                 var enemyTrackerScreenLabel = gameObject.AddComponent<EnemyTrackerScreenLabel>();
                 enemyTrackerScreenLabel.Initialize(Config);
@@ -72,22 +67,9 @@ namespace AIPlugin
                 windowManager.Register(sessionControlsWindow);
                 windowManager.Register(serverControlsWindow);
                 windowManager.Register(artifactCreatorWindow);
+                windowManager.Register(artifactTrainingWindow);
                 windowManager.Register(enemyTrackerScreenLabel);
-                
-                _registry.Add(teleporter);
-                _registry.Add(aiService);
-                _registry.Add(gameStateController);
-                _registry.Add(sessionEventHandler);
-                _registry.Add(sessionEnemyManager);
-                _registry.Add(session);
-                _registry.Add(frameCapturer);
-                _registry.Add(recorder);
-                _registry.Add(aiController);
-                _registry.Add(sessionControlsWindow);
-                
-
-                //gui = new PluginGUI(Config, _registry);
-
+              
                 Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
                 Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
                 Harmony.CreateAndPatchAll(typeof(HeroController_LookForInput_Patch), null);
@@ -121,20 +103,6 @@ namespace AIPlugin
             catch (Exception e)
             {
                 AIPlugin.Log.LogWarning($"Steam name failed: {e}");
-            }
-        }
-        
-        private void OnGUI()
-        {
-            //gui.OnGUIDrawStateLabel();
-        }
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(PlayerData), "TakeHealth")]
-        private static void TakeHealthPostfix(PlayerData __instance, int amount, bool hasBlueHealth, bool allowFracturedMaskBreak)
-        {
-            if (GodModeEnabled)
-            {
-                __instance.health = __instance.maxHealth;
             }
         }
     }

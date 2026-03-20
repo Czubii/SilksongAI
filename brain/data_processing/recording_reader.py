@@ -65,7 +65,7 @@ class RecordingFilters:
             print(f"Recording {filename} does not match record_frame_delta filter")
             matches = False
 
-        if self.player_name is not None and info['player_name'] != self.player_name:
+        if self.player_name is not None and self.player_name != "" and info['player_name'] != self.player_name:
             print(f"Recording {filename} does not match player_name filter")
             matches = False
 
@@ -79,7 +79,7 @@ class RecordingReader:
         self.filters = filters
 
         self.filtered_recordings = self.get_filtered_recording_files()
-        if len(self.filtered_recordings) == 0: raise Exception("No Usable Files Found!!!")
+        if len(self.filtered_recordings) == 0: raise Exception("Did not find any recordings that match the filters")
 
     def get_filtered_recording_files(self) -> list[RecordingFile]:
         filenames = [f for f in listdir(self._data_path) if isfile(join(self._data_path, f))]

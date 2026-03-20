@@ -56,13 +56,11 @@ namespace AIPlugin.Networking
         {
             if (_notifyConnected)
             {
-                AIPlugin.Log.LogInfo("NOTIFY CONN");
                 OnConnected?.Invoke();
                 _notifyConnected = false;   
             }
             if (_notifyDisconnected)
             {
-                AIPlugin.Log.LogInfo("NOTIFY DSC");
                 OnDisconnected?.Invoke();
                 _notifyDisconnected = false;
             }
