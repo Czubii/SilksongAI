@@ -54,6 +54,8 @@ namespace AIPlugin.Networking
 
             private Func<RequestHandle<TResponse, TPayload>> _requestFactory;
 
+            public event Action OnNewResultReady;
+
             public Refreshable(AiGateway gateway, RequestType type, TPayload payload)
             {
                 _gateway = gateway;
@@ -82,6 +84,8 @@ namespace AIPlugin.Networking
                     Log = _requestTask.Log;
 
                     ResultVersion++;
+
+                    OnNewResultReady?.Invoke();
                 }
                 finally
                 {

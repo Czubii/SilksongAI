@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 using static GamepadVibrationMixer.GamepadVibrationEmission;
 
 namespace AIPlugin.PluginGUI
@@ -36,31 +37,33 @@ namespace AIPlugin.PluginGUI
             return pressed;
         }
 
-        public class DropdownState
+        public class DropdownState<T>
+            where T : class
         {
-            public int SelectedIdx = 0;
+            public int SelectedIdx = -1;
+            public T SelectedOption;
             public bool SelectionChanged = false;  
             public bool Expanded = false;
-            public Vector2 Scroll;
         }
-        public static DropdownState Dropdown(DropdownState state, List<string> options)
+        public static DropdownState<T> Dropdown<T>(DropdownState<T> state, List<(string label, T value)> elements)
+            where T : class
         {
             var oldSelection = state.SelectedIdx;
             state.SelectionChanged = false;
 
             var oldEnabled = GUI.enabled;
 
-            state.SelectedIdx = options.Count <= 0 ? 0 : Mathf.Clamp(state.SelectedIdx, 0, options.Count - 1);
+            state.SelectedIdx = elements.Count <= 0 ? 0 : Mathf.Clamp(state.SelectedIdx, 0, elements.Count - 1);
 
-            if ((state.Expanded && !GUI.enabled) || options.Count == 0)
+            if ((state.Expanded && !GUI.enabled) || elements.Count == 0)
                 state.Expanded = false;
 
             if (!state.Expanded)
             {
-                if (options.Count > 0)
+                if (elements.Count > 0)
                 {
                     // Button showing current selection
-                    if (GUILayout.Button(options[state.SelectedIdx], Styles.Button))
+                    if (GUILayout.Button(elements[state.SelectedIdx].label, Styles.Button))
                     {
                         state.Expanded = !state.Expanded;
                     }
@@ -75,12 +78,12 @@ namespace AIPlugin.PluginGUI
             {
                 GUILayout.BeginVertical("box");
 
-                for (int i = 0; i < options.Count; i++)
+                for (int i = 0; i < elements.Count; i++)
                 {
                     // Draw a highlight box for the current selection
                     if (i == state.SelectedIdx)
                     {
-                        if (GUILayout.Button(options[i], Styles.GreenButton))
+                        if (GUILayout.Button(elements[i].label, Styles.GreenButton))
                         {
                             state.SelectedIdx = i;
                             state.Expanded = false;
@@ -88,7 +91,7 @@ namespace AIPlugin.PluginGUI
                     }
                     else
                     {
-                        if (GUILayout.Button(options[i], Styles.Button))
+                        if (GUILayout.Button(elements[i].label, Styles.Button))
                         {
                             state.SelectedIdx = i;
                             state.Expanded = false;
@@ -100,6 +103,15 @@ namespace AIPlugin.PluginGUI
             }
 
             GUI.enabled = oldEnabled;
+
+            if (elements.Count > 0)
+            {
+                state.SelectedOption = elements[state.SelectedIdx].value;
+            }
+            else
+            {
+                state.SelectedOption = null;
+            }
 
             if (state.SelectedIdx != oldSelection) state.SelectionChanged = true;
 
@@ -125,7 +137,7 @@ namespace AIPlugin.PluginGUI
             return value; // keep previous value if invalid
         }
 
-        public static ArchitectureConstructorParams ArchitectureConstructorParamField(ArchitectureConstructorParams param,
+        public static ServerParam ParamField(ServerParam param,
             params GUILayoutOption[] options)
         {
             GUILayout.BeginHorizontal();

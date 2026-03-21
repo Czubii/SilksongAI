@@ -135,7 +135,8 @@ namespace AIPlugin.Networking
                 var envelope = MessagePackSerializer.Deserialize<Protocol.EventEnvelope>(data);
 
                 if (envelope.EventType == null) throw new ArgumentNullException("envelope.EventType cannot be null");
-                Events.RaiseEvent(envelope.EventType);
+
+                Events.RaiseEvent(envelope.EventType, envelope.Payload);
             }
             catch (Exception ex)
             {

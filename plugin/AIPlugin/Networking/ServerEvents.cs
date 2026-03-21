@@ -12,13 +12,15 @@ namespace AIPlugin.Networking
         private Dictionary<string, Action> _eventRegistry = new Dictionary<string, Action>();
 
         public event Action OnNewArtifactCreated;
+        public event Action OnTrainingEpoch;
 
         public ServerEvents() 
         {
             _eventRegistry.Add("new_artifact", () => OnNewArtifactCreated?.Invoke());
+            _eventRegistry.Add("training_epoch", () => OnTrainingEpoch?.Invoke());
         }
 
-        public void RaiseEvent(string eventName)
+        public void RaiseEvent(string eventName, byte[] payload)
         {
             bool eventExists = _eventRegistry.TryGetValue(eventName, out Action action);
 

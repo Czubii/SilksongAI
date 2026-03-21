@@ -27,12 +27,12 @@ namespace AIPlugin.Networking
         {
             [Key("kind")] public string Kind { get; set; } = "event";
             [Key("type")] public string EventType { get; set; }
-            //[Key("payload")] public T Payload { get; set; } ADD IF NEEDED
+            [Key("payload")] public byte[] Payload { get; set; }
         }
     }
 
     [MessagePackObject]
-    public class ArchitectureConstructorParams
+    public class ServerParam
     {
         [Key("name")] public string VariableName { get; set; }
         [Key("type")] public string Type { get; set; }
@@ -59,7 +59,7 @@ namespace AIPlugin.Networking
             [Key("architecture")] public string ArchitectureName { get; set; }
             [Key("target_boss")] public string TargetBossName { get; set; }
             [Key("name")] public string ArtifactName { get; set; }
-            [Key("params")] public List<ArchitectureConstructorParams> Params { get; set; }
+            [Key("params")] public List<ServerParam> Params { get; set; }
             [Key("overwrite")] public bool Overwrite { get; set; } = false;
             [Key("require_success")] public bool RequireSuccess { get; set; } = true;
             [Key("player_name")] public string PlayerName { get; set; } = "";
@@ -86,13 +86,22 @@ namespace AIPlugin.Networking
         public class Architectures
         {
             [Key("architectures")] 
-            public Dictionary<string, List<ArchitectureConstructorParams>> ArchitectureParams;
+            public Dictionary<string, List<ServerParam>> ArchitectureParams;
         }
 
         [MessagePackObject]
         public class Artifacts
         {
             [Key("artifacts")] public Dictionary<string, List<string>> BossArtifacts;
+        }
+
+        [MessagePackObject]
+        public class TrainingEpoch
+        {
+            [Key("current_epoch")] public int CurrentEpoch;
+            [Key("total_epochs")] public int TotalEpochs;
+            [Key("training_loss")] public float TrainingLoss;
+            [Key("testing_loss")] public float TestingLoss;
         }
     }
 }

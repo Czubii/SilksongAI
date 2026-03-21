@@ -5,6 +5,7 @@ using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -13,30 +14,67 @@ using UnityEngine.UI;
 
 namespace AIPlugin.PluginGUI
 {
-    /// <summary>
-    /// Responsible for starting session / selecting boss / basic session settings like the number of trials and boss selection
-    /// </summary>
-    public class ArtifactCreatorWindow : BaseWindow//TODO: ENABLE CURSOUR WHEN WINDOW ACTIVE
+    public class ArtifactCreatorWindow : BaseWindow
     {
-        private enum State
+        private enum Content
         {
             ArtifactSetup,
             ArtifactCreationResults
         }
 
-        private State _state = State.ArtifactSetup;
+        private class Form: IForm
+        {
+            public CustomGUI.DropdownState<string> ArchitectureDropdownState = new CustomGUI.DropdownState<string>();
+            public CustomGUI.DropdownState<string> BossDropdownState = new CustomGUI.DropdownState<string>();
+
+            public string ArtifactName = "";
+            public bool Overwrite = false;
+
+            public List<ServerParam> ArchitectureParams = new List<ServerParam>();
+
+            //Filters:
+            public float PercentBestRecordings = 0.8f;
+            public bool RequireSuccess = false;
+            public string PlayerName = "";
+
+            public Requests.NewArtifact GetRequestPayload()
+            {
+
+                Requests.NewArtifact requestPayload = new Requests.NewArtifact()
+                {
+                    ArchitectureName = ArchitectureDropdownState.SelectedOption,
+                    TargetBossName = BossDropdownState.SelectedOption,
+
+                    ArtifactName = ArtifactName,
+                    Overwrite = Overwrite,
+
+                    Params = ArchitectureParams,
+
+                    UsePercentBest = PercentBestRecordings,
+                    RequireSuccess = RequireSuccess,
+                    PlayerName = PlayerName
+                };
+
+                return requestPayload;
+            }
+            public bool IsValid()
+            {
+                return ArtifactName != "";
+            }
+        }
+
+        private Form _form = new Form();
+
+        private Content _currentContent = Content.ArtifactSetup;
 
         private Vector2 _scroll = new Vector2();
 
         AiService _service;
 
-        private CustomGUI.DropdownState _architectureDropdownState = new CustomGUI.DropdownState();
-        private CustomGUI.DropdownState _newModelBossDropdownState = new CustomGUI.DropdownState();
-
         private readonly ServerRequest.Refreshable<Responses.Architectures> _architectureRequester;
         private ServerRequest.NewArtifact _newModelRequest = null;
 
-        private Requests.NewArtifact _newModelConfig = null;
+        private readonly List<(string, string)> _bossesDropdownElements;
 
         public ArtifactCreatorWindow(string name, AiService service):
             base(name, new Rect(100, 300, 250, 500))
@@ -47,120 +85,82 @@ namespace AIPlugin.PluginGUI
                 () => new ServerRequest.GetArchitectures(service.Gateway));
 
             service.OnConnected += _architectureRequester.Send;
+            service.OnConnected += OnConnected;
+
+            var displayBossNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToList();
+            var internalBossNames = BossReferenceDatabase.All.Select(s => s.InternalName).ToList();
+
+            _bossesDropdownElements = displayBossNames.Zip(internalBossNames, (d, i) => (d, i)).ToList();
+
         }
-        public override bool CanEnable() => _service.IsConnected;
+        private void OnConnected()
+        {
+            _form = new Form();
+        }
+        public override bool CanEnable() => _service.IsConnected && _architectureRequester.AnyResponse();
         public override void DrawContent()
         {
-            if (!_architectureRequester.AnyResponse()) return;
-            switch (_state)
+            switch (_currentContent)
             {
-                case State.ArtifactSetup:
+                case Content.ArtifactSetup:
                     DrawArtifactSetup();
                     break;
-                case State.ArtifactCreationResults:
+                case Content.ArtifactCreationResults:
                     DrawArtifactCreationResults();
                     break;
             }
         }
-
         private void DrawArtifactSetup()
         {
             var architectures = _architectureRequester.Result;
+            var architectureNames = architectures.ArchitectureParams.Keys.ToList();
 
-            GUILayout.BeginVertical();
-            _scroll = GUILayout.BeginScrollView(_scroll, Styles.ScrollView, Styles.VerticalScrollbar, GUILayout.ExpandHeight(true));
-            GUI.skin.verticalScrollbarThumb = Styles.VerticalScrollbarThumb;
+            List<(string label, string value)> architecturesDropdownElements = architectureNames.Zip(architectureNames, (d, i) => (d, i)).ToList();
 
-            GUILayout.Label("The dataset used to train the model using behavioral " +
+            UI.Form(_form)
+                .Label("The dataset used to train the model using behavioral " +
                 "cloning is created based on recordings at the time of creating the " +
                 "artifact and cannot be changed later (unless done manually). Make sure all the recordings " +
-                "you want to use exist in the respecive directory before creating the model.");
+                "you want to use exist in the respecive directory before creating the model.")
 
-            bool anyParamEmpty = false;
-            List<string> architectureNames = architectures.ArchitectureParams.Keys.ToList();
-            GUILayout.Label("Architecture: ");
-            _architectureDropdownState =
-                CustomGUI.Dropdown(_architectureDropdownState, architectureNames);
+                .Dropdown("Architecture: ", architecturesDropdownElements, x => x.ArchitectureDropdownState, 
+                    () => InitializeArchitectureParams(architectures))
 
-            if (_architectureDropdownState.SelectionChanged || _newModelConfig == null)
-            {
-                var selectedArchitectureName = architectureNames[_architectureDropdownState.SelectedIdx];
-                _newModelConfig = new Requests.NewArtifact()
-                {
-                    ArchitectureName = selectedArchitectureName,
-                    TargetBossName = BossReferenceDatabase.All.Select(s => s.InternalName).
-                        ToList()[_newModelBossDropdownState.SelectedIdx],
-                    ArtifactName = "",
-                    Params = architectures.ArchitectureParams[selectedArchitectureName],
-                    Overwrite = false
-                };
-            }
-            GUILayout.Label("Target Boss:");
-            List<string> bossNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToList();
-            _newModelBossDropdownState = CustomGUI.Dropdown(_newModelBossDropdownState, bossNames);
-            if (_newModelBossDropdownState.SelectionChanged)
-            {
-                _newModelConfig.TargetBossName = BossReferenceDatabase.All.Select(s => s.InternalName).
-                        ToList()[_newModelBossDropdownState.SelectedIdx];
-            }
+                .Dropdown("Boss: ", _bossesDropdownElements, x => x.BossDropdownState)
+                .TextField("Name: ", x => x.ArtifactName, GUILayout.Width(120))
+                .Toggle("Overwrite if name exists: ", x => x.Overwrite)
 
-            GUILayout.Space(20.0f);
+                .Space(20)
+                .Label("Recording Filters:")
+                .Toggle("Require Successs: ", x => x.RequireSuccess)
+                .TextField("Player Name: ", x => x.PlayerName, GUILayout.Width(120))
+                .HorizontalSlider($"Use {_form.PercentBestRecordings * 100.0f: 0.}% Best Rocrdings", 0.1f, 1.0f, 0.05f, x => x.PercentBestRecordings)
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Artifact Name:");
-            GUILayout.FlexibleSpace();
-            _newModelConfig.ArtifactName = GUILayout.TextField(_newModelConfig.ArtifactName, Styles.TextField, GUILayout.Width(110));
-            if (_newModelConfig.ArtifactName.Trim().Length == 0) anyParamEmpty = true;
-            GUILayout.EndHorizontal();
+                .Space(20)
+                .ParamListField("Required architecture parameters: ", x => x.ArchitectureParams, GUILayout.Width(120))
 
-            _newModelConfig.Overwrite = CustomGUI.LabeledToggle(_newModelConfig.Overwrite,
-                "Overwrite if name exists: ");
+                .Space(20)
+                .GUIEnabled(CanCreateArtifact())
+                .Button("Create", () => CreateArtifact(architectures))
+                .End();
 
-            GUILayout.Space(20.0f);
-
-            GUILayout.Label("Required Model Parameters: ");
-            for (int i = 0; i < _newModelConfig.Params.Count(); i++)
-            {
-                _newModelConfig.Params[i] = CustomGUI.ArchitectureConstructorParamField(_newModelConfig.Params[i],
-                    new GUILayoutOption[] { GUILayout.Width(50) });
-
-                if (_newModelConfig.Params[i].Value.Trim().Length == 0) anyParamEmpty = true;
-            }
-
-            GUILayout.Space(20.0f);
-            GUILayout.Label("Recording Filters (Leave category empty to not filter): ");
-
-            _newModelConfig.RequireSuccess = CustomGUI.LabeledToggle(_newModelConfig.RequireSuccess,
-                "Require Success:");
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Player Name:");
-            GUILayout.FlexibleSpace();
-            _newModelConfig.PlayerName = GUILayout.TextField(_newModelConfig.PlayerName, Styles.TextField, GUILayout.Width(110));
-            GUILayout.EndHorizontal();
-
-            GUILayout.Label($"Use top {_newModelConfig.UsePercentBest * 100:0.}% Recordings:");
-            _newModelConfig.UsePercentBest = GUILayout.HorizontalSlider(
-                _newModelConfig.UsePercentBest, 0.1f, 1.0f,
-                Styles.SliderTrack, Styles.SliderThumb);
-            _newModelConfig.UsePercentBest = Mathf.Round(_newModelConfig.UsePercentBest / 0.05f) * 0.05f;
-
-            GUILayout.EndScrollView();
-
-            GUILayout.BeginHorizontal();
-
-            bool prevEnabled = GUI.enabled;
-            if (anyParamEmpty || (!_newModelRequest?.Finished() ?? false)) GUI.enabled = false;
-            if (GUILayout.Button("Create", Styles.Button))
-            {
-                _state = State.ArtifactCreationResults;
-                _newModelRequest = new ServerRequest.NewArtifact(_service.Gateway, _newModelConfig);
-            }
-            GUI.enabled = prevEnabled;
-            GUILayout.EndHorizontal();
-            GUILayout.EndVertical();
         }
+        private void InitializeArchitectureParams(Responses.Architectures architectures)
+        {
+            List<ServerParam> paramList = architectures.ArchitectureParams.Values.ToList()[_form.ArchitectureDropdownState.SelectedIdx];
+            _form.ArchitectureParams = paramList;
+        }
+        private bool CanCreateArtifact()
+        {
+            return _form.IsValid() && (_newModelRequest?.Finished() ?? true);
+        }
+        private void CreateArtifact(Responses.Architectures architectures)
+        {
+            var payload = _form.GetRequestPayload();
 
+            _newModelRequest = new ServerRequest.NewArtifact(_service.Gateway, payload);
+            _currentContent = Content.ArtifactCreationResults;
+        }
         private void DrawArtifactCreationResults()
         {
             GUILayout.BeginVertical();
@@ -183,7 +183,7 @@ namespace AIPlugin.PluginGUI
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Go Back", Styles.Button))
                 {
-                    _state = State.ArtifactSetup;
+                    _currentContent = Content.ArtifactSetup;
                 }
             }
             GUILayout.EndVertical();

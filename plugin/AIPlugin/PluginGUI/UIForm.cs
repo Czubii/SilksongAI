@@ -1,4 +1,5 @@
-﻿using HutongGames.PlayMaker.Actions;
+﻿using AIPlugin.Networking;
+using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,9 +8,14 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using static AIPlugin.PluginGUI.CustomGUI;
 
 namespace AIPlugin.PluginGUI
 {
+    public interface IForm
+    {
+        bool IsValid();
+    }
     static class BindingCache<TModel>
     {
         private static Dictionary<MemberInfo, object> _cache = new Dictionary<MemberInfo, object>();
@@ -52,11 +58,13 @@ namespace AIPlugin.PluginGUI
     public static class UI
     {
         public static UIForm<T> Form<T>(T model)
+            where T : IForm
         {
             return new UIForm<T>(model);
         }
     }
     public class UIForm<T>
+        where T : IForm
     {
         private T _model;
         public UIForm(T model)
@@ -77,32 +85,91 @@ namespace AIPlugin.PluginGUI
 
             return this;
         }
-        public UIForm<T> Dropdown(string label, List<string> options, Expression<Func<T, CustomGUI.DropdownState>> expr, Action OnChanged = null)
+        public UIForm<T> Dropdown<TDropdown>(string label,
+            List<(string label, TDropdown value)> elements,
+            Expression<Func<T, DropdownState<TDropdown>>> expr,
+            Action onChanged = null)
+            where TDropdown : class
         {
             var (get, set) = BindingCache<T>.Get(expr);
 
             var value = get(_model);
 
             GUILayout.Label(label);
-            value = CustomGUI.Dropdown(value, options);
-
-            if (value.SelectionChanged) OnChanged?.Invoke();
+            value = CustomGUI.Dropdown(value, elements);
 
             set(_model, value);
 
+            if (value.SelectionChanged) onChanged?.Invoke();
+
             return this;
         }
-        public UIForm<T> IntegerField(string label, Expression<Func<T, int>> expr)
+        public UIForm<T> IntegerField(string label, Expression<Func<T, int>> expr, params GUILayoutOption[] options)
         {
             var (get, set) = BindingCache<T>.Get(expr);
 
             var value = get(_model);
 
             Labeled(label,
-                () => value = CustomGUI.IntegerField(value, GUILayout.Width(80)));
+                () => value = CustomGUI.IntegerField(value, options));
 
             set(_model, value);
 
+            return this;
+        }
+        public UIForm<T> TextField(string label, Expression<Func<T, string>> expr, params GUILayoutOption[] options)
+        {
+            var (get, set) = BindingCache<T>.Get(expr);
+
+            var value = get(_model);
+
+            Labeled(label,
+                () => value = GUILayout.TextField(value, Styles.TextField, options));
+
+            set(_model, value);
+
+            return this;
+        }
+        public UIForm<T> HorizontalSlider(string label, float min, float max, float step, Expression<Func<T, float>> expr, params GUILayoutOption[] options)
+        {
+            var (get, set) = BindingCache<T>.Get(expr);
+
+            var value = get(_model);
+
+            GUILayout.Label(label);
+            value = GUILayout.HorizontalSlider(value, min, max, Styles.SliderTrack, Styles.SliderThumb);
+
+            if (step != 0.0f) value = Mathf.Ceil(value / step) * step;
+
+            set(_model, value);
+
+            return this;
+        }
+        public UIForm<T> ParamListField(string label, Expression<Func<T, List<ServerParam>>> expr, params GUILayoutOption[] options)
+        {
+            var (get, set) = BindingCache<T>.Get(expr);
+
+            var value = get(_model);
+
+            GUILayout.Label(label);
+
+            for (int i = 0; i < value.Count; i++)
+            {
+                value[i] = CustomGUI.ParamField(value[i], options);
+            }
+
+            set(_model, value);
+
+            return this;
+        }
+        public UIForm<T> Label(string label)
+        {
+            GUILayout.Label(label);
+            return this;
+        }
+        public UIForm<T> Space(float pixels)
+        {
+            GUILayout.Space(pixels);
             return this;
         }
         public UIForm<T> BeginScrollView(Expression<Func<T, Vector2>> expr)

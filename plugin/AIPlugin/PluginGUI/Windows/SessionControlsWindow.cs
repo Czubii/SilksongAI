@@ -17,9 +17,9 @@ namespace AIPlugin.PluginGUI
     /// </summary>
     public class SessionControlsWindow: BaseWindow//TODO: ENABLE CURSOUR WHEN WINDOW ACTIVE
     {
-        private class Form
+        private class Form: IForm
         {
-            public CustomGUI.DropdownState BossDropdownState = new CustomGUI.DropdownState();
+            public CustomGUI.DropdownState<BossMetadata> BossDropdownState = new CustomGUI.DropdownState<BossMetadata>();
             public int NumFights = 1;
             public bool RecordingEnabled = false;
             public bool AiEnabled = false;
@@ -39,8 +39,7 @@ namespace AIPlugin.PluginGUI
         private BossfightRecorder _recorder;
         private AIBossfightAgent _aiBossfightAgent;
 
-        private List<string> _internalBossNames;
-        private List<string> _displayBossNames;
+        private readonly List<(string, BossMetadata)> _bossDropdownElements;
 
         public SessionControlsWindow(string name, SessionOrchestrator sessionOrchestrator, BossfightRecorder recorder, AIBossfightAgent aiAgent): 
             base(name, new Rect(100, 100, 200, 300))
@@ -49,24 +48,18 @@ namespace AIPlugin.PluginGUI
             _recorder = recorder;
             _aiBossfightAgent = aiAgent;
 
-            _internalBossNames = BossReferenceDatabase.All.Select(s => s.InternalName).ToList();
-            _displayBossNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToList();
+            var bossDisplayNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToList();
+
+            _bossDropdownElements = bossDisplayNames.Zip(BossReferenceDatabase.All.ToList(), (a, b) => (a, b)).ToList();
         }
         public override bool CanEnable() => true;
-
-        private bool CanStart()
-        {
-            return _sessionOrchestrator.CanStart() && form.IsValid();
-        }
-        private bool CanStop()
-        {
-            return _sessionOrchestrator.IsSessionActive();
-        }
+        private bool CanStart() => _sessionOrchestrator.CanStart() && form.IsValid();
+        private bool CanStop() => _sessionOrchestrator.IsSessionActive();
         public override void DrawContent()
         {
             UI.Form(form)
                 .BeginScrollView(x => x.Scroll)
-                .Dropdown("Boss:", _displayBossNames, x => x.BossDropdownState)
+                .Dropdown("Boss:", _bossDropdownElements, x => x.BossDropdownState)
                 .IntegerField("Number of Fights: ", x => x.NumFights)
                 .Toggle("Recording Enabled:", x => x.RecordingEnabled)
                 .Toggle("Keep Tools:", x => x.KeepTools)
@@ -81,8 +74,7 @@ namespace AIPlugin.PluginGUI
 
         private void StartSession()
         {
-            var boss = BossReferenceDatabase.All.ToList()[form.BossDropdownState.SelectedIdx];
-            var context = new SessionContext(boss, form.NumFights,
+            var context = new SessionContext(form.BossDropdownState.SelectedOption, form.NumFights,
                 new SessionContext.SessionSettings(false, false));//TODO add this functionality finally
 
             _sessionOrchestrator.TryStart(context);
@@ -91,62 +83,5 @@ namespace AIPlugin.PluginGUI
         {
             _sessionOrchestrator.RequestStop();
         }
-
-        //public override void DrawContent()
-        //{
-        //    GUILayout.BeginVertical();
-        //    _scroll = GUILayout.BeginScrollView(_scroll, Styles.ScrollView, Styles.VerticalScrollbar, GUILayout.ExpandHeight(true));
-        //    GUI.skin.verticalScrollbarThumb = Styles.VerticalScrollbarThumb;
-
-        //    if (_sessionOrchestrator.IsSessionActive())
-        //        GUI.enabled = false;
-
-        //    GUILayout.Label("Boss Selection:");
-        //    List<string> bossNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToList();
-        //    _bossDropdownState = CustomGUI.Dropdown(_bossDropdownState, bossNames);
-
-        //    GUILayout.BeginHorizontal();
-        //    GUILayout.Label("Number of fights: ");
-        //    GUILayout.FlexibleSpace();
-        //    _num_fights = CustomGUI.IntegerField(_num_fights, new GUILayoutOption[] { GUILayout.Width(50) });
-        //    GUILayout.EndHorizontal();
-
-
-        //    _recordingEnabled = CustomGUI.LabeledToggle(_recordingEnabled, "Record: ");
-        //    if (_recorder.enabled != _recordingEnabled) _recorder.enabled = _recordingEnabled;
-
-        //    _aiEnabled = CustomGUI.LabeledToggle(_aiEnabled, "Enable AI: ");
-        //    if (_aiBossfightAgent.enabled != _aiEnabled) _aiBossfightAgent.enabled = _aiEnabled;
-
-        //    _keepTools = CustomGUI.LabeledToggle(_keepTools, "Keep Tools: ");
-
-        //    GUILayout.EndScrollView();
-        //    if (!_sessionOrchestrator.CanStart()) // TODO add check if game is paused as it breaks 
-        //    {
-        //        GUI.enabled = false;
-        //    }
-        //    if (GUILayout.Button("Start Session", Styles.Button) && _sessionOrchestrator.CanStart())
-        //    {
-        //        var boss = BossReferenceDatabase.All.ToList()[_bossDropdownState.SelectedIdx];
-        //        var context = new SessionContext(boss, _num_fights, 
-        //            new SessionContext.SessionSettings(false, false));
-
-        //        _sessionOrchestrator.TryStart(context);
-        //    }
-
-        //    GUI.enabled = true;
-
-        //    if (!_sessionOrchestrator.IsSessionActive())
-        //    {
-        //        GUI.enabled = false;
-        //    }
-        //    if (GUILayout.Button("Stop Session", Styles.Button) && _sessionOrchestrator.IsSessionActive())
-        //    {
-        //        _sessionOrchestrator.RequestStop();
-        //    }
-
-        //    GUILayout.EndVertical();
-        //    GUI.enabled = true;
-        //}
     }
 }
