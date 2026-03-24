@@ -7,13 +7,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine.Playables;
+using static AIPlugin.Networking.Protocol;
 
 namespace AIPlugin.Networking
 {
     public class AiGateway: IDisposable
     {
         private AiClient _client;
-        private ConcurrentDictionary<string, object> _pendingRequests;
+        private ConcurrentDictionary<string, TaskCompletionSource<ResponseEnvelope>> _pendingRequests;
         public ServerEvents Events = new ServerEvents();
         public AiGateway(AiClient client)
         {
@@ -22,7 +23,7 @@ namespace AIPlugin.Networking
             _client.OnMessageRecieved += OnMessageRecieved;
             _client.OnDisconnect += OnDisconnect;
 
-            _pendingRequests = new ConcurrentDictionary<string, object>();
+            _pendingRequests = new ConcurrentDictionary<string, TaskCompletionSource<Protocol.ResponseEnvelope>>();
         }
         private void OnDisconnect()
         {
@@ -50,7 +51,7 @@ namespace AIPlugin.Networking
                     Payload = payload
                 };
 
-                var taskCompletion = new TaskCompletionSource<Protocol.ResponseEnvelope<TResponse>>();
+                var taskCompletion = new TaskCompletionSource<ResponseEnvelope>();
                 _pendingRequests[ID] = taskCompletion;
 
                 byte[] bytes = MessagePackSerializer.Serialize(request);
@@ -61,7 +62,9 @@ namespace AIPlugin.Networking
                 if (!envelope.Success)
                     throw new Exception("Server Error:\n" + envelope.ServerLog);
 
-                return (envelope.Payload, envelope.ServerLog);
+                var deserializedPayload = DeserializePayload<TResponse>(envelope.Payload);
+
+                return (deserializedPayload, envelope.ServerLog);
             }
             catch (Exception ex)
             {
@@ -69,6 +72,13 @@ namespace AIPlugin.Networking
                     AIPlugin.Log.LogError);
                 throw ex;
             }
+        }
+        public static T DeserializePayload<T>(object payload)
+        {
+            if (payload is byte[] bytes)
+                return MessagePackSerializer.Deserialize<T>(bytes);
+
+            throw new InvalidCastException($"Payload cannot be converted to {typeof(T)}");
         }
         private string GetMessageKind(byte[] data)
         {
@@ -132,7 +142,7 @@ namespace AIPlugin.Networking
         {
             try
             {
-                var envelope = MessagePackSerializer.Deserialize<Protocol.EventEnvelope>(data);
+                var envelope = MessagePackSerializer.Deserialize<EventEnvelope>(data);
 
                 if (envelope.EventType == null) throw new ArgumentNullException("envelope.EventType cannot be null");
 
@@ -142,54 +152,36 @@ namespace AIPlugin.Networking
             {
                 ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
             }
-
         }
 
         private void HandleResponseMessage(byte[] data)
         {
-            Protocol.ResponseEnvelope<object> header;
+            ResponseEnvelope responseEnvelope;
             try
             {
-                header = MessagePackSerializer.Deserialize<Protocol.ResponseEnvelope<object>>(data, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+                responseEnvelope = MessagePackSerializer.Deserialize<ResponseEnvelope>(data);
             }
             catch (Exception ex)
             {
+                ThreadSafeLogService.Log("Got exception when deserializing the reponse message: \n", AIPlugin.Log.LogError);
                 ThreadSafeLogService.Log(ex.ToString(), AIPlugin.Log.LogError);
                 return;
             }
 
-            if (!_pendingRequests.TryGetValue(header.RequestId, out var boxedTcs))
+            if (!_pendingRequests.TryGetValue(responseEnvelope.RequestId, out var tcs))
                 return;
-
-            var tcsType = boxedTcs.GetType();
-            var payloadType = tcsType.GenericTypeArguments[0];
 
             try
             {
-                var typedEnvelope = MessagePackSerializer.Deserialize(payloadType, data, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-
-                tcsType.GetMethod("SetResult")?.Invoke(
-                    boxedTcs,
-                    new[] { typedEnvelope });
+                tcs.SetResult(responseEnvelope);
             }
             catch (Exception ex)
             {
-
-                try
-                {
-                    tcsType.GetMethod("SetException", new[] { typeof(Exception) })?.
-                        Invoke(boxedTcs, new[] { ex });
-                }
-                catch (Exception ex2)
-                {
-                    ThreadSafeLogService.Log($"Failed to process message: {ex}", AIPlugin.Log.LogError);
-                    ThreadSafeLogService.Log($"Failed to invoke SetException on TCS: {ex2}",
-                        AIPlugin.Log.LogError);
-                }
+                tcs.SetException(ex);
             }
             finally
             {
-                _pendingRequests.TryRemove(header.RequestId, out _);
+                _pendingRequests.TryRemove(responseEnvelope.RequestId, out _);
             }
         }
         public void Dispose()

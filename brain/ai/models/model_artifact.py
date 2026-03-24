@@ -51,6 +51,7 @@ class ArtifactFactory:
             raise Exception(f"Layout version mismatch (supported: {SUPPORTED_LAYOUT_VERSION}, in dataset: {data['layout_version']})")
 
         model_config = data["model_config"]
+        print(model_config)
         model = ModelFactory.construct(**model_config)
 
         model.load_state_dict(data["model_state_dict"])

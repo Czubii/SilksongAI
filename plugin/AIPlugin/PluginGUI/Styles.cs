@@ -9,6 +9,9 @@ namespace AIPlugin.PluginGUI
 {
     public static class Styles
     {
+        public static Color UIGreen = new Color(0.3f, 0.55f, 0.35f, 1f);
+        public static Color UIOrange = new Color(0.96f, 0.60f, 0.21f, 1f); 
+
         private static List<Texture2D> _textures = new List<Texture2D>();
 
         private static GUIStyle _closeButton = null;
@@ -401,6 +404,52 @@ namespace AIPlugin.PluginGUI
                     _window.margin = new RectOffset(0, 0, 0, 0);
                 }
                 return _window;
+            }
+        }
+
+        private static GUIStyle _progressBarBackground = null;
+        public static GUIStyle ProgressBarBackground
+        {
+            get
+            {
+                if (_progressBarBackground == null)
+                {
+                    _progressBarBackground = new GUIStyle(GUI.skin.box);
+
+                    Texture2D bgTex = MakeTex(new Color(0.06f, 0.06f, 0.06f, 1f));
+
+                    _textures.Add(bgTex);
+
+                    _progressBarBackground.normal.background = bgTex;
+
+                    _progressBarBackground.padding = new RectOffset(2, 2, 2, 2);
+                    _progressBarBackground.margin = new RectOffset(2, 2, 4, 4);
+                    _progressBarBackground.border = new RectOffset(1, 1, 1, 1);
+                }
+
+                return _progressBarBackground;
+            }
+        }
+
+        private static GUIStyle _progressBarFill = null;
+        public static GUIStyle ProgressBarFill
+        {
+            get
+            {
+                if (_progressBarFill == null)
+                {
+                    _progressBarFill = new GUIStyle(GUI.skin.box);
+
+                    Texture2D fillTex = MakeTex(new Color(0.3f, 0.55f, 0.35f, 1f));
+
+                    _textures.Add(fillTex);
+
+                    _progressBarFill.normal.background = fillTex;
+
+                    _progressBarFill.margin = new RectOffset(0, 0, 0, 0);
+                }
+
+                return _progressBarFill;
             }
         }
 

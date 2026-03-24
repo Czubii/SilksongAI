@@ -13,9 +13,10 @@ using static UnityEngine.CullingGroup;
 namespace AIPlugin.PluginGUI
 {
     /// <summary>
-    /// Responsible for starting session / selecting boss / basic session settings like the number of trials and boss selection
+    /// Responsible for starting session / selecting boss / basic session settings like the number of 
+    /// trials and boss selection
     /// </summary>
-    public class SessionControlsWindow: BaseWindow//TODO: ENABLE CURSOUR WHEN WINDOW ACTIVE
+    public class SessionControlsWindow: BaseWindow
     {
         private class Form: IForm
         {
@@ -41,7 +42,12 @@ namespace AIPlugin.PluginGUI
 
         private readonly List<(string, BossMetadata)> _bossDropdownElements;
 
-        public SessionControlsWindow(string name, SessionOrchestrator sessionOrchestrator, BossfightRecorder recorder, AIBossfightAgent aiAgent): 
+        public SessionControlsWindow(
+            string name, 
+            SessionOrchestrator sessionOrchestrator, 
+            BossfightRecorder recorder, 
+            AIBossfightAgent aiAgent): 
+
             base(name, new Rect(100, 100, 200, 300))
         {
             _sessionOrchestrator = sessionOrchestrator;

@@ -9,20 +9,27 @@ namespace AIPlugin.Networking
 {
     public class ServerEvents
     {
-        private Dictionary<string, Action> _eventRegistry = new Dictionary<string, Action>();
+        private Dictionary<string, Delegate> _eventRegistry = new Dictionary<string, Delegate>();
 
         public event Action OnNewArtifactCreated;
-        public event Action OnTrainingEpoch;
-
+        public event Action OnTrainingFinished;
+        public event Action<EventPayloads.TrainingEpoch> OnTrainingEpoch;
+        
+        private void RegisterEvent<T>(string server_key, Action<T> handler)
+        {
+            _eventRegistry[server_key] = handler;
+        }
+        
         public ServerEvents() 
         {
-            _eventRegistry.Add("new_artifact", () => OnNewArtifactCreated?.Invoke());
-            _eventRegistry.Add("training_epoch", () => OnTrainingEpoch?.Invoke());
+            RegisterEvent<object>("new_artifact", _ => OnNewArtifactCreated?.Invoke());
+            RegisterEvent<object>("training_finished", _ => OnTrainingFinished?.Invoke());
+            RegisterEvent<EventPayloads.TrainingEpoch>("training_epoch", payload => OnTrainingEpoch?.Invoke(payload));
         }
 
         public void RaiseEvent(string eventName, byte[] payload)
         {
-            bool eventExists = _eventRegistry.TryGetValue(eventName, out Action action);
+            bool eventExists = _eventRegistry.TryGetValue(eventName, out Delegate action);
 
             if (!eventExists) 
             {
@@ -31,9 +38,31 @@ namespace AIPlugin.Networking
             }
             try
             {
-                ThreadSafeLogService.Log($"Invoking event: {eventName}.",
-                AIPlugin.Log.LogError);
-                action?.Invoke();
+                var delegateType = action.GetType();
+                Type payloadType;
+
+                if (delegateType.IsGenericType && delegateType.GetGenericTypeDefinition() == typeof(Action<>))
+                {
+                    payloadType = delegateType.GetGenericArguments()[0];
+                }
+                else
+                {
+                    // It's parameterless (wrapped as Action<object>)
+                    payloadType = typeof(object);
+                }
+
+                // Deserialize bytes to the correct type
+                object deserializedPayload;
+                if (payloadType == typeof(object))
+                {
+                    deserializedPayload = null; // parameterless events ignore payload
+                }
+                else
+                {
+                    deserializedPayload = MessagePack.MessagePackSerializer.Deserialize(payloadType, payload);
+                }
+
+                action.DynamicInvoke(deserializedPayload);
             }
             catch (Exception ex)
             {

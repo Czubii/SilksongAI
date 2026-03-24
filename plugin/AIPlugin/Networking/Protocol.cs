@@ -13,13 +13,13 @@ namespace AIPlugin.Networking
             [Key("payload")] public T Payload { get; set; }
         }
         [MessagePackObject]
-        public class ResponseEnvelope<T>
+        public class ResponseEnvelope
         {
             [Key("kind")] public string Kind { get; set; } = "response";
             [Key("request_ID")] public string RequestId { get; set; }
             [Key("success")] public bool Success { get; set; }
             [Key("log")] public string ServerLog { get; set; }
-            [Key("payload")] public T Payload { get; set; }
+            [Key("payload")] public byte[] Payload { get; set; }
         }
 
         [MessagePackObject]
@@ -38,70 +38,17 @@ namespace AIPlugin.Networking
         [Key("type")] public string Type { get; set; }
         [Key("value")] public string Value { get; set; }
     }
-
-
-    [MessagePackObject]
-    public class EmptyPayload { }
-
-    public enum RequestType
+    public static class EventPayloads
     {
-        get_architectures,
-        get_artifacts,
-        new_model,
-        train_artifact
-    }
-
-    public static class Requests
-    {
-        [MessagePackObject]
-        public class NewArtifact
-        {
-            [Key("architecture")] public string ArchitectureName { get; set; }
-            [Key("target_boss")] public string TargetBossName { get; set; }
-            [Key("name")] public string ArtifactName { get; set; }
-            [Key("params")] public List<ServerParam> Params { get; set; }
-            [Key("overwrite")] public bool Overwrite { get; set; } = false;
-            [Key("require_success")] public bool RequireSuccess { get; set; } = true;
-            [Key("player_name")] public string PlayerName { get; set; } = "";
-            [Key("percent_best")] public float UsePercentBest { get; set; } = 0.8f;
-
-            [Key("delta")] public int Delta = SessionConfig.CaptureFrameDelta;
-
-        }
-
-        [MessagePackObject]
-        public class TrainArtifcat
-        {
-            [Key("target_boss_name")] public string TargetBossName { get; set; }
-            [Key("artifact_name")] public string ArtifactName { get; set; }
-            [Key("num_epochs")] public int NumEpochs { get; set; } = 1;
-            [Key("learning_rate")] public float LearningRate { get; set; } = 0.001f;
-            [Key("batch_size")] public int BatchSize { get; set; } = 8;
-            [Key("use_gpu")] public bool UseGPU { get; set; } = false;
-        }
-    }
-    public static class Responses
-    {
-        [MessagePackObject]
-        public class Architectures
-        {
-            [Key("architectures")] 
-            public Dictionary<string, List<ServerParam>> ArchitectureParams;
-        }
-
-        [MessagePackObject]
-        public class Artifacts
-        {
-            [Key("artifacts")] public Dictionary<string, List<string>> BossArtifacts;
-        }
-
         [MessagePackObject]
         public class TrainingEpoch
         {
             [Key("current_epoch")] public int CurrentEpoch;
-            [Key("total_epochs")] public int TotalEpochs;
+            [Key("start_epoch")] public int StartEpoch;
+            [Key("end_epoch")] public int EndEpoch;
             [Key("training_loss")] public float TrainingLoss;
             [Key("testing_loss")] public float TestingLoss;
+            [Key("loss_history")] public List<(float training, float testing)> LossHistory;
         }
     }
 }

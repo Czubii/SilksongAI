@@ -1,16 +1,8 @@
-﻿using AIPlugin.BossfightSession;
-using AIPlugin.Networking;
-using BepInEx.Configuration;
-using Steamworks;
-using System;
+﻿using AIPlugin.Networking;
+using AIPlugin.Networking.Requests;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace AIPlugin.PluginGUI
 {
@@ -37,10 +29,9 @@ namespace AIPlugin.PluginGUI
             public bool RequireSuccess = false;
             public string PlayerName = "";
 
-            public Requests.NewArtifact GetRequestPayload()
+            public Requests.NewArtifact.Payload GetRequestPayload()
             {
-
-                Requests.NewArtifact requestPayload = new Requests.NewArtifact()
+                Requests.NewArtifact.Payload requestPayload = new Requests.NewArtifact.Payload()
                 {
                     ArchitectureName = ArchitectureDropdownState.SelectedOption,
                     TargetBossName = BossDropdownState.SelectedOption,
@@ -71,8 +62,8 @@ namespace AIPlugin.PluginGUI
 
         AiService _service;
 
-        private readonly ServerRequest.Refreshable<Responses.Architectures> _architectureRequester;
-        private ServerRequest.NewArtifact _newModelRequest = null;
+        private readonly Requests.GetArchitecturesRefreshable _architectureRequester;
+        private Requests.NewArtifact _newModelRequest = null;
 
         private readonly List<(string, string)> _bossesDropdownElements;
 
@@ -81,8 +72,7 @@ namespace AIPlugin.PluginGUI
         {
             _service = service;
 
-            _architectureRequester = ServerRequest.Refreshable.Watch(service.Gateway, 
-                () => new ServerRequest.GetArchitectures(service.Gateway));
+            _architectureRequester = new Requests.GetArchitecturesRefreshable(service.Gateway, () => new Requests.GetArchitectures(service.Gateway));
 
             service.OnConnected += _architectureRequester.Send;
             service.OnConnected += OnConnected;
@@ -145,7 +135,7 @@ namespace AIPlugin.PluginGUI
                 .End();
 
         }
-        private void InitializeArchitectureParams(Responses.Architectures architectures)
+        private void InitializeArchitectureParams(Requests.GetArchitectures.Response architectures)
         {
             List<ServerParam> paramList = architectures.ArchitectureParams.Values.ToList()[_form.ArchitectureDropdownState.SelectedIdx];
             _form.ArchitectureParams = paramList;
@@ -154,11 +144,11 @@ namespace AIPlugin.PluginGUI
         {
             return _form.IsValid() && (_newModelRequest?.Finished() ?? true);
         }
-        private void CreateArtifact(Responses.Architectures architectures)
+        private void CreateArtifact(Requests.GetArchitectures.Response architectures)
         {
             var payload = _form.GetRequestPayload();
 
-            _newModelRequest = new ServerRequest.NewArtifact(_service.Gateway, payload);
+            _newModelRequest = new Requests.NewArtifact(_service.Gateway, payload);
             _currentContent = Content.ArtifactCreationResults;
         }
         private void DrawArtifactCreationResults()

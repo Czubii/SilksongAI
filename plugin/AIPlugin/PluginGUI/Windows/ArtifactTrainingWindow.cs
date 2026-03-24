@@ -1,14 +1,11 @@
 ﻿using AIPlugin.Networking;
+using AIPlugin.Networking.Requests;
 using AIPlugin.Utilities;
-using HutongGames.PlayMaker.Actions;
-using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
-using static AIPlugin.Networking.Responses;
+using static AIPlugin.Networking.EventPayloads;
 
 namespace AIPlugin.PluginGUI
 {
@@ -47,7 +44,10 @@ namespace AIPlugin.PluginGUI
         private enum Content
         {
             TrainingForm,
-            TrainingInProgress
+            AwaitingTraining,
+            TrainingInProgress,
+            TrainingReuslts,
+            FinalizationResults
         }
 
         private Content _currentContent = Content.TrainingForm;
@@ -56,19 +56,24 @@ namespace AIPlugin.PluginGUI
 
         private AiService _service;
 
-        private ServerRequest.Refreshable<Artifacts, EmptyPayload> _artifactRequester;
-        private ServerRequest.TrainArtifact _artifactTrainingRequest = null;
+        private Requests.GetArtifactsRefreshable _artifactRequester;
+        private Requests.StartBehavioralCloning _startTrainingRequest = null;
+        private Requests.StopBehavioralCloning _stopTrainingRequest = null;
+        private Requests.FinalizeBehavioralCloning _finalizeTrainingRequest = null;
 
         private readonly List<(string label, string value)> _bossDropdownElements;
         private List<(string label, ArtifactOption)> _artifactDropdownElements = new List<(string label, ArtifactOption)>();
 
+        private TrainingEpoch _trainingInfo = null;
+        private LinePlot _lossPlot;
+        
         public ArtifactTrainingWindow(string name, AiService service) :
             base(name, new Rect(100, 300, 500, 500))
         {
             _service = service;
 
-            _artifactRequester = ServerRequest.Refreshable.Watch(service.Gateway,
-                () => new ServerRequest.GetArtifacts(service.Gateway));
+            _artifactRequester = new Requests.GetArtifactsRefreshable(service.Gateway, () => new Requests.GetArtifacts(service.Gateway));
+            _lossPlot = new LinePlot(450, 200, "Loss Of Epoch:");
 
             service.Gateway.Events.OnNewArtifactCreated += _artifactRequester.Send;
             service.OnConnected += _artifactRequester.Send;
@@ -87,6 +92,7 @@ namespace AIPlugin.PluginGUI
         private void OnConnected()
         {
             _form = new Form();
+            _currentContent = Content.TrainingForm;
         }
         private void BuildArtifactDropdownElements()
         {
@@ -122,17 +128,35 @@ namespace AIPlugin.PluginGUI
             }
         }
         public override bool CanEnable() => _service.IsConnected && _artifactRequester.AnyResponse();
-        private bool CanStartTraining() => _form.IsValid() && (_artifactTrainingRequest?.Finished() ?? true);
+        private bool CanStartTraining() => _form.IsValid() && (_startTrainingRequest?.Finished() ?? true);
         public override void DrawContent()
         {
-            switch (_currentContent)
+            GUILayout.BeginVertical();
+
+            try
             {
-                case Content.TrainingForm:
-                    DrawTrainingForm();
-                    break;
-                case Content.TrainingInProgress:
-                    DrawTrainingProgress();
-                    break;
+                switch (_currentContent)
+                {
+                    case Content.TrainingForm:
+                        DrawTrainingForm();
+                        break;
+                    case Content.AwaitingTraining:
+                        DrawAwaitingTraining();
+                        break;
+                    case Content.TrainingInProgress:
+                        DrawTrainingProgress();
+                        break;
+                    case Content.TrainingReuslts:
+                        DrawTrainingResults();
+                        break;
+                    case Content.FinalizationResults:
+                        DrawFinalizeTrainingResults();
+                        break;
+                }
+            }
+            finally
+            {
+                GUILayout.EndVertical();
             }
         }
         private void DrawTrainingForm()
@@ -154,38 +178,155 @@ namespace AIPlugin.PluginGUI
 
         private void DrawTrainingProgress()
         {
-            GUILayout.BeginVertical();
-            if(_artifactTrainingRequest == null)
+            if (_trainingInfo == null)
+            {
+                GUILayout.Label($"Awaiting Data: ");
+                GUILayout.Label($"Epoch: ?/?");
+                GUILayout.Label($"Training Dataset loss: ?");
+                GUILayout.Label($"Testing Dataset loss: ?");
+
+                _lossPlot.Draw();
+
+                CustomGUI.ProgressBar(0.0f, $"0%");
+            }
+            else
+            {
+                GUILayout.Label($"Training: ");
+                GUILayout.Label($"Epoch: {_trainingInfo.CurrentEpoch}/{_trainingInfo.EndEpoch}");
+                GUILayout.Label($"Training Dataset loss: {_trainingInfo.TrainingLoss}");
+                GUILayout.Label($"Testing Dataset loss: {_trainingInfo.TestingLoss}");
+
+                _lossPlot.Draw();
+
+                int epochRange = _trainingInfo.EndEpoch - _trainingInfo.StartEpoch;
+                float percentage = 0.0f;
+                if (epochRange > 0) percentage = (float)_trainingInfo.CurrentEpoch / (float)epochRange;
+
+                CustomGUI.ProgressBar(percentage, $"{percentage * 100: 0.}%");
+            }
+
+            if(_stopTrainingRequest != null ) GUI.enabled = false;
+
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Stop Training", Styles.Button)) _stopTrainingRequest = new Requests.StopBehavioralCloning(_service.Gateway);
+            GUI.enabled = true;
+        }
+
+        private void DrawAwaitingTraining()
+        {
+
+            if (_startTrainingRequest == null)
             {
                 _currentContent = Content.TrainingForm;
                 return;
             }
 
-            if (!_artifactTrainingRequest.Finished())
+            if (!_startTrainingRequest.Finished())
             {
                 GUILayout.Label("Training Starting. Please wait");
                 return;
             }
 
-            if (!_artifactTrainingRequest.FinishedWithSuccess())
+            if (!_startTrainingRequest.FinishedWithSuccess())
             {
                 GUILayout.Label("Could not start training because an exception occured somwhere: \n");
-                GUILayout.Label(_artifactTrainingRequest.Log);
+                GUILayout.Label(_startTrainingRequest.Log);
 
                 GUILayout.FlexibleSpace();
 
-                if(GUILayout.Button("Go Back", Styles.Button))
+                if (GUILayout.Button("Go Back", Styles.Button))
                 {
                     _currentContent = Content.TrainingForm;
+                    _service.Gateway.Events.OnTrainingEpoch -= OnTrainingEpoch;
+                    _service.Gateway.Events.OnTrainingFinished -= OnTrainingFinished;
                 }
                 return;
             }
 
-            GUILayout.EndVertical();
+            _currentContent = Content.TrainingInProgress;
+        }
+
+        private void DrawTrainingResults()
+        {
+            if (_trainingInfo == null)
+            {
+                GUILayout.Label($"Training Concluded. Results: ");
+                GUILayout.Label($"Total Epochs: ?");
+                GUILayout.Label($"Training Dataset loss: ?");
+                GUILayout.Label($"Testing Dataset loss: ?");
+            }
+            else
+            {
+                GUILayout.Label($"Training Concluded. Results: ");
+                GUILayout.Label($"Total Epochs: {_trainingInfo.CurrentEpoch}");
+                GUILayout.Label($"Training Dataset loss: {_trainingInfo.TrainingLoss}");
+                GUILayout.Label($"Testing Dataset loss: {_trainingInfo.TestingLoss}");
+            }
+            _lossPlot.Draw();
+
+            GUILayout.FlexibleSpace();
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Discard Changes", Styles.Button)) FinalizeTraining(false);
+            if(GUILayout.Button("Save Changes", Styles.Button)) FinalizeTraining(true);
+
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawFinalizeTrainingResults()
+        {
+            if (!_finalizeTrainingRequest.Finished())
+            {
+                GUILayout.Label("Finalization in progress. Please Wait");
+                return;
+            }
+            GUILayout.Label("Training Finalized. Result:");
+            GUILayout.Label($"{_finalizeTrainingRequest.Log}");
+
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Go Back", Styles.Button)) _currentContent = Content.TrainingForm;
+        }
+
+        private void FinalizeTraining(bool save)
+        {
+            var payload = new Requests.FinalizeBehavioralCloning.Payload()
+            {
+                Save = save
+            };
+            _finalizeTrainingRequest = new Requests.FinalizeBehavioralCloning(_service.Gateway, payload);
+            _currentContent = Content.FinalizationResults;
+        }
+        private void OnTrainingEpoch(TrainingEpoch info)
+        {
+            _trainingInfo = info;
+
+
+            List<float> trainingLosses = info.LossHistory.Select(x => x.training).ToList();
+            List<float> testingLosses = info.LossHistory.Select(x => x.testing).ToList();
+
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                try
+                {
+                    _lossPlot.SetSeries(0, trainingLosses, Styles.UIGreen, "Training Loss");
+                    _lossPlot.SetSeries(1, testingLosses, Styles.UIOrange, "Testing Loss");
+                    _lossPlot.Update();
+                }
+                catch (Exception ex)
+                {
+                    ThreadSafeLogService.Log($"Exception met when updating plot: {ex}", AIPlugin.Log.LogError);
+                }
+            });
+        }
+        private void OnTrainingFinished()
+        {
+            _currentContent = Content.TrainingReuslts;
+            _service.Gateway.Events.OnTrainingFinished -= OnTrainingFinished;
+            _service.Gateway.Events.OnTrainingEpoch -= OnTrainingEpoch;
         }
         private void StartTraining()
         {
-            var payload = new Requests.TrainArtifcat()
+            var payload = new Requests.StartBehavioralCloning.Payload()
             {
                 TargetBossName = _form.ArtifactDropdownState.SelectedOption.BossName,
                 ArtifactName = _form.ArtifactDropdownState.SelectedOption.ArtifactName,
@@ -195,95 +336,13 @@ namespace AIPlugin.PluginGUI
                 UseGPU = _form.UseGPU,
             };
 
-            _artifactTrainingRequest = new ServerRequest.TrainArtifact(_service.Gateway, payload);
-            _currentContent = Content.TrainingInProgress;
+            _startTrainingRequest = new Requests.StartBehavioralCloning(_service.Gateway, payload);
+            _stopTrainingRequest = null;
+            _trainingInfo = null;
+            _lossPlot.Clear();
+            _currentContent = Content.AwaitingTraining;
+            _service.Gateway.Events.OnTrainingEpoch += OnTrainingEpoch;
+            _service.Gateway.Events.OnTrainingFinished += OnTrainingFinished;
         }
-        //public override void DrawContent()
-        //{
-        //    if (_trainConfig == null) _trainConfig = new Requests.TrainArtifcat();
-
-        //    bool anyEmpty = false;
-
-        //    GUILayout.BeginVertical();
-
-
-        //    GUILayout.Label("Boss Selection: ");
-        //    _bossDropdownState = CustomGUI.Dropdown(_bossDropdownState, _bossDropdownItems);
-
-        //    if(_bossDropdownState.SelectionChanged)
-        //    {
-        //        _artifactDropdownState = new CustomGUI.DropdownState();
-        //        _trainConfig.TargetBossName = BossReferenceDatabase.All.Select(s => s.InternalName).
-        //                ToList()[_bossDropdownState.SelectedIdx];
-        //    }
-
-
-        //    GUILayout.Label("Artifact Selection: ");
-        //    List<string> artifactDropdownItems;
-        //    List<string> artifactNames;
-        //    if (_bossDropdownState.SelectedIdx == 0) //Any 
-        //    { 
-        //        artifactDropdownItems = new List<string>();
-        //        artifactNames = new List<string>();
-        //        foreach (var internalBossName in _artifactRequester.Result.BossArtifacts.Keys)
-        //        {
-        //            foreach (var artifactName in _artifactRequester.Result.BossArtifacts[internalBossName])
-        //            {
-        //                artifactDropdownItems.Add($"{internalBossName}:    {artifactName}"); //TODO somehow use display name here???
-        //                artifactNames.Add(artifactName);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        var internalBossName = BossReferenceDatabase.All.Select(s => s.InternalName).ToList()[_bossDropdownState.SelectedIdx - 1];
-        //        var any_artifacts = _artifactRequester.Result.BossArtifacts.TryGetValue(internalBossName, out artifactDropdownItems);
-        //        artifactNames = artifactDropdownItems;
-        //        if (!any_artifacts)
-        //        {
-        //            artifactDropdownItems = new List<string>(); // Empty
-        //            anyEmpty = true;
-        //        }
-        //    }
-
-        //    _artifactDropdownState = CustomGUI.Dropdown(_artifactDropdownState, artifactDropdownItems);
-
-        //    if (_artifactDropdownState.SelectionChanged)
-        //    {
-        //        _trainConfig.ArtifactName = artifactNames[_artifactDropdownState.SelectedIdx];
-        //    }
-
-        //    GUILayout.BeginHorizontal();
-        //    GUILayout.Label("Number of epochs: ");
-        //    GUILayout.FlexibleSpace();
-        //    _trainConfig.NumEpochs = CustomGUI.IntegerField(_trainConfig.NumEpochs, 
-        //        new GUILayoutOption[] { GUILayout.Width(110) });
-        //    if(_trainConfig.NumEpochs == 0) anyEmpty = true;
-        //    GUILayout.EndHorizontal();
-
-        //    GUILayout.BeginHorizontal();
-        //    GUILayout.Label("Batch size: ");
-        //    GUILayout.FlexibleSpace();
-        //    _trainConfig.BatchSize = CustomGUI.IntegerField(_trainConfig.BatchSize,
-        //        new GUILayoutOption[] { GUILayout.Width(110) });
-        //    if (_trainConfig.BatchSize == 0) anyEmpty = true;
-        //    GUILayout.EndHorizontal();
-
-        //    _trainConfig.UseGPU = CustomGUI.LabeledToggle(_trainConfig.UseGPU, "Use GPU: ");
-
-        //    GUILayout.Label("TODO: learning rate");
-
-        //    GUILayout.FlexibleSpace();
-
-        //    bool prevEnabled = GUI.enabled;
-        //    if (anyEmpty || (!_artifactTrainingRequest?.Finished() ?? false)) GUI.enabled = false;
-        //    if (GUILayout.Button("Create", Styles.Button))
-        //    {
-        //        _artifactTrainingRequest = new ServerRequest.TrainArtifact(_service.Gateway, _trainConfig);
-        //    }
-        //    GUI.enabled = prevEnabled;
-
-        //    GUILayout.EndVertical();
-        //}
     }
 }

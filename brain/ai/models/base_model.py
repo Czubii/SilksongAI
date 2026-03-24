@@ -42,7 +42,7 @@ class BaseBossNet(nn.Module, ABC):
         pass
 
     @classmethod
-    def get_additional_param_definitions(cls):
+    def serialize_params(cls):
         """
         :return: Parameters that cannot be inferred from dataset inside the factory and must be explicitly passed by user.
         Used by the plugin to allow for creation of new networks by client.
@@ -68,4 +68,15 @@ class BaseBossNet(nn.Module, ABC):
                  "value": default})
 
         return additional_params
+
+    @classmethod
+    def deserialize_params(cls, params: dict):
+        deserialized = {}
+        for param in params:
+            if param["type"] == "int":
+                deserialized[param["name"]] = int(param["value"])
+            else:
+                raise Exception(f"Unsupported type {param['type']}")
+
+        return deserialized
 

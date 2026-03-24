@@ -30,6 +30,7 @@ namespace AIPlugin
 
                 Log = Logger;
 
+                gameObject.AddComponent<MainThreadDispatcher>();
                 var teleporter = gameObject.AddComponent<TeleportService>();
                 var aiService = gameObject.AddComponent<AiService>();
                 aiService.Initialize("127.0.0.1", 5000);

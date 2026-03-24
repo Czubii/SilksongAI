@@ -26,14 +26,18 @@ namespace AIPlugin.BossfightSession
             _service = service;
             enabled = false;
         }
+        public bool CanEnable()
+        {
+            return _service?.IsConnected ?? false;
+        }
         public void OnEnable()
         {
-            _service.OnDisconnected += OnDisconnected;
             if (!_service?.IsConnected ?? true)
             {
                 enabled = false;
                 return;
             }
+            _service.OnDisconnected += OnDisconnected;
         }
         public void OnDisable()
         {

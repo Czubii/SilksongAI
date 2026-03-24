@@ -7,17 +7,17 @@ from ai.models import model_registry, BaseBossNet
 
 class ModelFactory:
     @staticmethod
-    def construct(model_type, base_dims, **kwargs) -> BaseBossNet:
-        if not model_type in model_registry.keys():
+    def construct(architecture_name, base_dims, **kwargs) -> BaseBossNet:
+        if not architecture_name in model_registry.keys():
             raise Exception("Unknown model type")
 
-        ModelFactory.validate_parameters(model_type, **kwargs)
-        model_cls = model_registry[model_type]
+        ModelFactory.validate_parameters(architecture_name, **kwargs)
+        model_cls = model_registry[architecture_name]
         return model_cls(base_dimensions=base_dims, **kwargs)
 
     @staticmethod
-    def validate_parameters(model_type, **kwargs) -> None:
-        model_cls = model_registry[model_type]
+    def validate_parameters(architecture_name, **kwargs) -> None:
+        model_cls = model_registry[architecture_name]
         sig = inspect.signature(model_cls.__init__)
 
         required_params = []
@@ -39,7 +39,7 @@ class ModelFactory:
         unknown = [k for k in kwargs if k not in allowed]
 
         if missing:
-            raise ValueError(f"Missing parameters for {model_type}: {', '.join(missing)}")
+            raise ValueError(f"Missing parameters for {architecture_name}: {', '.join(missing)}")
 
         if unknown:
-            raise Exception(f"Unknown parameters for {model_type}: {unknown}")
+            raise Exception(f"Unknown parameters for {architecture_name}: {unknown}")
