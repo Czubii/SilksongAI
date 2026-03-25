@@ -1,10 +1,13 @@
 ﻿using AIPlugin.Networking;
+using BepInEx;
 using HutongGames.PlayMaker;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using static GamepadVibrationMixer.GamepadVibrationEmission;
@@ -44,8 +47,16 @@ namespace AIPlugin.PluginGUI
             public T SelectedOption;
             public bool SelectionChanged = false;  
             public bool Expanded = false;
+
+            public void Reset()
+            {
+                SelectedIdx = -1;
+                SelectedOption = null;
+                Expanded = false;
+                SelectionChanged = true;    
+            }
         }
-        public static DropdownState<T> Dropdown<T>(DropdownState<T> state, List<(string label, T value)> elements)
+        public static DropdownState<T> Dropdown<T>(DropdownState<T> state, List<(string label, T value)> elements, string label = "")
             where T : class
         {
             var oldSelection = state.SelectedIdx;
@@ -62,16 +73,30 @@ namespace AIPlugin.PluginGUI
             {
                 if (elements.Count > 0)
                 {
+                    string buttonText = elements[state.SelectedIdx].label;
+
+                    if(!label.IsNullOrWhiteSpace())
+                    {
+                        buttonText = $"{label}: {buttonText}";
+                    }
+
                     // Button showing current selection
-                    if (GUILayout.Button(elements[state.SelectedIdx].label, Styles.Button))
+                    if (GUILayout.Button(buttonText, Styles.Button))
                     {
                         state.Expanded = !state.Expanded;
                     }
                 }
                 else
                 {
+                    string buttonText = "No options available";
+
+                    if (!label.IsNullOrWhiteSpace())
+                    {
+                        buttonText = $"{label}: {buttonText}";
+                    }
+
                     GUI.enabled = false;
-                    GUILayout.Button("No options available", Styles.Button);
+                    GUILayout.Button(buttonText, Styles.Button);
                 }
             }
             else
@@ -116,6 +141,144 @@ namespace AIPlugin.PluginGUI
             if (state.SelectedIdx != oldSelection) state.SelectionChanged = true;
 
             return state;
+        }
+
+        public class ArtifactSelectionDropdowns
+        {
+            public class ArtifactOption
+            {
+                public string BossName;
+                public string ArtifactName;
+
+                public ArtifactOption(string boss, string artifact)
+                {
+                    BossName = boss;
+                    ArtifactName = artifact;
+                }
+            }
+
+            private List<(string label, string value)> _bossDropdownElements = 
+                new List<(string label, string value)>();
+
+            private List<(string label, ArtifactOption)> _artifactDropdownElements = 
+                new List<(string label, ArtifactOption)>();
+
+            private DropdownState<string> _bossDropdownState = 
+                new DropdownState<string>();
+
+            private DropdownState<ArtifactOption> _artifactDropdownState = 
+                new DropdownState<ArtifactOption>();
+
+            private Dictionary<string, List<string>> _artifacts = 
+                new Dictionary<string, List<string>>();
+
+            public (string BossName, string ArtifactName) SelectedOption => 
+                (_artifactDropdownState?.SelectedOption?.BossName ?? null,
+                _artifactDropdownState?.SelectedOption?.ArtifactName ?? null);
+
+            public bool SelectionValid()
+            {
+                return SelectedOption.BossName != null && SelectedOption.ArtifactName != null;
+            }
+            public void Draw()
+            {
+                GUILayout.BeginVertical();
+                _bossDropdownState = 
+                    Dropdown(_bossDropdownState, _bossDropdownElements, "Boss");
+
+                if (_bossDropdownState.SelectionChanged)
+                {
+                    BuildArtifactDropdownElements();
+                }
+
+                _artifactDropdownState = 
+                    Dropdown(_artifactDropdownState, _artifactDropdownElements, "Artifact");
+
+                GUILayout.EndVertical();
+            }
+            public void UpdateElements(Dictionary<string, List<string>> artifacts)
+            {
+                _artifacts = artifacts;
+                BuildBossDropdownElements();
+                BuildArtifactDropdownElements();
+            }
+            private void BuildBossDropdownElements()
+            {
+                if (_artifacts.Count == 0)
+                {
+                    _bossDropdownElements = new List<(string label, string value)>();
+                    return;
+                }
+
+                _bossDropdownElements = new List<(string label, string value)>() { ("Any", "") };
+
+                foreach (var pair in _artifacts)
+                {
+                    var internalBossName = pair.Key;
+
+                    string displayName =
+                        BossReferenceDatabase.All
+                            .First(x => x.InternalName == internalBossName)
+                            .DisplayName;
+
+                    if (displayName == null)
+                    {
+                        AIPlugin.Log.LogError($"Unknown boss: {pair.Key}");
+                        continue;
+                    }
+
+                    _bossDropdownElements.Add((displayName, internalBossName));
+                }
+
+            }
+            private void BuildArtifactDropdownElements()
+            {
+                if (_artifacts.Count == 0)
+                {
+                    _artifactDropdownElements = new List<(string label, ArtifactOption)>();
+                    return;
+                }
+
+                if (_bossDropdownState.SelectedOption == "") //Any boss
+                {
+                    _artifactDropdownElements = new List<(string label, ArtifactOption)>();
+                    foreach (var pair in _artifacts)
+                    {
+                        var internalBossName = pair.Key;
+                        var artifactNames = pair.Value;
+
+                        string displayName = BossReferenceDatabase.All
+                                                    .First(x => x.InternalName == internalBossName)
+                                                    .DisplayName;
+
+                        if (displayName == null)
+                        {
+                            AIPlugin.Log.LogError($"Unknown boss: {pair.Key}");
+                            continue;
+                        }
+
+                        foreach (var artifactName in artifactNames)
+                        {
+                            _artifactDropdownElements.Add(($"{displayName}:    {artifactName}",
+                                new ArtifactOption(internalBossName, artifactName)));
+                        }
+                    }
+                }
+                else
+                {
+                    var bossName = _bossDropdownState.SelectedOption;
+                    var anyArtifacts = _artifacts.TryGetValue(bossName, out var artifactNames);
+
+                    if (anyArtifacts && artifactNames.Count > 0)
+                    {
+                        _artifactDropdownElements = artifactNames.Select(a => (a, new ArtifactOption(bossName, a))).ToList();
+                    }
+                    else
+                    {
+                        _artifactDropdownElements = new List<(string label, ArtifactOption)>(); // Empty
+                    }
+                }
+            }
         }
 
         public static bool LabeledToggle(bool value, string text, params GUILayoutOption[] options)

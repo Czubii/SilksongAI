@@ -1,4 +1,5 @@
 ﻿using AIPlugin.BossfightSession;
+using AIPlugin.Networking;
 using AIPlugin.Utilities;
 using MessagePack;
 
@@ -38,7 +39,7 @@ namespace AIPlugin //TODO fix all namespaces
 
     }
     [MessagePackObject]
-    public class InferenceFrame
+    public class InferenceFrame: IPayload
     {
         [Key(0)] public FrameData Data;
         [Key(1)] public int Reward = 0;
@@ -102,7 +103,7 @@ namespace AIPlugin //TODO fix all namespaces
         [Key(17)] public float InvDistY;
     }
     [MessagePackObject]
-    public class FrameUserInputs
+    public class FrameUserInputs: IResponse
     {
         // Movement:
         [Key(0)] public float Horizontal;

@@ -168,6 +168,7 @@
     <Compile Include="BossfightSession\CancellationHandle.cs" />
     <Compile Include="BossfightSession\FrameCapturer.cs" />
     <Compile Include="BossfightSession\SessionContext.cs" />
+    <Compile Include="BossfightSession\SessionDispatcher.cs" />
     <Compile Include="BossfightSession\SessionEnemyTracker.cs" />
     <Compile Include="BossfightSession\SessionEvents.cs" />
     <Compile Include="BossfightSession\SessionOrchestrator.cs" />
@@ -185,7 +186,6 @@
     <Compile Include="PluginGUI\Windows\ServerControlsWindow.cs" />
     <Compile Include="PluginGUI\Windows\SessionControlsWindow.cs" />
     <Compile Include="PluginGUI\CustomGUIElements.cs" />
-    <Compile Include="PluginConfig.cs" />
     <Compile Include="PluginGUI\Styles.cs" />
     <Compile Include="PluginGUI\WindowManager.cs" />
     <Compile Include="Utilities\BossBehavior.cs" />

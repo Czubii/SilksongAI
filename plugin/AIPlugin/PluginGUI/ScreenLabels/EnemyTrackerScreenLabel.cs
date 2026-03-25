@@ -10,7 +10,6 @@ namespace AIPlugin.PluginGUI
 {
     public class EnemyTrackerScreenLabel: BaseScreenLabel
     {
-        private int _lineOffsetY = 20;
         private static readonly GUIStyle _style = new GUIStyle
         {
             fontSize = 18,

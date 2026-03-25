@@ -16,6 +16,7 @@ namespace AIPlugin.PluginGUI
     {
         bool IsValid();
     }
+    public class EmptyForm: IForm { public bool IsValid() => true; }
     static class BindingCache<TModel>
     {
         private static Dictionary<MemberInfo, object> _cache = new Dictionary<MemberInfo, object>();
@@ -95,8 +96,7 @@ namespace AIPlugin.PluginGUI
 
             var value = get(_model);
 
-            GUILayout.Label(label);
-            value = CustomGUI.Dropdown(value, elements);
+            value = CustomGUI.Dropdown(value, elements, label);
 
             set(_model, value);
 
@@ -195,10 +195,13 @@ namespace AIPlugin.PluginGUI
             GUILayout.FlexibleSpace();
             return this;
         }
-        public UIForm<T> Button(string label, Action OnPress)
+        public UIForm<T> Button(string label, Action OnPress, bool enabled = true)
         {
+            var prevEnabled = GUI.enabled;
+            GUI.enabled = enabled;
             if(GUILayout.Button(label, Styles.Button))
                 OnPress();
+            GUI.enabled = prevEnabled;
             return this;
         }
         public UIForm<T> GUIEnabled(bool enabled)
@@ -210,6 +213,11 @@ namespace AIPlugin.PluginGUI
         {
             GUILayout.EndVertical();
             GUI.enabled = true;
+            return this;
+        }
+        public UIForm<T> CustomAction(Action action)
+        {
+            action?.Invoke();
             return this;
         }
         private void Labeled(string label, Action action)

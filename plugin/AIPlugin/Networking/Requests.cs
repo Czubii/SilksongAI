@@ -121,5 +121,43 @@ namespace AIPlugin.Networking.Requests
                 base(gateway, requestFactory)
             { }
         }
+        public class GetInferenceArtifact : RequestHandle<EmptyPayload, GetInferenceArtifact.Response>
+        {
+            public GetInferenceArtifact(AiGateway gateway) :
+                base(gateway, "get_inference_artifact", new EmptyPayload())
+            { }
+            [MessagePackObject]
+            public class Response : IResponse
+            {
+                [Key("target_boss_name")] public string TargetBossName { get; set; }
+                [Key("artifact_name")] public string ArtifactName { get; set; }
+            }
+        }
+        public class GetInferenceArtifactRefreshable : RefreshableRequest<EmptyPayload, GetInferenceArtifact.Response>
+        {
+            public GetInferenceArtifactRefreshable(AiGateway gateway, 
+                Func<RequestHandle<EmptyPayload, GetInferenceArtifact.Response>> requestFactory) :
+                base(gateway, requestFactory)
+            { }
+        }
+        public class SetInferenceArtifact : RequestHandle<SetInferenceArtifact.Payload, EmptyResponse>
+        {
+            public SetInferenceArtifact(AiGateway gateway, Payload payload) :
+                base(gateway, "set_inference_artifact", payload)
+            { }
+            [MessagePackObject]
+            public class Payload : IPayload
+            {
+                [Key("target_boss_name")] public string TargetBossName { get; set; }
+                [Key("artifact_name")] public string ArtifactName { get; set; }
+            }
+        }
+        public class LiveInference: RequestHandle<InferenceFrame, FrameUserInputs>
+        {
+            public LiveInference(AiGateway gateway, InferenceFrame payload) :
+                base(gateway, "live_inference", payload)
+            { }
+        }
+
     }
 }

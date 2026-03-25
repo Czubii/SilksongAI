@@ -15,6 +15,7 @@ namespace AIPlugin.PluginGUI
 
     public abstract class BaseScreenLabel : MonoBehaviour
     {
+        protected int _lineOffsetY = 20;
         public abstract bool EnabledInConfig();
     }
     public abstract class BaseWindow
@@ -23,6 +24,9 @@ namespace AIPlugin.PluginGUI
         public bool Enabled { get; set; }
 
         private Rect _windowRect;
+
+        private List<string> _errors = new List<string>();
+        private Vector2 _errorLogScroll = new Vector2();
 
         public BaseWindow(string name, Rect windowRect)
         {
@@ -46,8 +50,27 @@ namespace AIPlugin.PluginGUI
         public void DrawBase(int ID)
         {
             if (CustomGUI.TopBar(Name)) Enabled = false;
-            DrawContent();
+            if (_errors.Count > 0) DrawError();
+            else DrawContent();
             GUI.DragWindow();
+        }
+        public void NotifyError(string error)
+        {
+            _errors.Add(error);
+        }
+        private void DrawError()
+        {
+            _errorLogScroll = GUILayout.BeginScrollView(_errorLogScroll, Styles.ScrollView, Styles.VerticalScrollbar, GUILayout.ExpandHeight(true));
+            GUI.skin.verticalScrollbarThumb = Styles.VerticalScrollbarThumb;
+
+            GUILayout.Label("Exception Has Occured Somhere: ");
+            GUILayout.Label(_errors[0]);
+            GUILayout.FlexibleSpace();
+            if(GUILayout.Button("Okay", Styles.Button))
+            {
+                _errors.RemoveAt(0);
+            }
+            GUILayout.EndScrollView();
         }
         public abstract void DrawContent();
         public abstract bool CanEnable();

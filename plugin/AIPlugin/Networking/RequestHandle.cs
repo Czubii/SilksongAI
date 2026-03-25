@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AIPlugin.Utilities;
+using System;
 using System.Threading.Tasks;
 
 namespace AIPlugin.Networking
@@ -24,7 +25,8 @@ namespace AIPlugin.Networking
 
         public bool RetryOnFailure = false;
 
-        public event Action OnNewResultReady;
+        public event Action<TResponse> OnSuccess;
+        public event Action<string> OnError;
         public RefreshableRequest(AiGateway gateway, Func<RequestHandle<TPayload, TResponse>> requestFactory)
         {
             _gateway = gateway;
@@ -47,15 +49,26 @@ namespace AIPlugin.Networking
                 Send();
                 return;
             }
+            else if (!_requestTask.FinishedWithSuccess() && !RetryOnFailure)
+            {
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    OnError?.Invoke(_requestTask.Log);
+                });
+            }
 
             try
             {
-                Result = _requestTask.Result;
-                Log = _requestTask.Log;
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    Result = _requestTask.Result;
+                    Log = _requestTask.Log;
 
-                ResultVersion++;
+                    ResultVersion++;
 
-                OnNewResultReady?.Invoke();
+                    OnSuccess?.Invoke(Result);
+                });
+
             }
             finally
             {
@@ -80,6 +93,10 @@ namespace AIPlugin.Networking
         private bool _success = false;
         public TResponse Result { get; private set; } = null;
         public string Log { get; private set; } = "";
+
+        public event Action<TResponse> OnSuccess;
+        public event Action<string> OnError;
+
         public RequestHandle(AiGateway gateway, string type, TPayload payload)
         {
             AwaitResponseTask = AwaitResponseAsync(gateway, type, payload);
@@ -93,10 +110,19 @@ namespace AIPlugin.Networking
                 Result = result;
                 Log = log;
                 _success = true;
+
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    OnSuccess?.Invoke(Result);
+                });
             }
             catch (Exception ex)
             {
                 Log = ex.ToString();
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    OnError?.Invoke(Log);
+                });
             }
         }
         public bool Finished() => AwaitResponseTask.IsCompleted;

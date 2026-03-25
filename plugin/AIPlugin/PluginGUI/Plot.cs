@@ -10,12 +10,11 @@ namespace AIPlugin.PluginGUI
     public class LinePlot
     {
         private Texture2D _plotTexture;
-        private int _width;
-        private int _height;
-        private int _seriesPadding = 5;
-        private int _seriesWidth;
-        private int _seriesHeight;
-        private int _legendEntryHeigth = 20;
+        private readonly int _width;
+        private readonly int _height;
+        private readonly int _seriesPadding = 5;
+        private readonly int _seriesWidth;
+        private readonly int _seriesHeight;
 
         public string Title { get; private set; }
 

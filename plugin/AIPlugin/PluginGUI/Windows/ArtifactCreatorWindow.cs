@@ -58,8 +58,6 @@ namespace AIPlugin.PluginGUI
 
         private Content _currentContent = Content.ArtifactSetup;
 
-        private Vector2 _scroll = new Vector2();
-
         AiService _service;
 
         private readonly Requests.GetArchitecturesRefreshable _architectureRequester;
@@ -73,6 +71,7 @@ namespace AIPlugin.PluginGUI
             _service = service;
 
             _architectureRequester = new Requests.GetArchitecturesRefreshable(service.Gateway, () => new Requests.GetArchitectures(service.Gateway));
+            _architectureRequester.OnError += NotifyError;
 
             service.OnConnected += _architectureRequester.Send;
             service.OnConnected += OnConnected;
@@ -113,10 +112,10 @@ namespace AIPlugin.PluginGUI
                 "artifact and cannot be changed later (unless done manually). Make sure all the recordings " +
                 "you want to use exist in the respecive directory before creating the model.")
 
-                .Dropdown("Architecture: ", architecturesDropdownElements, x => x.ArchitectureDropdownState, 
+                .Dropdown("Architecture", architecturesDropdownElements, x => x.ArchitectureDropdownState, 
                     () => InitializeArchitectureParams(architectures))
 
-                .Dropdown("Boss: ", _bossesDropdownElements, x => x.BossDropdownState)
+                .Dropdown("Boss", _bossesDropdownElements, x => x.BossDropdownState)
                 .TextField("Name: ", x => x.ArtifactName, GUILayout.Width(120))
                 .Toggle("Overwrite if name exists: ", x => x.Overwrite)
 
@@ -149,34 +148,20 @@ namespace AIPlugin.PluginGUI
             var payload = _form.GetRequestPayload();
 
             _newModelRequest = new Requests.NewArtifact(_service.Gateway, payload);
+            _newModelRequest.OnError += NotifyError;
+
             _currentContent = Content.ArtifactCreationResults;
         }
         private void DrawArtifactCreationResults()
         {
-            GUILayout.BeginVertical();
-
 
             if (!_newModelRequest.Finished())
             {
                 GUILayout.Label("Model creation in progress. This may take up to a minute based on number " +
                 "of used recordings.");
+                return;
             }
-            else
-            {
-                GUILayout.Label("Model creation process finished. Result: ");
-
-                _scroll = GUILayout.BeginScrollView(_scroll, Styles.ScrollView, Styles.VerticalScrollbar, GUILayout.ExpandHeight(true));
-                GUI.skin.verticalScrollbarThumb = Styles.VerticalScrollbarThumb;
-                GUILayout.Label(_newModelRequest.Log);
-
-                GUILayout.EndScrollView();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Go Back", Styles.Button))
-                {
-                    _currentContent = Content.ArtifactSetup;
-                }
-            }
-            GUILayout.EndVertical();
+            _currentContent = Content.ArtifactSetup;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using AIPlugin.Networking;
+using AIPlugin.Networking.Requests;
 using AIPlugin.Utilities;
 using HarmonyLib;
 using InControl;
@@ -19,7 +20,7 @@ namespace AIPlugin.BossfightSession
     public class AIBossfightAgent : MonoBehaviour, ISessionListener, IFrameCaptureListener
     {
         private AiService _service;
-        private Task _aiControllTask = null;
+        private Requests.LiveInference _inferenceRequest = null;
 
         public void Initialize(AiService service)
         {
@@ -32,7 +33,7 @@ namespace AIPlugin.BossfightSession
         }
         public void OnEnable()
         {
-            if (!_service?.IsConnected ?? true)
+            if (!CanEnable())
             {
                 enabled = false;
                 return;
@@ -42,6 +43,7 @@ namespace AIPlugin.BossfightSession
         public void OnDisable()
         {
             _service.OnDisconnected -= OnDisconnected;
+            _inferenceRequest = null;
             AIInputState.AIControlEnabled = false;
         }
         public void OnDisconnected()
@@ -57,36 +59,26 @@ namespace AIPlugin.BossfightSession
         }
         public void OnFightFinished(AttemptResult result)
         {
-            //TODO: add server handshake to verify boss selection etc and proceed only if successful
             AIInputState.AIControlEnabled = false;
         }
         public void OnFrameCaptured(RecordingFrame frame)
         {
             if(!enabled) return;
 
-            if (_aiControllTask == null)
+            if (_inferenceRequest == null)
             {
-                _aiControllTask = ApplyAIControll(frame);
+                _inferenceRequest = new Requests.LiveInference(_service.Gateway,
+                    InferenceFrame.FromRecordingFrameData(frame));
+                _inferenceRequest.OnSuccess += ApplyAIControll;
             }
             else
             {
                 AIPlugin.Log.LogWarning($"AiBossfightController: Obtaining server AI response took longer than expected");
             }
         }
-        private async Task ApplyAIControll(RecordingFrame frame)
+        private void ApplyAIControll(FrameUserInputs inputs)
         {
-            try
-            {
-                //var inputs = await _service.Gateway.PredictInputsAsync(InferenceFrame.FromRecordingFrameData(frame));
-                //if (inputs == null) return;
-
-                //AIInputState.Inputs = inputs; //TODO make this thread safe???
-            }
-            catch (Exception e)
-            {
-                ThreadSafeLogService.Log($"Exception while GetAIPrediction: {e.ToString()}", AIPlugin.Log.LogError);
-            }
-            finally { _aiControllTask = null; }
+                AIInputState.Inputs = inputs; 
         }
     }
 

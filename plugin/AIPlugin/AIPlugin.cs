@@ -55,10 +55,19 @@ namespace AIPlugin
                 aiController.enabled = false;
                 sessionEventHandler.Subscribe(aiController);
 
-                var sessionControlsWindow = new SessionControlsWindow("Session Controls", session, recorder, aiController);
-                var serverControlsWindow = new ServerControlsWindow("Server Controls", aiService);
-                var artifactCreatorWindow = new ArtifactCreatorWindow("Artfiact Creator", aiService);
-                var artifactTrainingWindow = new ArtifactTrainingWindow("Artifact Trainer", aiService);
+                var sessionDispatcher = new SessionDispatcher(session, recorder, aiController, aiService);
+
+                var sessionControlsWindow = 
+                    new SessionControlsWindow("Session Controls", aiService, sessionDispatcher);
+                var serverControlsWindow = 
+                    new ServerControlsWindow("Server Controls", aiService);
+                var artifactCreatorWindow = 
+                    new ArtifactCreatorWindow("Artfiact Creator", aiService);
+                var artifactTrainingWindow = 
+                    new ArtifactTrainingWindow("Artifact Trainer", aiService);
+
+                var gameStateScreenLabel = gameObject.AddComponent<GameStateScreenLabel>();
+                gameStateScreenLabel.Initialize(Config, session, aiController, recorder);
 
                 var enemyTrackerScreenLabel = gameObject.AddComponent<EnemyTrackerScreenLabel>();
                 enemyTrackerScreenLabel.Initialize(Config);
@@ -70,7 +79,8 @@ namespace AIPlugin
                 windowManager.Register(artifactCreatorWindow);
                 windowManager.Register(artifactTrainingWindow);
                 windowManager.Register(enemyTrackerScreenLabel);
-              
+                windowManager.Register(gameStateScreenLabel);
+
                 Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
                 Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
                 Harmony.CreateAndPatchAll(typeof(HeroController_LookForInput_Patch), null);
@@ -78,7 +88,7 @@ namespace AIPlugin
             }
             catch (Exception e)
             {
-                Log.LogError(e);
+                Log.LogError($"ERROR WHEN INITIALIZING PLUGIN: {e}");
                 return;
             }
 

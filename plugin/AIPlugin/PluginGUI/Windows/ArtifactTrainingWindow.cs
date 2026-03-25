@@ -1,32 +1,24 @@
 ﻿using AIPlugin.Networking;
 using AIPlugin.Networking.Requests;
 using AIPlugin.Utilities;
+using BepInEx;
+using HutongGames.PlayMaker.Actions;
+using InControl;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static AIPlugin.Networking.EventPayloads;
+using static AIPlugin.PluginGUI.CustomGUI;
 
 namespace AIPlugin.PluginGUI
 {
     public class ArtifactTrainingWindow : BaseWindow
     {
-        class ArtifactOption
-        {
-            public string BossName;
-            public string ArtifactName;
-
-            public ArtifactOption(string boss, string artifact)
-            {
-                BossName = boss;
-                ArtifactName = artifact;
-            }
-        }
         private class Form : IForm
         {
             public Vector2 Scroll = new Vector2();
-            public CustomGUI.DropdownState<string> BossDropdownState = new CustomGUI.DropdownState<string>();
-            public CustomGUI.DropdownState<ArtifactOption> ArtifactDropdownState = new CustomGUI.DropdownState<ArtifactOption>();
+            public (string BossName, string ArtifactName) artifactSelection = (null, null);
             public int NumEpochs = 1;
             public int BatchSize = 4;
             public float LearningRateExponent = -3.0f;
@@ -35,7 +27,8 @@ namespace AIPlugin.PluginGUI
 
             public bool IsValid()
             {
-                return ArtifactDropdownState.SelectedOption != null 
+                return !artifactSelection.BossName.IsNullOrWhiteSpace()
+                    && !artifactSelection.ArtifactName.IsNullOrWhiteSpace()
                     && NumEpochs > 0 
                     && BatchSize > 0;
             }
@@ -61,9 +54,8 @@ namespace AIPlugin.PluginGUI
         private Requests.StopBehavioralCloning _stopTrainingRequest = null;
         private Requests.FinalizeBehavioralCloning _finalizeTrainingRequest = null;
 
-        private readonly List<(string label, string value)> _bossDropdownElements;
-        private List<(string label, ArtifactOption)> _artifactDropdownElements = new List<(string label, ArtifactOption)>();
-
+        private ArtifactSelectionDropdowns _artifactSelectionDropdowns;
+        
         private TrainingEpoch _trainingInfo = null;
         private LinePlot _lossPlot;
         
@@ -72,60 +64,34 @@ namespace AIPlugin.PluginGUI
         {
             _service = service;
 
-            _artifactRequester = new Requests.GetArtifactsRefreshable(service.Gateway, () => new Requests.GetArtifacts(service.Gateway));
+            _artifactRequester = new Requests.GetArtifactsRefreshable(service.Gateway,
+                () => new Requests.GetArtifacts(service.Gateway));
+            _artifactRequester.OnError += HandleError;
+
+            _artifactSelectionDropdowns = new ArtifactSelectionDropdowns();
+
             _lossPlot = new LinePlot(450, 200, "Loss Of Epoch:");
 
             service.Gateway.Events.OnNewArtifactCreated += _artifactRequester.Send;
             service.OnConnected += _artifactRequester.Send;
             service.OnConnected += OnConnected;
 
-            _artifactRequester.OnNewResultReady += BuildArtifactDropdownElements;
-
-            var displayBossNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToList();
-            displayBossNames.Insert(0, "Any");
-
-            var internalBossNames = BossReferenceDatabase.All.Select(s => s.InternalName).ToList();
-            internalBossNames.Insert(0, "");
-
-            _bossDropdownElements = displayBossNames.Zip(internalBossNames, (a, b) => (a, b)).ToList();
+            _artifactRequester.OnSuccess += UpdateArtifactDropdowns;
+        }
+        private void UpdateArtifactDropdowns(Requests.GetArtifacts.Response response)
+        {
+            _artifactSelectionDropdowns.UpdateElements(response.BossArtifacts);
         }
         private void OnConnected()
         {
             _form = new Form();
             _currentContent = Content.TrainingForm;
         }
-        private void BuildArtifactDropdownElements()
+        private void HandleError(string error)
         {
-            var artifacts = _artifactRequester.Result.BossArtifacts;
-
-            if (_form.BossDropdownState.SelectedOption == "") //Any boss
-            {
-                _artifactDropdownElements = new List<(string label, ArtifactOption)>();
-                foreach (var pair in artifacts)
-                {
-                    var internalBossName = pair.Key;
-                    var artifactNames = pair.Value;
-
-                    foreach (var artifactName in artifactNames) 
-                    {
-                        _artifactDropdownElements.Add(($"{internalBossName}:    {artifactName}", new ArtifactOption(internalBossName, artifactName)));
-                    }
-                }
-            }
-            else
-            {
-                var bossName = _form.BossDropdownState.SelectedOption;
-                var anyArtifacts = artifacts.TryGetValue(bossName, out var artifactNames);
-
-                if (anyArtifacts && artifactNames.Count > 0)
-                {
-                    _artifactDropdownElements = artifactNames.Select(a => (a, new ArtifactOption(bossName, a))).ToList();
-                }
-                else
-                {
-                    _artifactDropdownElements = new List<(string label, ArtifactOption)>(); // Empty
-                }
-            }
+            _currentContent = Content.TrainingForm;
+            FinalizeTraining(false);
+            NotifyError(error);
         }
         public override bool CanEnable() => _service.IsConnected && _artifactRequester.AnyResponse();
         private bool CanStartTraining() => _form.IsValid() && (_startTrainingRequest?.Finished() ?? true);
@@ -163,8 +129,11 @@ namespace AIPlugin.PluginGUI
         {
             UI.Form(_form)
                .BeginScrollView(x => x.Scroll)
-               .Dropdown("Boss: ", _bossDropdownElements, x => x.BossDropdownState, BuildArtifactDropdownElements)
-               .Dropdown("Artifact: ", _artifactDropdownElements, x => x.ArtifactDropdownState)
+               .CustomAction(() => {
+                   _artifactSelectionDropdowns.Draw();
+
+                   _form.artifactSelection = _artifactSelectionDropdowns.SelectedOption;
+               })
                .IntegerField("Number of Epochs: ", x => x.NumEpochs, GUILayout.Width(120))
                .IntegerField("Batch Size: ", x => x.BatchSize, GUILayout.Width(120))
                .Toggle("Use GPU: ", x => x.UseGPU)
@@ -200,15 +169,21 @@ namespace AIPlugin.PluginGUI
 
                 int epochRange = _trainingInfo.EndEpoch - _trainingInfo.StartEpoch;
                 float percentage = 0.0f;
-                if (epochRange > 0) percentage = (float)_trainingInfo.CurrentEpoch / (float)epochRange;
+                if (epochRange > 0) 
+                    percentage = (float)(_trainingInfo.CurrentEpoch - _trainingInfo.StartEpoch) 
+                        / (float)epochRange;
 
-                CustomGUI.ProgressBar(percentage, $"{percentage * 100: 0.}%");
+                CustomGUI.ProgressBar(percentage, $"{percentage * 100: 0.0}%");
             }
 
             if(_stopTrainingRequest != null ) GUI.enabled = false;
 
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Stop Training", Styles.Button)) _stopTrainingRequest = new Requests.StopBehavioralCloning(_service.Gateway);
+            if (GUILayout.Button("Stop Training", Styles.Button))
+            {
+                _stopTrainingRequest = new Requests.StopBehavioralCloning(_service.Gateway);
+                _startTrainingRequest.OnError += HandleError;
+            }
             GUI.enabled = true;
         }
 
@@ -280,11 +255,7 @@ namespace AIPlugin.PluginGUI
                 GUILayout.Label("Finalization in progress. Please Wait");
                 return;
             }
-            GUILayout.Label("Training Finalized. Result:");
-            GUILayout.Label($"{_finalizeTrainingRequest.Log}");
-
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Go Back", Styles.Button)) _currentContent = Content.TrainingForm;
+            _currentContent = Content.TrainingForm;
         }
 
         private void FinalizeTraining(bool save)
@@ -294,6 +265,7 @@ namespace AIPlugin.PluginGUI
                 Save = save
             };
             _finalizeTrainingRequest = new Requests.FinalizeBehavioralCloning(_service.Gateway, payload);
+            _finalizeTrainingRequest.OnError += HandleError;
             _currentContent = Content.FinalizationResults;
         }
         private void OnTrainingEpoch(TrainingEpoch info)
@@ -328,8 +300,8 @@ namespace AIPlugin.PluginGUI
         {
             var payload = new Requests.StartBehavioralCloning.Payload()
             {
-                TargetBossName = _form.ArtifactDropdownState.SelectedOption.BossName,
-                ArtifactName = _form.ArtifactDropdownState.SelectedOption.ArtifactName,
+                TargetBossName = _form.artifactSelection.BossName,
+                ArtifactName = _form.artifactSelection.ArtifactName,
                 NumEpochs = _form.NumEpochs,
                 BatchSize = _form.BatchSize,
                 LearningRate = _form.LearningRate,
@@ -337,6 +309,8 @@ namespace AIPlugin.PluginGUI
             };
 
             _startTrainingRequest = new Requests.StartBehavioralCloning(_service.Gateway, payload);
+            _startTrainingRequest.OnError += HandleError;
+
             _stopTrainingRequest = null;
             _trainingInfo = null;
             _lossPlot.Clear();
