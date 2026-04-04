@@ -37,15 +37,15 @@ class Vocabulary:
             raise Exception("Dictionary is empty")
 
         word = f"{re.sub(self._instance_regex, '', parent_name)}|{name}|{state_name}"
-        output = self.dictionary[word]
+        output = self.dictionary.get(word)
 
         if output is None:
-            raise Exception(f"Word not found in vocabulary!: {word}")
+            self.__len__() - 1
 
         return output
 
     def __len__(self):
-        return len(self.dictionary)
+        return len(self.dictionary) + 1 #TODO take a look at the unknown work handling
 
     def to_dict(self):
         return self.dictionary

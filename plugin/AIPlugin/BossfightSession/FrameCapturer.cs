@@ -31,6 +31,7 @@ namespace AIPlugin.BossfightSession
         public void OnFightFinished(AttemptResult result)
         {
             _capturingActive = false;
+            CaptureFrame(result);
         }
 
         private void Update()
@@ -47,7 +48,7 @@ namespace AIPlugin.BossfightSession
             }
         }
 
-        private void CaptureFrame()
+        private void CaptureFrame(AttemptResult? result = null)
         {
             EnemyInstance boss = _enemyTracker?.GetTargetInstance() ?? null;
             List<EnemyInstance> enemies = _enemyTracker?.GetNonTargetInstances() ?? null;
@@ -63,7 +64,7 @@ namespace AIPlugin.BossfightSession
 
                 if (_prevFrame != null) 
                 {
-                    frame.Reward = RewardCalculator.Calculate(_prevFrame, frame);
+                    frame.Reward = RewardCalculator.Calculate(_prevFrame, frame, result);
                 }
 
                 NotifyFrameCaptured(frame);

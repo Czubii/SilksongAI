@@ -130,14 +130,18 @@ namespace AIPlugin.PluginGUI
 
             return this;
         }
-        public UIForm<T> HorizontalSlider(string label, float min, float max, float step, Expression<Func<T, float>> expr, params GUILayoutOption[] options)
+        public UIForm<T> HorizontalSlider(string label, float min, float max, float step, 
+            Expression<Func<T, float>> expr, 
+            params GUILayoutOption[] labelOptions)
         {
             var (get, set) = BindingCache<T>.Get(expr);
 
             var value = get(_model);
 
-            GUILayout.Label(label);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, labelOptions);
             value = GUILayout.HorizontalSlider(value, min, max, Styles.SliderTrack, Styles.SliderThumb);
+            GUILayout.EndHorizontal();
 
             if (step != 0.0f) value = Mathf.Ceil(value / step) * step;
 
@@ -145,13 +149,11 @@ namespace AIPlugin.PluginGUI
 
             return this;
         }
-        public UIForm<T> ParamListField(string label, Expression<Func<T, List<ServerParam>>> expr, params GUILayoutOption[] options)
+        public UIForm<T> ParamListField(Expression<Func<T, List<ServerParam>>> expr, params GUILayoutOption[] options)
         {
             var (get, set) = BindingCache<T>.Get(expr);
 
             var value = get(_model);
-
-            GUILayout.Label(label);
 
             for (int i = 0; i < value.Count; i++)
             {
@@ -162,9 +164,11 @@ namespace AIPlugin.PluginGUI
 
             return this;
         }
-        public UIForm<T> Label(string label)
+        public UIForm<T> Label(string label, GUIStyle style = null)
         {
-            GUILayout.Label(label);
+            if (style == null) style = GUI.skin.label;
+
+            GUILayout.Label(label, style);
             return this;
         }
         public UIForm<T> Space(float pixels)
@@ -172,6 +176,18 @@ namespace AIPlugin.PluginGUI
             GUILayout.Space(pixels);
             return this;
         }
+        public UIForm<T> BeginCard(string cardLabel, GUIStyle style)
+        {
+            GUILayout.BeginVertical(style);
+            GUILayout.Label(cardLabel, Styles.HeaderLabel);
+            return this;    
+        }
+        public UIForm<T> EndCard()
+        {
+            GUILayout.EndVertical();
+            return this;
+        }
+
         public UIForm<T> BeginScrollView(Expression<Func<T, Vector2>> expr)
         {
             var (get, set) = BindingCache<T>.Get(expr);
@@ -197,11 +213,10 @@ namespace AIPlugin.PluginGUI
         }
         public UIForm<T> Button(string label, Action OnPress, bool enabled = true)
         {
-            var prevEnabled = GUI.enabled;
-            GUI.enabled = enabled;
+            GUI.enabled = enabled && GUI.enabled;
             if(GUILayout.Button(label, Styles.Button))
                 OnPress();
-            GUI.enabled = prevEnabled;
+            GUI.enabled = true;
             return this;
         }
         public UIForm<T> GUIEnabled(bool enabled)

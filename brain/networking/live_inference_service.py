@@ -1,18 +1,17 @@
+from typing import Optional
 import torch
-from torch import softmax
-
-from ai.models import Artifact, artifact_exists, ArtifactFactory, get_artifact_path
+from ai.models import Artifact, artifact_exists, ArtifactFactory, generate_artifact_path
 from data_processing import LiveInferenceFrame
 
 
-class AIClientSession:
+class LiveInferenceService:
     """
     Wraps the live inference process for single client
     """
     def __init__(self):
-        self._selected_boss_name = ""
-        self._selected_model_name = ""
-        self._artifact: Artifact = None
+        self._selected_boss_name: Optional[str] = None
+        self._selected_model_name: Optional[str] = None
+        self._artifact: Optional[Artifact] = None
 
         self._cont_buffer = torch.tensor([])
         self._bool_buffer = torch.tensor([])
@@ -20,16 +19,18 @@ class AIClientSession:
         self._buffer_filled = False
         self._live_frame_buffer = None
 
-    def select_model(self, boss_name: str, model_name: str, load_artifact: bool = True):
+    def select_artifact(self, boss_name: str, model_name: str) -> bool:
 
-        self._artifact: Artifact = None
+        self._artifact = None
 
         if not artifact_exists(boss_name, model_name):
-            self._selected_boss_name = ""
-            self._selected_model_name = ""
-            return
+            self._selected_boss_name = None
+            self._selected_model_name = None
+            raise Exception(f"Artifact does not exist: {boss_name}: {model_name}")
+            return False
+
         print(f"Selected model: {self._selected_boss_name}-{self._selected_model_name}")
-        self._artifact = ArtifactFactory.from_file(get_artifact_path(boss_name, model_name))  # TODO add separate button for loading or load when starting session
+        self._artifact = ArtifactFactory.from_file(generate_artifact_path(boss_name, model_name))  # TODO add separate button for loading or load when starting session
 
         self._selected_model_name = model_name
         self._selected_boss_name = boss_name
@@ -42,9 +43,10 @@ class AIClientSession:
         self._named_state_buffer = torch.zeros([model.time_window, model.base_dimensions.input_named_state], dtype=torch.long)
         self._buffer_filled = False
         self._live_frame_buffer = None
+        return True
 
 
-    def get_selected_model(self):
+    def get_selected_artifact(self):
         return [self._selected_boss_name, self._selected_model_name]
 
     def _update_buffer(self, cont_tensor, bool_tensor, named_state_tensor):
@@ -96,7 +98,16 @@ class AIClientSession:
         prediction_boolean_batch = prediction_boolean_batch.squeeze(0)
 
         bool_probabilities = torch.sigmoid(prediction_boolean_batch)
-        bool_values = (bool_probabilities > 0.05).tolist()
+
+        thresholds = torch.tensor(
+            self._artifact.boolean_thresholds,
+            dtype=bool_probabilities.dtype,
+            device=bool_probabilities.device
+        )
+
+        bool_values = (bool_probabilities > thresholds).tolist()
+
         cont_values = prediction_continuous_batch.tolist()
         payload = cont_values + bool_values
+
         return payload

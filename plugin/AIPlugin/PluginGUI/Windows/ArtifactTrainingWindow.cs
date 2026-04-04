@@ -1,5 +1,6 @@
 ﻿using AIPlugin.Networking;
 using AIPlugin.Networking.Requests;
+using AIPlugin.PluginGUI.Windows;
 using AIPlugin.Utilities;
 using BepInEx;
 using HutongGames.PlayMaker.Actions;
@@ -18,7 +19,6 @@ namespace AIPlugin.PluginGUI
         private class Form : IForm
         {
             public Vector2 Scroll = new Vector2();
-            public (string BossName, string ArtifactName) artifactSelection = (null, null);
             public int NumEpochs = 1;
             public int BatchSize = 4;
             public float LearningRateExponent = -3.0f;
@@ -27,10 +27,7 @@ namespace AIPlugin.PluginGUI
 
             public bool IsValid()
             {
-                return !artifactSelection.BossName.IsNullOrWhiteSpace()
-                    && !artifactSelection.ArtifactName.IsNullOrWhiteSpace()
-                    && NumEpochs > 0 
-                    && BatchSize > 0;
+                return NumEpochs > 0 && BatchSize > 0;
             }
         }
 
@@ -49,38 +46,26 @@ namespace AIPlugin.PluginGUI
 
         private AiService _service;
 
-        private Requests.GetArtifactsRefreshable _artifactRequester;
         private Requests.StartBehavioralCloning _startTrainingRequest = null;
         private Requests.StopBehavioralCloning _stopTrainingRequest = null;
         private Requests.FinalizeBehavioralCloning _finalizeTrainingRequest = null;
 
-        private ArtifactSelectionDropdowns _artifactSelectionDropdowns;
-        
+        private ArtifactSelection _artifactSelection;
+        private Requests.GetArtifacts.Response.Artifact _traindedArtifact;
+
         private TrainingEpoch _trainingInfo = null;
         private LinePlot _lossPlot;
         
-        public ArtifactTrainingWindow(string name, AiService service) :
-            base(name, new Rect(100, 300, 500, 500))
+        public ArtifactTrainingWindow(string name, ArtifactSelection artifactSelection, AiService service) :
+            base(name, new Rect(100, 300, 500, 550))
         {
             _service = service;
-
-            _artifactRequester = new Requests.GetArtifactsRefreshable(service.Gateway,
-                () => new Requests.GetArtifacts(service.Gateway));
-            _artifactRequester.OnError += HandleError;
-
-            _artifactSelectionDropdowns = new ArtifactSelectionDropdowns();
+            _artifactSelection = artifactSelection;
 
             _lossPlot = new LinePlot(450, 200, "Loss Of Epoch:");
 
-            service.Gateway.Events.OnNewArtifactCreated += _artifactRequester.Send;
-            service.OnConnected += _artifactRequester.Send;
             service.OnConnected += OnConnected;
 
-            _artifactRequester.OnSuccess += UpdateArtifactDropdowns;
-        }
-        private void UpdateArtifactDropdowns(Requests.GetArtifacts.Response response)
-        {
-            _artifactSelectionDropdowns.UpdateElements(response.BossArtifacts);
         }
         private void OnConnected()
         {
@@ -93,7 +78,7 @@ namespace AIPlugin.PluginGUI
             FinalizeTraining(false);
             NotifyError(error);
         }
-        public override bool CanEnable() => _service.IsConnected && _artifactRequester.AnyResponse();
+        public override bool CanEnable() => _service.IsConnected;
         private bool CanStartTraining() => _form.IsValid() && (_startTrainingRequest?.Finished() ?? true);
         public override void DrawContent()
         {
@@ -128,17 +113,18 @@ namespace AIPlugin.PluginGUI
         private void DrawTrainingForm()
         {
             UI.Form(_form)
-               .BeginScrollView(x => x.Scroll)
                .CustomAction(() => {
-                   _artifactSelectionDropdowns.Draw();
-
-                   _form.artifactSelection = _artifactSelectionDropdowns.SelectedOption;
+                    ArtifactSelectionCard(_artifactSelection);
                })
+               .GUIEnabled(_artifactSelection.AnySelected)
+
+               .BeginCard("Training Settings: ", Styles.Card)
                .IntegerField("Number of Epochs: ", x => x.NumEpochs, GUILayout.Width(120))
                .IntegerField("Batch Size: ", x => x.BatchSize, GUILayout.Width(120))
                .Toggle("Use GPU: ", x => x.UseGPU)
                .HorizontalSlider($"Learning Rate: {_form.LearningRate.ToString("G2")}", -10f, 0f, 0.1f, x => x.LearningRateExponent)
-               .EndScrollView()
+               .EndCard()
+
                .FlexibleSpace()
                .GUIEnabled(CanStartTraining())
                .Button("Start Training", StartTraining)
@@ -147,9 +133,12 @@ namespace AIPlugin.PluginGUI
 
         private void DrawTrainingProgress()
         {
+            ArtifactCard(_traindedArtifact);
+
+            GUILayout.BeginVertical(Styles.Card);
+            GUILayout.Label($"Training: ", Styles.HeaderLabel);
             if (_trainingInfo == null)
             {
-                GUILayout.Label($"Awaiting Data: ");
                 GUILayout.Label($"Epoch: ?/?");
                 GUILayout.Label($"Training Dataset loss: ?");
                 GUILayout.Label($"Testing Dataset loss: ?");
@@ -160,7 +149,6 @@ namespace AIPlugin.PluginGUI
             }
             else
             {
-                GUILayout.Label($"Training: ");
                 GUILayout.Label($"Epoch: {_trainingInfo.CurrentEpoch}/{_trainingInfo.EndEpoch}");
                 GUILayout.Label($"Training Dataset loss: {_trainingInfo.TrainingLoss}");
                 GUILayout.Label($"Testing Dataset loss: {_trainingInfo.TestingLoss}");
@@ -176,6 +164,8 @@ namespace AIPlugin.PluginGUI
                 CustomGUI.ProgressBar(percentage, $"{percentage * 100: 0.0}%");
             }
 
+            GUILayout.EndVertical();
+
             if(_stopTrainingRequest != null ) GUI.enabled = false;
 
             GUILayout.FlexibleSpace();
@@ -189,7 +179,7 @@ namespace AIPlugin.PluginGUI
 
         private void DrawAwaitingTraining()
         {
-
+            ArtifactCard(_traindedArtifact);
             if (_startTrainingRequest == null)
             {
                 _currentContent = Content.TrainingForm;
@@ -223,21 +213,27 @@ namespace AIPlugin.PluginGUI
 
         private void DrawTrainingResults()
         {
+            ArtifactCard(_traindedArtifact);
+
+            GUILayout.BeginVertical(Styles.Card);
+            GUILayout.Label($"Training Results: ", Styles.HeaderLabel);
+
             if (_trainingInfo == null)
             {
-                GUILayout.Label($"Training Concluded. Results: ");
                 GUILayout.Label($"Total Epochs: ?");
                 GUILayout.Label($"Training Dataset loss: ?");
                 GUILayout.Label($"Testing Dataset loss: ?");
             }
             else
             {
-                GUILayout.Label($"Training Concluded. Results: ");
                 GUILayout.Label($"Total Epochs: {_trainingInfo.CurrentEpoch}");
                 GUILayout.Label($"Training Dataset loss: {_trainingInfo.TrainingLoss}");
                 GUILayout.Label($"Testing Dataset loss: {_trainingInfo.TestingLoss}");
             }
+
             _lossPlot.Draw();
+
+            GUILayout.EndVertical();
 
             GUILayout.FlexibleSpace();
             GUILayout.BeginHorizontal();
@@ -250,6 +246,7 @@ namespace AIPlugin.PluginGUI
 
         private void DrawFinalizeTrainingResults()
         {
+            ArtifactCard(_traindedArtifact);
             if (!_finalizeTrainingRequest.Finished())
             {
                 GUILayout.Label("Finalization in progress. Please Wait");
@@ -298,10 +295,11 @@ namespace AIPlugin.PluginGUI
         }
         private void StartTraining()
         {
+            _traindedArtifact = _artifactSelection.Artifact;
             var payload = new Requests.StartBehavioralCloning.Payload()
             {
-                TargetBossName = _form.artifactSelection.BossName,
-                ArtifactName = _form.artifactSelection.ArtifactName,
+                TargetBossName = _artifactSelection.Artifact.BossName,
+                ArtifactName = _artifactSelection.Artifact.Name,
                 NumEpochs = _form.NumEpochs,
                 BatchSize = _form.BatchSize,
                 LearningRate = _form.LearningRate,

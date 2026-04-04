@@ -65,20 +65,24 @@ namespace AIPlugin.BossfightSession
         {
             if(!enabled) return;
 
-            if (_inferenceRequest == null)
+            if (_inferenceRequest?.Finished() ?? true)
             {
                 _inferenceRequest = new Requests.LiveInference(_service.Gateway,
                     InferenceFrame.FromRecordingFrameData(frame));
-                _inferenceRequest.OnSuccess += ApplyAIControll;
+                _inferenceRequest.OnSuccess += OnInferenceResponse;
             }
             else
             {
                 AIPlugin.Log.LogWarning($"AiBossfightController: Obtaining server AI response took longer than expected");
             }
         }
+        private void OnInferenceResponse(FrameUserInputs inputs)
+        {
+            ApplyAIControll(inputs);
+        }
         private void ApplyAIControll(FrameUserInputs inputs)
         {
-                AIInputState.Inputs = inputs; 
+            AIInputState.Inputs = inputs;
         }
     }
 

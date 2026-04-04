@@ -1,12 +1,8 @@
 import bisect
 import itertools
 from pathlib import Path
-from pprint import pprint
-
 import torch
 from torch.utils.data import Dataset
-
-from ai.models import get_artifact_training_dataset_path
 from data_processing.layout import SUPPORTED_LAYOUT_VERSION, LayoutNotSupported
 
 class BossFightDataset(Dataset):
@@ -27,6 +23,8 @@ class BossFightDataset(Dataset):
         self.output_boolean = data["output_boolean"]
 
         self.frame_counts = data["frame_counts"]
+
+        self.returns = data["returns"]
 
         self.output_boolean_counts_pos = data["output_boolean_counts_pos"]
         self.output_boolean_counts_neg = data["output_boolean_counts_neg"]
@@ -57,13 +55,5 @@ class BossFightDataset(Dataset):
             "input_named_state": self.input_named_state[start_global_idx:end_global_idx+1],
             "output_continuous": self.output_continuous[end_global_idx],
             "output_boolean": self.output_boolean[end_global_idx],
+            "returns": self.returns[end_global_idx],
         }
-
-# if __name__ == "__main__":
-#     d = BossFightDataset(get_artifact_training_dataset_path("Lace Boss1", "temp"), 5)
-#
-#     pprint(d[0]["input_named_state"])
-#     pprint(d[1]["input_named_state"])
-#     pprint(d[2]["input_named_state"])
-#     pprint(d[3]["input_named_state"])
-#     pprint(d[4]["input_named_state"])

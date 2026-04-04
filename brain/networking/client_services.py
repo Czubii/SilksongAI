@@ -3,11 +3,14 @@ import threading
 import traceback
 from abc import abstractmethod, ABC
 from asyncio import Task
+from pathlib import Path
 from typing import Optional, TypeVar
 import msgpack
 from jedi.inference.arguments import TreeArguments
 
 from ai.behavioral_cloning.trainer import BehaviorCloningTrainer
+from networking.live_inference_service import LiveInferenceService
+
 
 class ClientConnection:
     def __init__(self, writer):
@@ -84,12 +87,11 @@ class BehavioralCloningTask(ClientTask):
 
         return True, ""
 
-    def save_results(self):
-        #TODO saving
+    def save_results(self, path: Path):
+        self.trainer.model_artifact.save(path)
         self.results_handled = True
 
     def discard_results(self):
-        #TODO saving
         self.results_handled = True
 
     def _on_start(self, trainer, num_epochs):
@@ -123,6 +125,7 @@ T = TypeVar("T", bound="ClientTask")
 class ClientServices:
     def __init__(self, client: ClientConnection):
         self.client = client
+        self.live_inference_service = LiveInferenceService()
         self._tasks: dict[type[ClientTask], ClientTask] = {}
         self._initialize_tasks()
 

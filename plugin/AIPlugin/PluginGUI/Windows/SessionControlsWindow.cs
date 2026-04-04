@@ -1,6 +1,7 @@
 ﻿using AIPlugin.BossfightSession;
 using AIPlugin.Networking;
 using AIPlugin.Networking.Requests;
+using AIPlugin.PluginGUI.Windows;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -32,123 +33,73 @@ namespace AIPlugin.PluginGUI
 
         private SessionForm _sessionForm = new SessionForm();
 
-        private bool _aiEnabled = false;
-
         private SessionDispatcher _dispatcher;
-
-        private AiService _service;
-
-        private Requests.GetArtifactsRefreshable _artifactRequester;
-        private Requests.SetInferenceArtifact _artifactSetter = null;
 
         private readonly List<(string, BossMetadata)> _bossDropdownElements;
 
-        private CustomGUI.ArtifactSelectionDropdowns _aiModeArtifactSelection;
+        private ArtifactSelection _artifactSelection;
 
         public SessionControlsWindow(
             string name, 
-            AiService service,
+            ArtifactSelection artifactSelection,
             SessionDispatcher dispatcher): 
-            base(name, new Rect(100, 100, 300, 400))
+            base(name, new Rect(100, 100, 350, 500))
         {
+            _artifactSelection = artifactSelection; 
             _dispatcher = dispatcher;
-            _service = service;
             var bossDisplayNames = BossReferenceDatabase.All.Select(s => s.DisplayName).ToList();
 
-            _artifactRequester = new Requests.GetArtifactsRefreshable(service.Gateway,
-                () => new Requests.GetArtifacts(service.Gateway));
-
-            service.Gateway.Events.OnNewArtifactCreated += _artifactRequester.Send;
-            service.OnConnected += _artifactRequester.Send;
-            _artifactRequester.OnSuccess += OnArtifactResults;
-
             _bossDropdownElements = bossDisplayNames.Zip(BossReferenceDatabase.All.ToList(), (a, b) => (a, b)).ToList();
-            _aiModeArtifactSelection = new CustomGUI.ArtifactSelectionDropdowns();
         }
-        private void OnArtifactResults(Requests.GetArtifacts.Response artifacts)
-        {
-            _aiModeArtifactSelection.UpdateElements(artifacts.BossArtifacts);
-        }
+
         public override bool CanEnable() => true;
         public override void DrawContent()
         {
-            GUI.enabled = _service.IsConnected;
-            if (!_service.IsConnected) _aiEnabled = false;
-            _aiEnabled = LabeledToggle(_aiEnabled, "Use AI");
-            GUI.enabled = true;
-
-            if (!_aiEnabled) DrawSessionForm();
-            else DrawAiSessionForm();
-        }
-        public void DrawSessionForm()
-        {
             UI.Form(_sessionForm)
-                .BeginScrollView(x => x.Scroll)
-                .Dropdown("Boss", _bossDropdownElements, x => x.BossDropdownState)
-                .IntegerField("Number of Fights: ", x => x.NumFights, GUILayout.Width(120))
-                .Toggle("Recording Enabled:", x => x.RecordingEnabled)
-                .Toggle("Keep Crest and Tools:", x => x.KeepTools)
-                .Toggle("Keep Abilities and Health:", x => x.KeepAbilities)
-                .EndScrollView()
-                .FlexibleSpace()
-                .Button("Start Session", StartSession, CanStart())
-                .Button("Stop Session", StopSession, CanStop())
-                .End();
-        }
-        public void DrawAiSessionForm()
-        {
-            UI.Form(_sessionForm)
-                .BeginScrollView(x => x.Scroll)
-                .CustomAction(_aiModeArtifactSelection.Draw)
-                .Space(10)
-                .Button("Apply", () => {
-                    var selection = _aiModeArtifactSelection.SelectedOption;
-                    var payload = new Requests.SetInferenceArtifact.Payload()
-                    {
-                        ArtifactName = selection.ArtifactName,
-                        TargetBossName = selection.BossName
-                    };
+               .BeginScrollView(x => x.Scroll)
 
-                    _artifactSetter = new Requests.SetInferenceArtifact(_service.Gateway, payload);
-                    _artifactSetter.OnError += NotifyError;
+               .GUIEnabled(!_dispatcher.IsSessionActive())
+               .BeginCard("Session Settings: ", Styles.Card)
+               .IntegerField("Number of Fights: ", x => x.NumFights, GUILayout.Width(120))
+               .Toggle("Recording Enabled:", x => x.RecordingEnabled)
+               .Toggle("Keep Crest and Tools:", x => x.KeepTools)
+               .Toggle("Keep Abilities and Health:", x => x.KeepAbilities)
+               .EndCard()
 
-                }, _artifactSetter?.Finished() ?? true &&
-                   _aiModeArtifactSelection.SelectionValid())
-                .Space(30)
-                .IntegerField("Number of Fights: ", x => x.NumFights, GUILayout.Width(120))
-                .Toggle("Recording Enabled:", x => x.RecordingEnabled)
-                .Toggle("Keep Crest and Tools:", x => x.KeepTools)
-                .Toggle("Keep Abilities and Health:", x => x.KeepAbilities)
-                .EndScrollView()
-                .FlexibleSpace()
-                .Button("Start Session", StartAiSession, CanStartAi())
-                .Button("Stop Session", StopSession, CanStop())
-                .End();
+               .EndScrollView()
+
+               .BeginCard("Session: ", Styles.Card)
+               .Dropdown("Boss", _bossDropdownElements, x => x.BossDropdownState)
+               .Button("Start", StartSession, CanStart())
+               .EndCard()
+
+               .BeginCard("AI Session: ", Styles.Card)
+               .CustomAction(() => {
+                   ArtifactSelectionCard(_artifactSelection);
+               })
+               .Button("Start", StartAiSession, CanStartAi())
+               .EndCard()
+
+               .GUIEnabled(true)
+               .Button("Stop Session", StopSession, CanStop())
+               .End();
         }
         private bool CanStart() => _dispatcher.CanStartSession() && _sessionForm.IsValid();
+        private bool CanStartAi() => _dispatcher.CanStartAiSession() && _sessionForm.IsValid();
         private void StartSession()
         {
             var settings = new SessionContext.SessionSettings(_sessionForm.KeepAbilities, _sessionForm.KeepTools);
             //TODO add this functionality finally
 
             var boss = _sessionForm.BossDropdownState.SelectedOption;
-            _dispatcher.StartSessionLocaly(_sessionForm.NumFights, boss, settings, _sessionForm.RecordingEnabled);
-        }
-        private bool CanStartAi()
-        {
-            var GUIArtifactSelection = _aiModeArtifactSelection.SelectedOption;
-            return _dispatcher.CanStartAiSession()
-                && _sessionForm.IsValid()
-                && _dispatcher.SelectedArtifact != null
-                && _dispatcher.SelectedArtifact.Value.ArtifactName == GUIArtifactSelection.ArtifactName
-                && _dispatcher.SelectedArtifact.Value.BossName == GUIArtifactSelection.BossName;
+            _dispatcher.StartSession(_sessionForm.NumFights, boss, settings, _sessionForm.RecordingEnabled);
         }
         private void StartAiSession()
         {
             var settings = new SessionContext.SessionSettings(_sessionForm.KeepAbilities, _sessionForm.KeepTools);
             //TODO add this functionality finally
 
-            _dispatcher.StartAiSessionLocaly(_sessionForm.NumFights, settings, _sessionForm.RecordingEnabled);        
+            _dispatcher.StartAiSession(_sessionForm.NumFights, settings, _sessionForm.RecordingEnabled, NotifyError);        
         }
         private bool CanStop() => _dispatcher.IsSessionActive();
         private void StopSession()

@@ -74,7 +74,7 @@ namespace AIPlugin
                 PosY = hero.transform.position.y,
                 RelPosX = hero.transform.position.x - targetEnemy.GameObject.transform.position.x,
                 RelPosY = hero.transform.position.y - targetEnemy.GameObject.transform.position.y,
-                InvDistX = 1.0f / (Mathf.Abs(hero.transform.position.x - targetEnemy.GameObject.transform.position.y) + 0.1f),
+                InvDistX = 1.0f / (Mathf.Abs(hero.transform.position.x - targetEnemy.GameObject.transform.position.x) + 0.1f),
                 InvDistY = 1.0f / (Mathf.Abs(hero.transform.position.y - targetEnemy.GameObject.transform.position.y) + 0.1f),
                 HP = hero.playerData.health,
                 Silk = hero.playerData.silk,
@@ -92,10 +92,10 @@ namespace AIPlugin
 
             return output;
         }
-
         public static FrameUserInputs GetInputs()
         {
             var IH = InputHandler.Instance; // This one is always in game so it should not cause any trouble accessing it this way
+
             FrameUserInputs controls = new FrameUserInputs()
             {
                 Jump = IH.inputActions.Jump,

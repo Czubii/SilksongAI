@@ -7,6 +7,8 @@ from pathlib import Path
 import torch
 
 from ai.models.model_artifact import ArtifactFactory
+from ai.models.path_manager import generate_artifact_root_path, generate_artifact_dataset_folder_path, \
+    generate_artifact_path, generate_artifact_test_dataset_path, generate_artifact_training_dataset_path
 from shared import load_config
 from data_processing import SUPPORTED_LAYOUT_VERSION, RecordingQualityFilter, ChooseNBest, ChoosePercentBest
 
@@ -21,7 +23,7 @@ class ArtifactPaths:
     testing_dataset: Path
     training_dataset: Path
 
-def get_available_artifacts() -> defaultdict[str, list[str]]:
+def get_available_artifacts_names() -> defaultdict[str, list[str]]:
     output = defaultdict(list[str])
     for (dirpath, _, filenames) in os.walk(config.model_artifact_dir):
         if contains(filenames, "artifact.pt"):
@@ -34,17 +36,50 @@ def get_available_artifacts() -> defaultdict[str, list[str]]:
 
     return output
 
-def get_artifact_paths(target_boss_name: str, artifact_name: str) -> ArtifactPaths:
+def get_artifact_info(target_boss_name: str, artifact_name: str) -> dict:
+    paths = get_existing_artifact_paths(target_boss_name, artifact_name)
+    artifact_path = paths.artifact
+
+    if not os.path.exists(artifact_path) or os.path.isdir(artifact_path):
+        raise Exception(f"File does not exist: {artifact_path}")
+
+    data = torch.load(artifact_path, weights_only=False)
+    if data["layout_version"] != SUPPORTED_LAYOUT_VERSION:
+        raise Exception(f"Layout version mismatch (supported: {SUPPORTED_LAYOUT_VERSION}, "
+                        f"in artifact: {data['layout_version']})")
+
+    model_config = data["model_config"]
+
+    boss_name = data["boss_name"]
+    artifact_name = data["name"]
+    metadata = data["metadata"]
+    behavioral_cloning = metadata["behavioral_cloning"]
+
+    config = {
+        "architecture_name": model_config["architecture_name"]
+    }
+
+    return {
+        "architecture_name": model_config["architecture_name"],
+        "artifact_name": artifact_name,
+        "target_boss_name": boss_name,
+        "boolean_thresholds": data["boolean_thresholds"].tolist(),
+        "creation_date": metadata["created"],
+        "current_epoch": behavioral_cloning["total_epochs"],
+        "loss_history": behavioral_cloning["losses"],
+    }   
+
+def get_existing_artifact_paths(target_boss_name: str, artifact_name: str) -> ArtifactPaths:
     if not artifact_exists(target_boss_name, artifact_name):
         raise ValueError(f"Artifact {target_boss_name}: {artifact_name} does not exist")
     return ArtifactPaths(
-        artifact=get_artifact_path(target_boss_name, artifact_name),
-        testing_dataset=get_artifact_test_dataset_path(target_boss_name, artifact_name),
-        training_dataset=get_artifact_training_dataset_path(target_boss_name, artifact_name),
+        artifact=generate_artifact_path(target_boss_name, artifact_name),
+        testing_dataset=generate_artifact_test_dataset_path(target_boss_name, artifact_name),
+        training_dataset=generate_artifact_training_dataset_path(target_boss_name, artifact_name),
     )
 
 def artifact_exists(target_boss_name: str, artifact_name: str) -> bool:
-    artifacts = get_available_artifacts()
+    artifacts = get_available_artifacts_names()
     return artifact_name in artifacts[target_boss_name]
 
 def artifact_dir_exists (target_boss_name: str, artifact_name: str) -> bool:
@@ -54,21 +89,6 @@ def delete_artifact(target_boss_name: str, artifact_name: str):
     if artifact_dir_exists(target_boss_name, artifact_name):
         shutil.rmtree(os.path.join(config.model_artifact_dir, target_boss_name, artifact_name))
 
-def get_artifact_root_path(target_boss_name: str, artifact_name: str) -> Path:
-    return Path(os.path.join(config.model_artifact_dir, target_boss_name, artifact_name))
-
-def get_artifact_path(target_boss_name: str, artifact_name: str) -> Path:
-    return Path(os.path.join(get_artifact_root_path(target_boss_name, artifact_name), "artifact.pt"))
-
-def get_artifact_dataset_path(target_boss_name: str, artifact_name: str) -> Path:
-    return Path(os.path.join(get_artifact_root_path(target_boss_name, artifact_name), "dataset"))
-
-def get_artifact_test_dataset_path(target_boss_name: str, artifact_name: str) -> Path:
-    return Path(os.path.join(get_artifact_root_path(target_boss_name, artifact_name), "dataset", "testing_data.pt"))
-
-def get_artifact_training_dataset_path(target_boss_name: str, artifact_name: str) -> Path:
-    return Path(os.path.join(get_artifact_root_path(target_boss_name, artifact_name), "dataset", "training_data.pt"))
-
 def prepare_dataset_and_artifact(target_boss_name: str,
                                  artifact_name: str,
                                  filters: RecordingFilters,
@@ -77,7 +97,7 @@ def prepare_dataset_and_artifact(target_boss_name: str,
                                  architecture_name ="ExemplaryNet",
                                  **kwargs) -> None:
 
-    output_root = get_artifact_root_path(target_boss_name, artifact_name)
+    output_root = generate_artifact_root_path(target_boss_name, artifact_name)
     if output_root.exists() and not overwrite:
         raise ValueError(f"Artifact with name \"{artifact_name}\" for boss \"{target_boss_name}\" already exists. Set overwrite=True to overwrite.")
     elif output_root.exists():
@@ -91,13 +111,21 @@ def prepare_dataset_and_artifact(target_boss_name: str,
 
     pp = RecordingProcessor(recording_path, target_boss_name, filters)
 
-    dataset_path = get_artifact_dataset_path(target_boss_name, artifact_name)
+    dataset_path = generate_artifact_dataset_folder_path(target_boss_name, artifact_name)
     os.mkdir(dataset_path)
 
     pp.process_and_save(dataset_path, testing_percent=testing_percent)
 
-    artifact = ArtifactFactory.from_dataset(dataset_path, architecture_name, **kwargs)
-    artifact.save(get_artifact_path(target_boss_name, artifact_name))
+    training_path = generate_artifact_training_dataset_path(target_boss_name, artifact_name)
+    testing_path = generate_artifact_test_dataset_path(target_boss_name, artifact_name)
+
+    artifact = ArtifactFactory.new_from_dataset(training_path,
+                                                testing_path,
+                                                target_boss_name,
+                                                artifact_name,
+                                                architecture_name, **kwargs)
+
+    artifact.save(generate_artifact_path(target_boss_name, artifact_name))
 
 if __name__ == '__main__':
     filters = RecordingFilters()

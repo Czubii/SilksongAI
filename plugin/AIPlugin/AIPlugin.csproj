@@ -179,6 +179,7 @@
     <Compile Include="PluginGUI\Plot.cs" />
     <Compile Include="PluginGUI\UIForm.cs" />
     <Compile Include="PluginGUI\Windows\ArtifactCreatorWindow.cs" />
+    <Compile Include="PluginGUI\Windows\ArtifactManager.cs" />
     <Compile Include="PluginGUI\Windows\ArtifactTrainingWindow.cs" />
     <Compile Include="PluginGUI\CursorManager.cs" />
     <Compile Include="PluginGUI\ScreenLabels\EnemyTrackerScreenLabel.cs" />

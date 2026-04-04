@@ -92,7 +92,8 @@ class RecordingProcessor:
     def process_and_save(self,
                          output_dir: Path,
                          testing_count: Optional[int] = None,
-                         testing_percent: Optional[float] = None) -> None:
+                         testing_percent: Optional[float] = None,
+                         returns_gamma = 0.99) -> None:
         """
         :param output_dir: self-explanatory
         :param testing_percent: number of recordings used for testing
@@ -119,6 +120,8 @@ class RecordingProcessor:
         target_cont_list = np.zeros([total_frames, self._dims.output_continuous], dtype=np.float32)
         target_bool_list = np.zeros([total_frames, self._dims.output_boolean], dtype=np.float32)
 
+        frame_rewards = np.zeros([total_frames])
+
         prev_id = -1
         for i, (frame, recording_info) in enumerate(self._data_reader.frames()):
             current_id = recording_info.get("recording_id")
@@ -133,6 +136,8 @@ class RecordingProcessor:
             target_cont_list[i, :] = frame.Targets.get_all_continuous()
             target_bool_list[i, :] = frame.Targets.get_all_booleans()
 
+            frame_rewards[i] = frame.Reward
+
         target_bool = np.array(target_bool_list, dtype=bool)
 
         testing_bool = target_bool[:testing_frame_count]
@@ -144,10 +149,27 @@ class RecordingProcessor:
         testing_bool_counts_neg = np.sum(~testing_bool, axis=0, dtype=np.int32)
         training_bool_counts_neg = np.sum(~training_bool, axis=0, dtype=np.int32)
 
+        returns = np.zeros_like(frame_rewards, dtype=np.float32)
+        offset = 0
+        for length in frame_counts:
+            start = offset
+            acc = 0.0
+            for k in range(length - 1, -1, -1):
+                idx = start + k
+                r = frame_rewards[idx]
+                acc = r + returns_gamma * acc
+                returns[idx] = acc
+            offset += length
+
+        returns = (returns - returns.mean()) / (returns.std() + 1e-8)
+
         data_test = {
             "layout_version": SUPPORTED_LAYOUT_VERSION,
             "target_boss": self._target_boss,
             "frame_counts": frame_counts[:testing_count],
+
+            "frame_rewards": frame_rewards[:testing_frame_count],
+            "returns":  returns[:testing_frame_count],
 
             "input_continuous": torch.tensor(cont_list[:testing_frame_count]),
             "input_boolean": torch.tensor(bool_list[:testing_frame_count]),
@@ -168,6 +190,9 @@ class RecordingProcessor:
             "layout_version": SUPPORTED_LAYOUT_VERSION,
             "target_boss": self._target_boss,
             "frame_counts": frame_counts[testing_count:],
+
+            "frame_rewards": frame_rewards[testing_frame_count:],
+            "returns": returns[testing_frame_count:],
 
             "input_continuous": torch.tensor(cont_list[testing_frame_count:]),
             "input_boolean": torch.tensor(bool_list[testing_frame_count:]),

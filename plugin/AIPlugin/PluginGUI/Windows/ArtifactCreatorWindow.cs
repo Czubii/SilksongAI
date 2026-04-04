@@ -66,7 +66,7 @@ namespace AIPlugin.PluginGUI
         private readonly List<(string, string)> _bossesDropdownElements;
 
         public ArtifactCreatorWindow(string name, AiService service):
-            base(name, new Rect(100, 300, 250, 500))
+            base(name, new Rect(100, 300, 350, 500))
         {
             _service = service;
 
@@ -116,17 +116,21 @@ namespace AIPlugin.PluginGUI
                     () => InitializeArchitectureParams(architectures))
 
                 .Dropdown("Boss", _bossesDropdownElements, x => x.BossDropdownState)
+
+                .BeginCard("Name:", Styles.Card)
                 .TextField("Name: ", x => x.ArtifactName, GUILayout.Width(120))
                 .Toggle("Overwrite if name exists: ", x => x.Overwrite)
+                .EndCard()
 
-                .Space(20)
-                .Label("Recording Filters:")
+                .BeginCard("Recording Filters:", Styles.Card)
                 .Toggle("Require Successs: ", x => x.RequireSuccess)
                 .TextField("Player Name: ", x => x.PlayerName, GUILayout.Width(120))
                 .HorizontalSlider($"Use {_form.PercentBestRecordings * 100.0f: 0.}% Best Rocrdings", 0.1f, 1.0f, 0.05f, x => x.PercentBestRecordings)
+                .EndCard()
 
-                .Space(20)
-                .ParamListField("Required architecture parameters: ", x => x.ArchitectureParams, GUILayout.Width(120))
+                .BeginCard("Required Architecture Parameters: ", Styles.Card)
+                .ParamListField(x => x.ArchitectureParams, GUILayout.Width(120))
+                .EndCard()
 
                 .Space(20)
                 .GUIEnabled(CanCreateArtifact())

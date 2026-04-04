@@ -11,6 +11,7 @@ class ModelFactory:
         if not architecture_name in model_registry.keys():
             raise Exception("Unknown model type")
 
+
         ModelFactory.validate_parameters(architecture_name, **kwargs)
         model_cls = model_registry[architecture_name]
         return model_cls(base_dimensions=base_dims, **kwargs)

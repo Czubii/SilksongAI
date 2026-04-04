@@ -19,6 +19,7 @@ async def new_artifact(payload: dict, services: ClientServices):
                                  filters,
                                  payload["overwrite"],
                                  0.2,
+                                 payload["architecture"],
                                  **network_params)
 
     await broadcast_event("new_artifact")

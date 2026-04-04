@@ -13,7 +13,6 @@ namespace AIPlugin.Networking
 
         public event Action OnNewArtifactCreated;
         public event Action OnTrainingFinished;
-        public event Action OnInferecneArtifactSelected;
         public event Action<EventPayloads.TrainingEpoch> OnTrainingEpoch;
         
         private void RegisterEvent<T>(string server_key, Action<T> handler)
@@ -25,7 +24,6 @@ namespace AIPlugin.Networking
         {
             RegisterEvent<object>("new_artifact", _ => OnNewArtifactCreated?.Invoke());
             RegisterEvent<object>("training_finished", _ => OnTrainingFinished?.Invoke());
-            RegisterEvent<object>("inference_artifact_selected", _ => OnInferecneArtifactSelected?.Invoke());
             RegisterEvent<EventPayloads.TrainingEpoch>("training_epoch", payload => OnTrainingEpoch?.Invoke(payload));
         }
 
@@ -49,15 +47,13 @@ namespace AIPlugin.Networking
                 }
                 else
                 {
-                    // It's parameterless (wrapped as Action<object>)
                     payloadType = typeof(object);
                 }
 
-                // Deserialize bytes to the correct type
                 object deserializedPayload;
                 if (payloadType == typeof(object))
                 {
-                    deserializedPayload = null; // parameterless events ignore payload
+                    deserializedPayload = null;
                 }
                 else
                 {

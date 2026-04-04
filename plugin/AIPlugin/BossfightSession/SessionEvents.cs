@@ -26,8 +26,6 @@ namespace AIPlugin.BossfightSession
             if (!_sessionListeners.Contains(listener))
                 _sessionListeners.Add(listener);
 
-            _sessionListeners.Add(listener);
-
             if(listener is IFrameCaptureListener frameListener && !_frameCaptureListeners.Contains(frameListener))
             {
                 _frameCaptureListeners.Add(frameListener);
@@ -48,7 +46,7 @@ namespace AIPlugin.BossfightSession
             foreach (var listener in _sessionListeners)
                 try
                 {
-                    listener.OnFightStarted();
+                    listener?.OnFightStarted();
                 }
                 catch (Exception ex)
                 {
@@ -60,7 +58,7 @@ namespace AIPlugin.BossfightSession
             foreach (var listener in _sessionListeners)
                 try
                 {
-                    listener.OnFightFinished(result);
+                    listener?.OnFightFinished(result);
                 }
                 catch (Exception ex)
                 {
@@ -73,7 +71,7 @@ namespace AIPlugin.BossfightSession
             foreach (var listener in _frameCaptureListeners)
                 try
                 {
-                    listener.OnFrameCaptured(frameData);
+                    listener?.OnFrameCaptured(frameData);
                 }
                 catch (Exception ex)
                 {

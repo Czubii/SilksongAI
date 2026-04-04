@@ -1,9 +1,10 @@
-﻿using System;
+﻿using AIPlugin.BossfightSession;
+using BepInEx.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BepInEx.Configuration;
 
 namespace AIPlugin.Utilities
 {
@@ -12,15 +13,9 @@ namespace AIPlugin.Utilities
 
         private static ConfigEntry<int> DAMAGE_DELT;
         private static ConfigEntry<int> DAMAGE_TAKEN;
-        private static ConfigEntry<int> TIME_PENALTY;
-        private static ConfigEntry<int> LOW_HEALTH_PENALTY;
-        private static ConfigEntry<int> LOW_HEALTH_THRESHOLD;
-        private static ConfigEntry<int> HIGH_SLIK_PENALTY;
-        private static ConfigEntry<int> HIGH_SLIK_THRESHOLD;
 
-        //TODO IMPLEMENT:
-        private static ConfigEntry<int> WIN_REWARD;
-        private static ConfigEntry<int> LOSS_PENALTY;
+        private static ConfigEntry<int> WIN;
+        private static ConfigEntry<int> LOSE;
 
         private static readonly string _configSection = "Rewards";
         private static readonly ConfigDescription _configDescription =
@@ -30,27 +25,13 @@ namespace AIPlugin.Utilities
             });
         public static void Bind(ConfigFile file)
         {
-            DAMAGE_DELT =
-                file.Bind(_configSection, "Damage Delt Reward", 2, _configDescription);
-            DAMAGE_TAKEN =
-                file.Bind(_configSection, "Damage Taken Penalty", -400, _configDescription);
-            TIME_PENALTY =
-                file.Bind(_configSection, "Time Penalty", -1, _configDescription);
-            LOW_HEALTH_PENALTY =
-                file.Bind(_configSection, "Low Health Penalty", -15, _configDescription);
-            LOW_HEALTH_THRESHOLD =
-                file.Bind(_configSection, "Low Health Threshold", 2, _configDescription);
-            HIGH_SLIK_PENALTY =
-                file.Bind(_configSection, "High Silk Penalty", -5, _configDescription);
-            HIGH_SLIK_THRESHOLD =
-                file.Bind(_configSection, "High Silk Threshold", 9, _configDescription);
-            WIN_REWARD =
-                file.Bind(_configSection, "Win Reward", 5000, _configDescription);
-            LOSS_PENALTY =
-                file.Bind(_configSection, "Loss Penalty", -5000, _configDescription);
+            DAMAGE_DELT =   file.Bind(_configSection, "Damage Delt", 2, _configDescription);
+            DAMAGE_TAKEN =  file.Bind(_configSection, "Damage Taken", -8, _configDescription);
+            WIN =           file.Bind(_configSection, "Fight Won", 100, _configDescription);
+            LOSE =          file.Bind(_configSection, "Fight Lost", -100, _configDescription);
         }
 
-        public static int Calculate(RecordingFrame prevFrame,  RecordingFrame currFrame)
+        public static int Calculate(RecordingFrame prevFrame,  RecordingFrame currFrame, AttemptResult? result = null)
         {
             var prev = prevFrame.Data;
             var curr = currFrame.Data;
@@ -67,12 +48,18 @@ namespace AIPlugin.Utilities
             int damageTaken = prev.Hero.HP - curr.Hero.HP;
             total += damageTaken * DAMAGE_TAKEN.Value;
 
-            total += TIME_PENALTY.Value;
+            if (result != null)
+            {
+                if (result == AttemptResult.Success)
+                {
+                    total += WIN.Value;
+                }
+                else
+                {
+                    total += LOSE.Value;
+                }
+            }
 
-            if (curr.Hero.HP <= LOW_HEALTH_THRESHOLD.Value) 
-                total += LOW_HEALTH_PENALTY.Value;
-            if (curr.Hero.Silk >= HIGH_SLIK_THRESHOLD.Value) 
-                total += HIGH_SLIK_PENALTY.Value;
             return total;
         }
     }

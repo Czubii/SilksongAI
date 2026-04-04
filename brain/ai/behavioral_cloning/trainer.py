@@ -25,8 +25,8 @@ class BehaviorCloningTrainer:
 
         self.optimizer = optim.Adam(self.model_artifact.model.parameters())
 
-        self.regression_loss = nn.SmoothL1Loss()
-        self.binary_loss = nn.BCEWithLogitsLoss(pos_weight=self._training_dataset.pos_weights)#
+        self.regression_loss = nn.SmoothL1Loss(reduction='none')
+        self.binary_loss = nn.BCEWithLogitsLoss(reduction='none', pos_weight=self._training_dataset.pos_weights)
 
 
         self.device: str = "cpu"
@@ -34,9 +34,6 @@ class BehaviorCloningTrainer:
             self.device = torch.device("cuda")
 
         print("Starting training. Using device:", self.device)
-
-        if self.model_artifact.metadata["behavioral_cloning"] is None:
-            self.model_artifact.metadata["behavioral_cloning"] = BehaviorCloningTrainer.get_empty_metadata()
 
         self.model_artifact.model.to(self.device)
 
@@ -69,20 +66,14 @@ class BehaviorCloningTrainer:
             "current_epoch": self.model_artifact.metadata["behavioral_cloning"]["total_epochs"]
         }
 
-    @staticmethod
-    def get_empty_metadata() -> dict:
-        return {
-            "total_epochs": 0,
-            "losses": [],
-        }
-
     def _epoch(self, dataloader: DataLoader, testing: bool = False) -> float:
         """
         :param dataloader:
-        :return: average loss for this epoch
+        :return: average loss for this epoch (sensible: 0=perfect, larger=bad)
         """
-        total_loss = 0
+        total_loss = 0.0
         n = 0
+
         for dataset_entry in dataloader:
             continuous_batch = dataset_entry["input_continuous"].to(self.device, dtype=torch.float32)
             boolean_batch = dataset_entry["input_boolean"].to(self.device, dtype=torch.float32)
@@ -91,23 +82,40 @@ class BehaviorCloningTrainer:
             target_continuous_batch = dataset_entry["output_continuous"].to(self.device, dtype=torch.float32)
             target_boolean_batch = dataset_entry["output_boolean"].to(self.device, dtype=torch.float32)
 
-            self.optimizer.zero_grad()
-            output_batch = self.model_artifact.model(continuous_batch, boolean_batch, input_named_state_batch)
+            output_batch = self.model_artifact.model(
+                continuous_batch, boolean_batch, input_named_state_batch
+            )
 
             prediction_continuous_batch = output_batch["output_continuous"]
             prediction_boolean_batch = output_batch["output_boolean"]
 
+            # Use normalized *and shifted to positive* returns as weights
+            returns_batch = dataset_entry["returns"].to(self.device, dtype=torch.float32)
+            returns_batch = (returns_batch - returns_batch.min())  # shift to >=0
+            if returns_batch.max() > 0:
+                returns_batch /= returns_batch.max()  # scale to [0,1]
+
+            # Per-sample losses
             loss_float = self.regression_loss(prediction_continuous_batch, target_continuous_batch)
             loss_bool = self.binary_loss(prediction_boolean_batch, target_boolean_batch)
 
-            loss = 0.7 * loss_float + 0.3 * loss_bool
+            # Mean over features per sample
+            loss_float_per_sample = loss_float.mean(dim=1)
+            loss_bool_per_sample = loss_bool.mean(dim=1)
+
+            # Weighted sum
+            loss_per_sample = 0.5 * loss_float_per_sample + 0.6 * loss_bool_per_sample
+            loss_per_sample_weighted = loss_per_sample * (1.0 + returns_batch)  # scale with positive returns
+
+            # Aggregate
+            total_loss += loss_per_sample_weighted.sum().item()
+            n += continuous_batch.shape[0]
 
             if not testing:
-                loss.backward()
+                self.optimizer.zero_grad()
+                loss_per_sample_weighted.mean().backward()
+                torch.nn.utils.clip_grad_norm_(self.model_artifact.model.parameters(), 1.0)
                 self.optimizer.step()
-
-            total_loss += loss.item()
-            n += 1
 
         return total_loss / n
 

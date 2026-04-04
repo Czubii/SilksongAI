@@ -1,4 +1,6 @@
 ﻿using AIPlugin.Networking;
+using AIPlugin.Networking.Requests;
+using AIPlugin.PluginGUI.Windows;
 using BepInEx;
 using HutongGames.PlayMaker;
 using System;
@@ -10,6 +12,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using static AIPlugin.Networking.Requests.Requests.GetArtifacts.Response;
 using static GamepadVibrationMixer.GamepadVibrationEmission;
 
 namespace AIPlugin.PluginGUI
@@ -23,7 +26,7 @@ namespace AIPlugin.PluginGUI
 
             GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
             labelStyle.fontStyle = FontStyle.Bold;
-            labelStyle.fontSize = 15;
+            labelStyle.fontSize = 20;
             labelStyle.alignment = TextAnchor.MiddleCenter;
 
             GUILayout.Label(text, labelStyle, GUILayout.ExpandWidth(true));
@@ -139,148 +142,36 @@ namespace AIPlugin.PluginGUI
             }
 
             if (state.SelectedIdx != oldSelection) state.SelectionChanged = true;
-
             return state;
         }
 
-        public class ArtifactSelectionDropdowns
+        public static void ArtifactSelectionCard(ArtifactSelection selection)
         {
-            public class ArtifactOption
+            
+            if(!selection?.AnySelected ?? true)
             {
-                public string BossName;
-                public string ArtifactName;
-
-                public ArtifactOption(string boss, string artifact)
-                {
-                    BossName = boss;
-                    ArtifactName = artifact;
-                }
+                GUILayout.BeginHorizontal(Styles.CardOrangeHighlight);
+                GUILayout.Label("No Artifact Selected. Make sure to choose one inside Artifact Settings window");
+                GUILayout.EndHorizontal();
             }
-
-            private List<(string label, string value)> _bossDropdownElements = 
-                new List<(string label, string value)>();
-
-            private List<(string label, ArtifactOption)> _artifactDropdownElements = 
-                new List<(string label, ArtifactOption)>();
-
-            private DropdownState<string> _bossDropdownState = 
-                new DropdownState<string>();
-
-            private DropdownState<ArtifactOption> _artifactDropdownState = 
-                new DropdownState<ArtifactOption>();
-
-            private Dictionary<string, List<string>> _artifacts = 
-                new Dictionary<string, List<string>>();
-
-            public (string BossName, string ArtifactName) SelectedOption => 
-                (_artifactDropdownState?.SelectedOption?.BossName ?? null,
-                _artifactDropdownState?.SelectedOption?.ArtifactName ?? null);
-
-            public bool SelectionValid()
+            else
             {
-                return SelectedOption.BossName != null && SelectedOption.ArtifactName != null;
-            }
-            public void Draw()
-            {
-                GUILayout.BeginVertical();
-                _bossDropdownState = 
-                    Dropdown(_bossDropdownState, _bossDropdownElements, "Boss");
-
-                if (_bossDropdownState.SelectionChanged)
-                {
-                    BuildArtifactDropdownElements();
-                }
-
-                _artifactDropdownState = 
-                    Dropdown(_artifactDropdownState, _artifactDropdownElements, "Artifact");
-
-                GUILayout.EndVertical();
-            }
-            public void UpdateElements(Dictionary<string, List<string>> artifacts)
-            {
-                _artifacts = artifacts;
-                BuildBossDropdownElements();
-                BuildArtifactDropdownElements();
-            }
-            private void BuildBossDropdownElements()
-            {
-                if (_artifacts.Count == 0)
-                {
-                    _bossDropdownElements = new List<(string label, string value)>();
-                    return;
-                }
-
-                _bossDropdownElements = new List<(string label, string value)>() { ("Any", "") };
-
-                foreach (var pair in _artifacts)
-                {
-                    var internalBossName = pair.Key;
-
-                    string displayName =
-                        BossReferenceDatabase.All
-                            .First(x => x.InternalName == internalBossName)
-                            .DisplayName;
-
-                    if (displayName == null)
-                    {
-                        AIPlugin.Log.LogError($"Unknown boss: {pair.Key}");
-                        continue;
-                    }
-
-                    _bossDropdownElements.Add((displayName, internalBossName));
-                }
-
-            }
-            private void BuildArtifactDropdownElements()
-            {
-                if (_artifacts.Count == 0)
-                {
-                    _artifactDropdownElements = new List<(string label, ArtifactOption)>();
-                    return;
-                }
-
-                if (_bossDropdownState.SelectedOption == "") //Any boss
-                {
-                    _artifactDropdownElements = new List<(string label, ArtifactOption)>();
-                    foreach (var pair in _artifacts)
-                    {
-                        var internalBossName = pair.Key;
-                        var artifactNames = pair.Value;
-
-                        string displayName = BossReferenceDatabase.All
-                                                    .First(x => x.InternalName == internalBossName)
-                                                    .DisplayName;
-
-                        if (displayName == null)
-                        {
-                            AIPlugin.Log.LogError($"Unknown boss: {pair.Key}");
-                            continue;
-                        }
-
-                        foreach (var artifactName in artifactNames)
-                        {
-                            _artifactDropdownElements.Add(($"{displayName}:    {artifactName}",
-                                new ArtifactOption(internalBossName, artifactName)));
-                        }
-                    }
-                }
-                else
-                {
-                    var bossName = _bossDropdownState.SelectedOption;
-                    var anyArtifacts = _artifacts.TryGetValue(bossName, out var artifactNames);
-
-                    if (anyArtifacts && artifactNames.Count > 0)
-                    {
-                        _artifactDropdownElements = artifactNames.Select(a => (a, new ArtifactOption(bossName, a))).ToList();
-                    }
-                    else
-                    {
-                        _artifactDropdownElements = new List<(string label, ArtifactOption)>(); // Empty
-                    }
-                }
+                ArtifactCard(selection.Artifact);
             }
         }
 
+        public static void ArtifactCard(Artifact artifact)
+        {
+            GUILayout.BeginVertical(Styles.CardGreenHighlight);
+
+            GUILayout.Label(artifact.Name, Styles.HeaderLabel);
+            GUILayout.Label($"Boss: {artifact.BossName} \n " +
+                            $"Architecture: {artifact.ArchitectureName}");
+
+            GUILayout.EndVertical();
+        }
+
+ 
         public static bool LabeledToggle(bool value, string text, params GUILayoutOption[] options)
         {
             GUILayout.BeginHorizontal();

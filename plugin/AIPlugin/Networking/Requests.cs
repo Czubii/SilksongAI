@@ -34,7 +34,27 @@ namespace AIPlugin.Networking.Requests
             [MessagePackObject]
             public class Response : IResponse
             {
-                [Key("artifacts")] public Dictionary<string, List<string>> BossArtifacts;
+                [MessagePackObject]
+                public class Artifact
+                {
+                    [Key("architecture_name")] public string ArchitectureName;
+                    [Key("artifact_name")] public string Name;
+                    [Key("target_boss_name")] public string BossName;
+                    [Key("creation_date")] public string CreationDate;
+                    [Key("boolean_thresholds")] public List<float> BooleanThresholds;
+                    [Key("current_epoch")] public int CurrentEpoch;
+                    [Key("loss_history")] public List<(float training, float testing)> LossHistory;
+                    [Key("config")] public ArtifactConfig config;
+                }
+                [MessagePackObject]
+                public class ArtifactConfig
+                {
+                    [Key("architecture_name")] public string Name;
+                    //TODO [Key("params")] public Dictionary<string, string> Params;
+                }
+
+                [Key("artifacts")] public Dictionary<string, 
+                    List<Artifact>> BossArtifacts;
             }
         }
         public class GetArtifactsRefreshable : RefreshableRequest<EmptyPayload, GetArtifacts.Response>
@@ -121,29 +141,10 @@ namespace AIPlugin.Networking.Requests
                 base(gateway, requestFactory)
             { }
         }
-        public class GetInferenceArtifact : RequestHandle<EmptyPayload, GetInferenceArtifact.Response>
+        public class InitializeLiveInference : RequestHandle<InitializeLiveInference.Payload, EmptyResponse>
         {
-            public GetInferenceArtifact(AiGateway gateway) :
-                base(gateway, "get_inference_artifact", new EmptyPayload())
-            { }
-            [MessagePackObject]
-            public class Response : IResponse
-            {
-                [Key("target_boss_name")] public string TargetBossName { get; set; }
-                [Key("artifact_name")] public string ArtifactName { get; set; }
-            }
-        }
-        public class GetInferenceArtifactRefreshable : RefreshableRequest<EmptyPayload, GetInferenceArtifact.Response>
-        {
-            public GetInferenceArtifactRefreshable(AiGateway gateway, 
-                Func<RequestHandle<EmptyPayload, GetInferenceArtifact.Response>> requestFactory) :
-                base(gateway, requestFactory)
-            { }
-        }
-        public class SetInferenceArtifact : RequestHandle<SetInferenceArtifact.Payload, EmptyResponse>
-        {
-            public SetInferenceArtifact(AiGateway gateway, Payload payload) :
-                base(gateway, "set_inference_artifact", payload)
+            public InitializeLiveInference(AiGateway gateway, Payload payload) :
+                base(gateway, "initialize_live_inference", payload)
             { }
             [MessagePackObject]
             public class Payload : IPayload
@@ -159,5 +160,18 @@ namespace AIPlugin.Networking.Requests
             { }
         }
 
+        public class SetArtifactConfig : RequestHandle<SetArtifactConfig.Payload, EmptyResponse>
+        {
+            public SetArtifactConfig(AiGateway gateway, Payload payload) :
+                base(gateway, "set_artifact_config", payload)
+            { }
+            [MessagePackObject]
+            public class Payload : IPayload
+            {
+                [Key("target_boss_name")] public string TargetBossName { get; set; }
+                [Key("artifact_name")] public string ArtifactName { get; set; }
+                [Key("boolean_thresholds")] public List<float> BooleanThresholds { get; set; }
+            }
+        }
     }
 }

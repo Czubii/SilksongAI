@@ -25,7 +25,6 @@ namespace AIPlugin.BossfightSession
         private string _tempFilePath;
 
         private SessionEnemyTracker _enemyManager; 
-
         public void Initialize(SessionEnemyTracker enemyManager)
         {
             _enemyManager = enemyManager; // TODO try to remove this somehow

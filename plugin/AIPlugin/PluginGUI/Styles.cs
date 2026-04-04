@@ -9,10 +9,133 @@ namespace AIPlugin.PluginGUI
 {
     public static class Styles
     {
-        public static Color UIGreen = new Color(0.3f, 0.55f, 0.35f, 1f);
-        public static Color UIOrange = new Color(0.96f, 0.60f, 0.21f, 1f); 
+        public static Color UIGreen = new Color(0.3f, 0.55f, 0.35f, 1f); // new Color(0.25f, 0.35f, 0.55f, 1f)
+        public static Color UIOrange = new Color(199/255f, 110/255f, 42/255f, 1f); 
 
         private static List<Texture2D> _textures = new List<Texture2D>();
+
+        private static Texture2D _lightBackgroundTex = null;
+        public static Texture2D LightBackgroundTex
+        {
+            get
+            {
+                if (_lightBackgroundTex == null)
+                {
+                    _lightBackgroundTex = MakeTex(new Color(0.15f, 0.15f, 0.15f, 1f));
+                }
+                return _lightBackgroundTex;
+            }
+        }
+
+        private static Texture2D _darkBackgroundTex = null;
+        public static Texture2D DarkBackgroundTex
+        {
+            get
+            {
+                if (_darkBackgroundTex == null)
+                {
+                    _darkBackgroundTex = MakeTex(new Color(0.06f, 0.06f, 0.06f, 1f));
+                }
+                return _darkBackgroundTex;
+            }
+        }
+
+        private static Texture2D _orangeBackgroundTex = null;
+        public static Texture2D OrangeBackgroundTex
+        {
+            get
+            {
+                if (_orangeBackgroundTex == null)
+                {
+                    _orangeBackgroundTex = MakeTex(UIOrange);
+                }
+                return _orangeBackgroundTex;
+            }
+        }
+
+        private static GUIStyle _headerLabel = null;
+        public static GUIStyle HeaderLabel
+        {
+            get
+            {
+                if (_headerLabel == null)
+                {
+                    _headerLabel = new GUIStyle(GUI.skin.label);
+
+                    _headerLabel.fontStyle = FontStyle.Bold;
+                    _headerLabel.fontSize = 15;
+                }
+
+                return _headerLabel;
+            }
+        }
+
+        private static GUIStyle _card = null;
+        public static GUIStyle Card
+        {
+            get
+            {
+                if (_card == null)
+                {
+                    _card = new GUIStyle(GUI.skin.box);
+
+                    Texture2D normalTex = MakeTex(new Color(0.125f, 0.125f, 0.125f, 1f));
+
+                    _textures.Add(normalTex);
+
+                    _card.normal.background = normalTex;
+
+                    _card.padding = new RectOffset(10, 10, 8, 8);
+                    _card.margin = new RectOffset(4, 4, 4, 4);
+                }
+
+                return _card;
+            }
+        }
+
+        private static GUIStyle _cardGreenHighlight = null;
+        public static GUIStyle CardGreenHighlight
+        {
+            get
+            {
+                if (_cardGreenHighlight == null)
+                {
+                    _cardGreenHighlight = new GUIStyle(Card);
+
+                    Texture2D selectedTex = MakeTex(UIGreen);
+
+                    _textures.Add(selectedTex);
+
+                    _cardGreenHighlight.normal.background = selectedTex;
+                    _cardGreenHighlight.hover.background = selectedTex;
+                    _cardGreenHighlight.active.background = selectedTex;
+                }
+
+                return _cardGreenHighlight;
+            }
+        }
+
+        private static GUIStyle _cardOrangeHighlight = null;
+        public static GUIStyle CardOrangeHighlight
+        {
+            get
+            {
+                if (_cardOrangeHighlight == null)
+                {
+                    _cardOrangeHighlight = new GUIStyle(Card);
+
+                    Texture2D selectedTex = MakeTex(UIOrange);
+
+                    _textures.Add(selectedTex);
+
+                    _cardOrangeHighlight.normal.background = selectedTex;
+                    _cardOrangeHighlight.hover.background = selectedTex;
+                    _cardOrangeHighlight.active.background = selectedTex;
+                }
+
+                return _cardOrangeHighlight;
+            }
+        }
 
         private static GUIStyle _closeButton = null;
         public static GUIStyle CloseButton 
@@ -23,7 +146,7 @@ namespace AIPlugin.PluginGUI
                 {
                     _closeButton = new GUIStyle(GUI.skin.button);
 
-                    Texture2D normalTex = MakeTex(new Color(0.15f, 0.15f, 0.15f, 1f));
+                    Texture2D normalTex = LightBackgroundTex;
                     Texture2D hoverTex = MakeTex(new Color(1f, 0f, 0f, 1f));
                     Texture2D activeTex = MakeTex(new Color(0.8f, 0f, 0f, 1f));
 

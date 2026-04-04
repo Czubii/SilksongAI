@@ -78,7 +78,7 @@ namespace AIPlugin.PluginGUI
 
     public class PluginWindowManager : MonoBehaviour
     {
-        private List<BaseWindow> _windows = new List<BaseWindow>();
+        private Dictionary<BaseWindow, bool> _windows = new Dictionary<BaseWindow, bool>();
         private List<BaseScreenLabel> _labels = new List<BaseScreenLabel>();
 
         private int _buttonWidth = 150;
@@ -102,13 +102,13 @@ namespace AIPlugin.PluginGUI
             if (!_labels.Contains(screenLabel))
                 _labels.Add(screenLabel);
         }
-        public void Register(BaseWindow window)
+        public void Register(BaseWindow window, bool addButton)
         {
             if (window == null)
                 throw new ArgumentNullException("Widnow parameter cannot be null");
 
-            if (!_windows.Contains(window))
-                _windows.Add(window);
+            if (!_windows.Keys.Contains(window))
+                _windows.Add(window, addButton);
 
             UpdateRect();
         }
@@ -119,7 +119,6 @@ namespace AIPlugin.PluginGUI
         }
         void Update()
         {
-            UpdateRect();
             foreach (var label in _labels)
             {
                 if(label.EnabledInConfig() != label.enabled)
@@ -135,20 +134,27 @@ namespace AIPlugin.PluginGUI
         void OnGUI()
         {
             if (!_drawingEabled) return;
+            UpdateRect();
 
             _windowRect = GUILayout.Window(0, _windowRect, Draw, GUIContent.none, Styles.Window);
             for(int i = 0; i<_windows.Count; i++)
             {
-                _windows[i].MakeWindow(i+1);
+                _windows.Keys.ToArray()[i].MakeWindow(i+1);
             }
         }
         void Draw(int windowID)
         {
             GUILayout.BeginHorizontal();
-            foreach (var window in _windows)
+            foreach (var kvp in _windows)
             {
-                GUI.enabled = window.CanEnable();
-                window.Enabled = GUILayout.Toggle(window.Enabled, window.Name, Styles.ToggleButton, GUILayout.Height(40), GUILayout.Width(_buttonWidth));
+                if(!kvp.Value) continue;
+
+                GUI.enabled = kvp.Key.CanEnable();
+                kvp.Key.Enabled = 
+                    GUILayout.Toggle(kvp.Key.Enabled, kvp.Key.Name, 
+                    Styles.ToggleButton,
+                    GUILayout.Height(40), 
+                    GUILayout.Width(_buttonWidth));
             }
             GUI.enabled = true;
             GUILayout.EndHorizontal();

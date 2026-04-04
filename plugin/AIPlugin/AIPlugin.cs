@@ -14,6 +14,7 @@ using System.Reflection;
 using HutongGames.PlayMaker.Actions;
 using UnityEngine.EventSystems;
 using AIPlugin.PluginGUI;
+using AIPlugin.PluginGUI.Windows;
 
 namespace AIPlugin
 {
@@ -55,16 +56,20 @@ namespace AIPlugin
                 aiController.enabled = false;
                 sessionEventHandler.Subscribe(aiController);
 
-                var sessionDispatcher = new SessionDispatcher(session, recorder, aiController, aiService);
+                var artifactSelection = new ArtifactSelection();
+
+                var sessionDispatcher = new SessionDispatcher(artifactSelection, session, recorder, aiController, aiService);
 
                 var sessionControlsWindow = 
-                    new SessionControlsWindow("Session Controls", aiService, sessionDispatcher);
+                    new SessionControlsWindow("Session Controls", artifactSelection, sessionDispatcher);
                 var serverControlsWindow = 
                     new ServerControlsWindow("Server Controls", aiService);
                 var artifactCreatorWindow = 
                     new ArtifactCreatorWindow("Artfiact Creator", aiService);
                 var artifactTrainingWindow = 
-                    new ArtifactTrainingWindow("Artifact Trainer", aiService);
+                    new ArtifactTrainingWindow("Artifact Trainer", artifactSelection, aiService);
+                var artifactManagerWIndow =
+                    new ArtifactManager("Artifact settings", artifactSelection, aiService);
 
                 var gameStateScreenLabel = gameObject.AddComponent<GameStateScreenLabel>();
                 gameStateScreenLabel.Initialize(Config, session, aiController, recorder);
@@ -74,10 +79,12 @@ namespace AIPlugin
 
                 var windowManager = gameObject.AddComponent<PluginWindowManager>();
                 windowManager.Initialize(Config);
-                windowManager.Register(sessionControlsWindow);
-                windowManager.Register(serverControlsWindow);
-                windowManager.Register(artifactCreatorWindow);
-                windowManager.Register(artifactTrainingWindow);
+                windowManager.Register(serverControlsWindow, true);
+                windowManager.Register(sessionControlsWindow, true);
+                windowManager.Register(artifactManagerWIndow, true);
+                windowManager.Register(artifactCreatorWindow, true);
+                windowManager.Register(artifactTrainingWindow, true);
+                
                 windowManager.Register(enemyTrackerScreenLabel);
                 windowManager.Register(gameStateScreenLabel);
 
@@ -91,7 +98,6 @@ namespace AIPlugin
                 Log.LogError($"ERROR WHEN INITIALIZING PLUGIN: {e}");
                 return;
             }
-
             Log.LogInfo("Plugin loaded and initialized");
         }
         void Update()
