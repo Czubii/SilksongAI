@@ -1,9 +1,10 @@
-﻿using MessagePack;
-using System.Collections.Generic;
+﻿using AIPlugin.Utilities;
+using MessagePack;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Playables;
 using static AIPlugin.BossfightSession.BossfightRecorder;
-using AIPlugin.Utilities;
 
 namespace AIPlugin.BossfightSession
 {
@@ -27,11 +28,13 @@ namespace AIPlugin.BossfightSession
         {
             _capturingActive = true;
             _prevFrame = null;
+            _events.RaiseCaptureStarted();
         }
         public void OnFightFinished(AttemptResult result)
         {
             _capturingActive = false;
             CaptureFrame(result);
+            _events.RaiseFinished(result);
         }
 
         private void Update()
@@ -67,7 +70,7 @@ namespace AIPlugin.BossfightSession
                     frame.Reward = RewardCalculator.Calculate(_prevFrame, frame, result);
                 }
 
-                NotifyFrameCaptured(frame);
+                _events.RaiseFrameCaptured(frame);
                 _prevFrame = frame;
             }
             catch (Exception e)
@@ -77,6 +80,5 @@ namespace AIPlugin.BossfightSession
             }
         }
 
-        private void NotifyFrameCaptured(RecordingFrame frameData) => _events.RaiseFrameCaptured(frameData);
     }
 }

@@ -14,7 +14,7 @@ using static AIPlugin.PluginGUI.CustomGUI;
 
 namespace AIPlugin.PluginGUI
 {
-    public class ArtifactTrainingWindow : BaseWindow
+    public class BehavioralCloningWindow : BaseWindow
     {
         private class Form : IForm
         {
@@ -50,13 +50,13 @@ namespace AIPlugin.PluginGUI
         private Requests.StopBehavioralCloning _stopTrainingRequest = null;
         private Requests.FinalizeBehavioralCloning _finalizeTrainingRequest = null;
 
-        private ArtifactSelection _artifactSelection;
+        private ClientState _artifactSelection;
         private Requests.GetArtifacts.Response.Artifact _traindedArtifact;
 
         private TrainingEpoch _trainingInfo = null;
         private LinePlot _lossPlot;
         
-        public ArtifactTrainingWindow(string name, ArtifactSelection artifactSelection, AiService service) :
+        public BehavioralCloningWindow(string name, ClientState artifactSelection, AiService service) :
             base(name, new Rect(100, 300, 500, 550))
         {
             _service = service;

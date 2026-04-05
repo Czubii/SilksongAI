@@ -13,7 +13,7 @@ namespace AIPlugin.BossfightSession
 {
     public class SessionDispatcher
     {
-        private ArtifactSelection _artifactSelection;
+        private ClientState _artifactSelection;
         private SessionOrchestrator _sessionOrchestrator;
         private BossfightRecorder _recorder;
         private AIBossfightAgent _agent;
@@ -22,7 +22,7 @@ namespace AIPlugin.BossfightSession
         private Requests.InitializeLiveInference _initializeInferenceRequest = null;
 
         public SessionDispatcher(
-            ArtifactSelection selection,
+            ClientState selection,
             SessionOrchestrator sessionOrchestrator,
             BossfightRecorder recorder,
             AIBossfightAgent aiAgent,

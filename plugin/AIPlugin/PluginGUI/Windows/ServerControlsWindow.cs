@@ -11,8 +11,6 @@ namespace AIPlugin.PluginGUI
 {
     public class ServerControlsWindow : BaseWindow//TODO: ENABLE CURSOUR WHEN WINDOW ACTIVE
     {
-       
-
         private AiService _service;
 
         public ServerControlsWindow(string name, AiService service) : base(name, new Rect(0,0, 200, 0))
@@ -29,6 +27,8 @@ namespace AIPlugin.PluginGUI
             {
                 //TODO
             }
+
+            CustomGUI.LabeledToggle(false, "Control Client From Server"); // TODO
 
 
             GUILayout.EndVertical();

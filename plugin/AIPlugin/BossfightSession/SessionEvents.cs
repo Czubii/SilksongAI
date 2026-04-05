@@ -16,6 +16,8 @@ namespace AIPlugin.BossfightSession
     public interface IFrameCaptureListener
     {
         void OnFrameCaptured(RecordingFrame frameData);
+        void OnCaptureStarted();
+        void OnCaptureFinished(AttemptResult result);
     }
     public class SessionEvents
     {
@@ -76,6 +78,30 @@ namespace AIPlugin.BossfightSession
                 catch (Exception ex)
                 {
                     AIPlugin.Log.LogError($"RaiseFrameCaptured: {ex}");
+                }
+        }
+        public void RaiseCaptureStarted()
+        {
+            foreach (var listener in _frameCaptureListeners)
+                try
+                {
+                    listener?.OnCaptureStarted();
+                }
+                catch (Exception ex)
+                {
+                    AIPlugin.Log.LogError($"RaiseCaptureStarted: {ex}");
+                }
+        }
+        public void RaiseCaptureFinished(AttemptResult result)
+        {
+            foreach (var listener in _frameCaptureListeners)
+                try
+                {
+                    listener?.OnCaptureFinished(result);
+                }
+                catch (Exception ex)
+                {
+                    AIPlugin.Log.LogError($"RaiseCaptureFinished: {ex}");
                 }
         }
     }

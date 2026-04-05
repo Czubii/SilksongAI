@@ -56,7 +56,7 @@ namespace AIPlugin
                 aiController.enabled = false;
                 sessionEventHandler.Subscribe(aiController);
 
-                var artifactSelection = new ArtifactSelection();
+                var artifactSelection = new ClientState();
 
                 var sessionDispatcher = new SessionDispatcher(artifactSelection, session, recorder, aiController, aiService);
 
@@ -67,7 +67,7 @@ namespace AIPlugin
                 var artifactCreatorWindow = 
                     new ArtifactCreatorWindow("Artfiact Creator", aiService);
                 var artifactTrainingWindow = 
-                    new ArtifactTrainingWindow("Artifact Trainer", artifactSelection, aiService);
+                    new BehavioralCloningWindow("Behavioral Cloning", artifactSelection, aiService);
                 var artifactManagerWIndow =
                     new ArtifactManager("Artifact settings", artifactSelection, aiService);
 
@@ -90,7 +90,7 @@ namespace AIPlugin
 
                 Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
                 Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
-                Harmony.CreateAndPatchAll(typeof(HeroController_LookForInput_Patch), null);
+                Harmony.CreateAndPatchAll(typeof(BossfightSession.Agents.AIInputPatcher), null);
                 Harmony.CreateAndPatchAll(typeof(CursorManager), null);
             }
             catch (Exception e)

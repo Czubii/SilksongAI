@@ -163,10 +163,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BossfightSession\AIBossfightAgent.cs" />
+    <Compile Include="BossfightSession\Agents\SimpleAgent.cs" />
+    <Compile Include="BossfightSession\Agents\AIInputPatcher.cs" />
+    <Compile Include="BossfightSession\Agents\BaseAgent.cs" />
     <Compile Include="BossfightSession\AttemptResult.cs" />
     <Compile Include="BossfightSession\CancellationHandle.cs" />
     <Compile Include="BossfightSession\FrameCapturer.cs" />
+    <Compile Include="BossfightSession\Agents\ReinforcedLearningAgent.cs" />
     <Compile Include="BossfightSession\SessionContext.cs" />
     <Compile Include="BossfightSession\SessionDispatcher.cs" />
     <Compile Include="BossfightSession\SessionEnemyTracker.cs" />
@@ -180,10 +183,11 @@
     <Compile Include="PluginGUI\UIForm.cs" />
     <Compile Include="PluginGUI\Windows\ArtifactCreatorWindow.cs" />
     <Compile Include="PluginGUI\Windows\ArtifactManager.cs" />
-    <Compile Include="PluginGUI\Windows\ArtifactTrainingWindow.cs" />
+    <Compile Include="PluginGUI\Windows\BehavioralCloningWindow.cs" />
     <Compile Include="PluginGUI\CursorManager.cs" />
     <Compile Include="PluginGUI\ScreenLabels\EnemyTrackerScreenLabel.cs" />
     <Compile Include="PluginGUI\ScreenLabels\GameStateScreenLabel.cs" />
+    <Compile Include="PluginGUI\Windows\ReinforcementLearningWindow.cs" />
     <Compile Include="PluginGUI\Windows\ServerControlsWindow.cs" />
     <Compile Include="PluginGUI\Windows\SessionControlsWindow.cs" />
     <Compile Include="PluginGUI\CustomGUIElements.cs" />

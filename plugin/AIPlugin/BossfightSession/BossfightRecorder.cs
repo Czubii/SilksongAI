@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace AIPlugin.BossfightSession
 {
-    public class BossfightRecorder : MonoBehaviour, ISessionListener, IFrameCaptureListener
+    public class BossfightRecorder : MonoBehaviour, IFrameCaptureListener
     {
         private bool _isRecording = false;
 
@@ -36,7 +36,7 @@ namespace AIPlugin.BossfightSession
                 StopRecordingPrematurely(); // closes streams, writes footer as failure, renames temp
             }
         }
-        public void OnFightStarted()
+        public void OnCaptureStarted()
         {
             if(_isRecording || !enabled) return;
 
@@ -87,7 +87,7 @@ namespace AIPlugin.BossfightSession
             _accumulatedReward = 0;
             _isRecording = true;
         }
-        public void OnFightFinished(AttemptResult result) // close files write the info about recording
+        public void OnCaptureFinished(AttemptResult result) // close files write the info about recording
         {
             if (!_isRecording) return;
             _isRecording = false;
@@ -186,7 +186,7 @@ namespace AIPlugin.BossfightSession
         }
         private void StopRecordingPrematurely()
         {
-            OnFightFinished(AttemptResult.ForcedStop);
+            OnCaptureFinished(AttemptResult.ForcedStop);
         }
         private string GetOutputPath(string bossName)
         {

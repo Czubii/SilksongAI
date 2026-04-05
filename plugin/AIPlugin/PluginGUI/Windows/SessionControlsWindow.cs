@@ -37,11 +37,11 @@ namespace AIPlugin.PluginGUI
 
         private readonly List<(string, BossMetadata)> _bossDropdownElements;
 
-        private ArtifactSelection _artifactSelection;
+        private ClientState _artifactSelection;
 
         public SessionControlsWindow(
             string name, 
-            ArtifactSelection artifactSelection,
+            ClientState artifactSelection,
             SessionDispatcher dispatcher): 
             base(name, new Rect(100, 100, 350, 500))
         {

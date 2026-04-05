@@ -1,4 +1,5 @@
-﻿using AIPlugin.Utilities;
+﻿using AIPlugin.PluginGUI.Windows;
+using AIPlugin.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
@@ -26,8 +27,6 @@ namespace AIPlugin.Networking
 
         public event Action OnConnected;
         public event Action OnDisconnected;
-        private bool _notifyConnected;
-        private bool _notifyDisconnected;
 
       
         public void Initialize(string ip, int port)
@@ -40,30 +39,25 @@ namespace AIPlugin.Networking
         }
         private void HandleDisconnect() //TODO add some game pausing or something nice here 
         {
-            _notifyDisconnected = true; 
-            AIPlugin.Log.LogWarning("Lost Connection to the AI server");
-            if (_autoReconnect)
+            MainThreadDispatcher.Enqueue(() => 
             {
-                AIPlugin.Log.LogWarning("Trying to reconnect...");
-                _reconnectTask = TryReconnect();
-            }
+                OnDisconnected?.Invoke();
+
+                AIPlugin.Log.LogWarning("Lost Connection to the AI server");
+                if (_autoReconnect && _reconnectTask == null)
+                {
+                    AIPlugin.Log.LogWarning("Trying to reconnect...");
+                    _reconnectTask = TryReconnect();
+                }
+            });
         }
         private void HandleConnect() 
         {
-            _notifyConnected = true;
-        }
-        void Update()
-        {
-            if (_notifyConnected)
+            _clientState = new ClientState();
+            MainThreadDispatcher.Enqueue(() =>
             {
                 OnConnected?.Invoke();
-                _notifyConnected = false;   
-            }
-            if (_notifyDisconnected)
-            {
-                OnDisconnected?.Invoke();
-                _notifyDisconnected = false;
-            }
+            });
         }
 
         public void ConnectToServer()

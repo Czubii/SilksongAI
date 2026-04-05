@@ -12,16 +12,17 @@ using static AIPlugin.PluginGUI.Windows.ArtifactManager;
 
 namespace AIPlugin.PluginGUI.Windows
 {
-    public class ArtifactSelection
+    public class ClientState
     {
         public bool AnySelected => Artifact != null;
-
         public Artifact Artifact { get; private set; } = null;
-        public void UpdateSelection(Artifact artifact)
+        public bool AllowControlFromServer = false;
+        public bool ReinforcementLearningActive = false;
+        public void UpdateArtifactSelection(Artifact artifact)
         {
             Artifact = artifact;
         }
-        public void RemoveSelection()
+        public void RemoveArtifactSelection()
         {
             Artifact = null;
         }
@@ -30,7 +31,7 @@ namespace AIPlugin.PluginGUI.Windows
     {
 
         private AiService _service;
-        public ArtifactSelection Selection { get; private set; }
+        public ClientState Selection { get; private set; }
         private List<(string label, string value)> _bossDropdownElements = new List<(string label, string value)>();
         private CustomGUI.DropdownState<string> _bossDropdownState = new CustomGUI.DropdownState<string>();
         private Dictionary<string, List<Artifact>> _artifacts;
@@ -68,7 +69,7 @@ namespace AIPlugin.PluginGUI.Windows
         private ConfigForm _configForm = null;
         private Requests.SetArtifactConfig _setArtifactConfigRequest = null;
 
-        public ArtifactManager(string name, ArtifactSelection selection, AiService service): base(name, new Rect(100, 300, 500, 500)) 
+        public ArtifactManager(string name, ClientState selection, AiService service): base(name, new Rect(100, 300, 500, 500)) 
         {
             Selection = selection;
             _service = service;
@@ -79,7 +80,7 @@ namespace AIPlugin.PluginGUI.Windows
             _artifactRequester.OnSuccess += UpdateAvailableArtifacts;
             _artifactRequester.OnError += NotifyError;
 
-            _service.OnDisconnected += Selection.RemoveSelection;
+            _service.OnDisconnected += Selection.RemoveArtifactSelection;
         }
         private void UpdateAvailableArtifacts(Requests.GetArtifacts.Response artifacts)
         {
@@ -87,7 +88,7 @@ namespace AIPlugin.PluginGUI.Windows
             BuildBossDropdownElements();
             if (!SelectionStillExists())
             {
-                Selection.RemoveSelection();    
+                Selection.RemoveArtifactSelection();    
             }
         }
         private bool SelectionStillExists()
@@ -103,7 +104,7 @@ namespace AIPlugin.PluginGUI.Windows
             if (selectedArtifact == null)
                 return false;
 
-            Selection.UpdateSelection(selectedArtifact);
+            Selection.UpdateArtifactSelection(selectedArtifact);
 
             return true;
         }
@@ -263,7 +264,7 @@ namespace AIPlugin.PluginGUI.Windows
 
                     if (!selected && GUILayout.Button("Select", Styles.Button, GUILayout.Width(150)))
                     {
-                        Selection.UpdateSelection(artifact);
+                        Selection.UpdateArtifactSelection(artifact);
                     }
                     if (selected && GUILayout.Button("Details / Config", Styles.Button, GUILayout.Width(150)))
                     {

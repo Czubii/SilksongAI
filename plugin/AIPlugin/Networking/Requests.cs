@@ -153,9 +153,9 @@ namespace AIPlugin.Networking.Requests
                 [Key("artifact_name")] public string ArtifactName { get; set; }
             }
         }
-        public class LiveInference: RequestHandle<InferenceFrame, FrameUserInputs>
+        public class PredictAction: RequestHandle<InferenceFrame, FrameUserInputs>
         {
-            public LiveInference(AiGateway gateway, InferenceFrame payload) :
+            public PredictAction(AiGateway gateway, InferenceFrame payload) :
                 base(gateway, "live_inference", payload)
             { }
         }
