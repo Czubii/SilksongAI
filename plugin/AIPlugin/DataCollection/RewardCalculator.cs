@@ -13,6 +13,7 @@ namespace AIPlugin.Utilities
 
         private static ConfigEntry<int> DAMAGE_DELT;
         private static ConfigEntry<int> DAMAGE_TAKEN;
+        private static ConfigEntry<int> HEAL;
 
         private static ConfigEntry<int> WIN;
         private static ConfigEntry<int> LOSE;
@@ -27,6 +28,7 @@ namespace AIPlugin.Utilities
         {
             DAMAGE_DELT =   file.Bind(_configSection, "Damage Delt", 2, _configDescription);
             DAMAGE_TAKEN =  file.Bind(_configSection, "Damage Taken", -8, _configDescription);
+            HEAL =          file.Bind(_configSection, "Heart Healed", 2, _configDescription);
             WIN =           file.Bind(_configSection, "Fight Won", 100, _configDescription);
             LOSE =          file.Bind(_configSection, "Fight Lost", -100, _configDescription);
         }
@@ -45,8 +47,16 @@ namespace AIPlugin.Utilities
             }
             total += damageDelt * damageDelt * DAMAGE_DELT.Value;
 
-            int damageTaken = prev.Hero.HP - curr.Hero.HP;
-            total += damageTaken * DAMAGE_TAKEN.Value;
+            if (curr.Hero.HP < prev.Hero.HP)
+            {
+                int damageTaken = prev.Hero.HP - curr.Hero.HP;
+                total += damageTaken * DAMAGE_TAKEN.Value;
+            }
+            else if (curr.Hero.HP > prev.Hero.HP)
+            {
+                int damageHealed = curr.Hero.HP - prev.Hero.HP;
+                total += damageHealed * HEAL.Value;
+            }
 
             if (result != null)
             {

@@ -93,7 +93,7 @@ class RecordingProcessor:
                          output_dir: Path,
                          testing_count: Optional[int] = None,
                          testing_percent: Optional[float] = None,
-                         returns_gamma = 0.99) -> None:
+                         gamma = 0.99) -> None:
         """
         :param output_dir: self-explanatory
         :param testing_percent: number of recordings used for testing
@@ -115,7 +115,7 @@ class RecordingProcessor:
 
         cont_list = np.zeros([total_frames, self._dims.input_continuous], dtype=np.float32)
         bool_list = np.zeros([total_frames, self._dims.input_boolean], dtype=np.float32)
-        named_state_idx_list = np.zeros([total_frames, self._dims.input_named_state], dtype=np.float32)
+        named_state_idx_list = np.zeros([total_frames, self._dims.input_named_state], dtype=np.int64)
 
         target_cont_list = np.zeros([total_frames, self._dims.output_continuous], dtype=np.float32)
         target_bool_list = np.zeros([total_frames, self._dims.output_boolean], dtype=np.float32)
@@ -156,13 +156,14 @@ class RecordingProcessor:
             acc = 0.0
             for k in range(length - 1, -1, -1):
                 idx = start + k
-                r = frame_rewards[idx]
-                acc = r + returns_gamma * acc
+                acc = frame_rewards[idx] + gamma * acc
                 returns[idx] = acc
+            # normalize per episode
+            episode_returns = returns[start:start + length]
+            episode_returns = (episode_returns - episode_returns.mean()) / (episode_returns.std() + 1e-8)
+            returns[start:start + length] = episode_returns
+
             offset += length
-
-        returns = (returns - returns.mean()) / (returns.std() + 1e-8)
-
         data_test = {
             "layout_version": SUPPORTED_LAYOUT_VERSION,
             "target_boss": self._target_boss,

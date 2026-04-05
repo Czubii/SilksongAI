@@ -57,3 +57,4 @@ class BossFightDataset(Dataset):
             "output_boolean": self.output_boolean[end_global_idx],
             "returns": self.returns[end_global_idx],
         }
+    

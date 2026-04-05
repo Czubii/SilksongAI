@@ -89,25 +89,23 @@ class BehaviorCloningTrainer:
             prediction_continuous_batch = output_batch["output_continuous"]
             prediction_boolean_batch = output_batch["output_boolean"]
 
-            # Use normalized *and shifted to positive* returns as weights
             returns_batch = dataset_entry["returns"].to(self.device, dtype=torch.float32)
-            returns_batch = (returns_batch - returns_batch.min())  # shift to >=0
-            if returns_batch.max() > 0:
-                returns_batch /= returns_batch.max()  # scale to [0,1]
 
-            # Per-sample losses
+            adv = torch.clamp(returns_batch, -3, 3)
+            beta = 1.0
+            weights = torch.exp(adv / beta)
+
+            weights = weights / weights.mean()
+
             loss_float = self.regression_loss(prediction_continuous_batch, target_continuous_batch)
             loss_bool = self.binary_loss(prediction_boolean_batch, target_boolean_batch)
 
-            # Mean over features per sample
             loss_float_per_sample = loss_float.mean(dim=1)
             loss_bool_per_sample = loss_bool.mean(dim=1)
 
-            # Weighted sum
             loss_per_sample = 0.5 * loss_float_per_sample + 0.6 * loss_bool_per_sample
-            loss_per_sample_weighted = loss_per_sample * (1.0 + returns_batch)  # scale with positive returns
+            loss_per_sample_weighted = loss_per_sample * weights  # scale with positive returns
 
-            # Aggregate
             total_loss += loss_per_sample_weighted.sum().item()
             n += continuous_batch.shape[0]
 
