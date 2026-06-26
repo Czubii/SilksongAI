@@ -93,7 +93,7 @@ namespace AIPlugin.Networking.Requests
         public class StartBehavioralCloning : RequestHandle<StartBehavioralCloning.Payload, EmptyResponse>
         {
             public StartBehavioralCloning(AiGateway gateway, Payload payload) :
-                base(gateway, "start_training", payload)
+                base(gateway, "bc_start", payload)
             { }
             [MessagePackObject]
             public class Payload : IPayload
@@ -115,7 +115,7 @@ namespace AIPlugin.Networking.Requests
         public class StopBehavioralCloning : RequestHandle<EmptyPayload, EmptyResponse>
         {
             public StopBehavioralCloning(AiGateway gateway) :
-                base(gateway, "stop_training", new EmptyPayload())
+                base(gateway, "bc_stop", new EmptyPayload())
             { }
         }
         public class StopBehavioralCloningRefreshable : RefreshableRequest<EmptyPayload, EmptyResponse>
@@ -127,7 +127,7 @@ namespace AIPlugin.Networking.Requests
         public class FinalizeBehavioralCloning : RequestHandle<FinalizeBehavioralCloning.Payload, EmptyResponse>
         {
             public FinalizeBehavioralCloning(AiGateway gateway, Payload payload) :
-                base(gateway, "finalize_training", payload)
+                base(gateway, "bc_finalize", payload)
             { }
             [MessagePackObject]
             public class Payload : IPayload
@@ -141,10 +141,10 @@ namespace AIPlugin.Networking.Requests
                 base(gateway, requestFactory)
             { }
         }
-        public class InitializeLiveInference : RequestHandle<InitializeLiveInference.Payload, EmptyResponse>
+        public class InitializeInferenceSession : RequestHandle<InitializeInferenceSession.Payload, EmptyResponse>
         {
-            public InitializeLiveInference(AiGateway gateway, Payload payload) :
-                base(gateway, "initialize_live_inference", payload)
+            public InitializeInferenceSession(AiGateway gateway, Payload payload) :
+                base(gateway, "initialize_inference_session", payload)
             { }
             [MessagePackObject]
             public class Payload : IPayload
@@ -153,9 +153,9 @@ namespace AIPlugin.Networking.Requests
                 [Key("artifact_name")] public string ArtifactName { get; set; }
             }
         }
-        public class LiveInference: RequestHandle<InferenceFrame, FrameUserInputs>
+        public class InferenceAction: RequestHandle<InferenceFrame, FrameUserInputs>
         {
-            public LiveInference(AiGateway gateway, InferenceFrame payload) :
+            public InferenceAction(AiGateway gateway, InferenceFrame payload) :
                 base(gateway, "live_inference", payload)
             { }
         }
@@ -173,5 +173,58 @@ namespace AIPlugin.Networking.Requests
                 [Key("boolean_thresholds")] public List<float> BooleanThresholds { get; set; }
             }
         }
+        public class RLStart : RequestHandle<RLStart.Payload, EmptyResponse>
+        {
+            public RLStart(AiGateway gateway, Payload payload) :
+                base(gateway, "rl_start", payload)
+            { }
+            [MessagePackObject]
+            public class Payload : IPayload
+            {
+                [Key("target_boss_name")] public string TargetBossName { get; set; }
+                [Key("artifact_name")] public string ArtifactName { get; set; }
+                [Key("num_epochs")] public int NumEpochs { get; set; } = 1;
+                [Key("fights_per_epoch")] public int FightsPerEpoch { get; set; } = 1;
+            }
+        }
+        public class RLInferenceAction : RequestHandle<InferenceFrame, FrameUserInputs>
+        {
+            public RLInferenceAction(AiGateway gateway, InferenceFrame payload) :
+                base(gateway, "rl_inference_action", payload)
+            { }
+        }
+
+        public class RLCanRunFight : RequestHandle<EmptyPayload, RLCanRunFight.Response>
+        {
+            public RLCanRunFight(AiGateway gateway) :
+                base(gateway, "rl_run_fight", new EmptyPayload())
+            { }
+
+            [MessagePackObject]
+            public class Response : IResponse
+            {
+                [Key("can_run")] public bool CanRun { get; set; }
+                [Key("target_boss_name")] public string TargetBossName { get; set; }
+            }
+        }
+        public class RLFightStartedRefreshable : RefreshableRequest<EmptyPayload, EmptyResponse>
+        {
+            public RLFightStartedRefreshable(AiGateway gateway, Func<RequestHandle<EmptyPayload, EmptyResponse>> requestFactory) :
+                base(gateway, requestFactory)
+            { }
+        }
+        public class RLFightFisihed : RequestHandle<EmptyPayload, EmptyResponse>
+        {
+            public RLFightFisihed(AiGateway gateway) :
+                base(gateway, "rl_fight_finished", new EmptyPayload())
+            { }
+        }
+        public class RLFightFisihedRefreshable : RefreshableRequest<EmptyPayload, EmptyResponse>
+        {
+            public RLFightFisihedRefreshable(AiGateway gateway, Func<RequestHandle<EmptyPayload, EmptyResponse>> requestFactory) :
+                base(gateway, requestFactory)
+            { }
+        }
+
     }
 }

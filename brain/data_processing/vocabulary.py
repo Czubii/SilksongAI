@@ -1,5 +1,5 @@
-from typing import Iterable
 import re
+from typing import Iterable
 
 from .layout import NamedStatesContainer
 from .recording_reader import RecordingReader

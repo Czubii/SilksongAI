@@ -15,6 +15,7 @@ using HutongGames.PlayMaker.Actions;
 using UnityEngine.EventSystems;
 using AIPlugin.PluginGUI;
 using AIPlugin.PluginGUI.Windows;
+using AIPlugin.BossfightSession.Agents;
 
 namespace AIPlugin
 {
@@ -34,7 +35,7 @@ namespace AIPlugin
                 gameObject.AddComponent<MainThreadDispatcher>();
                 var teleporter = gameObject.AddComponent<TeleportService>();
                 var aiService = gameObject.AddComponent<AiService>();
-                aiService.Initialize("127.0.0.1", 5000);
+                aiService.Initialize();
                 var gameStateController = new GameStateController();
                 var sessionEventHandler = new SessionEvents();
                 var sessionEnemyManager = new SessionEnemyTracker();
@@ -43,22 +44,32 @@ namespace AIPlugin
                 session.Initialize(sessionEventHandler, gameStateController, teleporter, sessionEnemyManager);
 
                 var frameCapturer = gameObject.AddComponent<FrameCapturer>();
-                frameCapturer.Initialize(sessionEventHandler, sessionEnemyManager);
+                frameCapturer.Initialize(sessionEnemyManager);
                 sessionEventHandler.Subscribe(frameCapturer);
 
                 var recorder = gameObject.AddComponent<BossfightRecorder>();
                 recorder.Initialize(sessionEnemyManager);
                 recorder.enabled = false;
-                sessionEventHandler.Subscribe(recorder);
+                frameCapturer.Events.Subscribe(recorder);
 
-                var aiController = gameObject.AddComponent<AIBossfightAgent>();
-                aiController.Initialize(aiService);
-                aiController.enabled = false;
-                sessionEventHandler.Subscribe(aiController);
+                var simpleAgent = gameObject.AddComponent<SimpleAgent>();
+                simpleAgent.Initialize(aiService);
+                simpleAgent.enabled = false;
+                frameCapturer.Events.Subscribe(simpleAgent);
+
+                var RLAgent = gameObject.AddComponent<RLAgent>();
+                RLAgent.Initialize(aiService);
+                RLAgent.enabled = false;
+                frameCapturer.Events.Subscribe(RLAgent);
+
+                var agentManager = new AgentManager(simpleAgent, RLAgent);
 
                 var artifactSelection = new ArtifactSelection();
 
-                var sessionDispatcher = new SessionDispatcher(artifactSelection, session, recorder, aiController, aiService);
+                var sessionDispatcher = new SessionDispatcher(session, recorder, agentManager, aiService);
+
+                var RLManager = gameObject.AddComponent<RLManager>();
+                RLManager.Initialize(sessionDispatcher, aiService);
 
                 var sessionControlsWindow = 
                     new SessionControlsWindow("Session Controls", artifactSelection, sessionDispatcher);
@@ -67,12 +78,14 @@ namespace AIPlugin
                 var artifactCreatorWindow = 
                     new ArtifactCreatorWindow("Artfiact Creator", aiService);
                 var artifactTrainingWindow = 
-                    new ArtifactTrainingWindow("Artifact Trainer", artifactSelection, aiService);
+                    new BehavioralCloningWindow("Behavioral Cloning", artifactSelection, aiService);
                 var artifactManagerWIndow =
                     new ArtifactManager("Artifact settings", artifactSelection, aiService);
+                var reinforcementLearningWindow =
+                    new ReinforcementLearningWindow("Reinforcement Learning", artifactSelection, aiService);
 
                 var gameStateScreenLabel = gameObject.AddComponent<GameStateScreenLabel>();
-                gameStateScreenLabel.Initialize(Config, session, aiController, recorder);
+                gameStateScreenLabel.Initialize(Config, session, agentManager, recorder);
 
                 var enemyTrackerScreenLabel = gameObject.AddComponent<EnemyTrackerScreenLabel>();
                 enemyTrackerScreenLabel.Initialize(Config);
@@ -84,13 +97,14 @@ namespace AIPlugin
                 windowManager.Register(artifactManagerWIndow, true);
                 windowManager.Register(artifactCreatorWindow, true);
                 windowManager.Register(artifactTrainingWindow, true);
+                windowManager.Register(reinforcementLearningWindow, true);
                 
                 windowManager.Register(enemyTrackerScreenLabel);
                 windowManager.Register(gameStateScreenLabel);
 
                 Harmony.CreateAndPatchAll(typeof(AIPlugin), null);
                 Harmony.CreateAndPatchAll(typeof(EnemyTracker), null);
-                Harmony.CreateAndPatchAll(typeof(HeroController_LookForInput_Patch), null);
+                Harmony.CreateAndPatchAll(typeof(AIInputPatcher), null);
                 Harmony.CreateAndPatchAll(typeof(CursorManager), null);
             }
             catch (Exception e)

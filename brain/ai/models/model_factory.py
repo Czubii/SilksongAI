@@ -1,7 +1,5 @@
 import inspect
 
-from numpy.f2py.auxfuncs import throw_error
-
 from ai.models import model_registry, BaseBossNet
 
 

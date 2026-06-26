@@ -15,13 +15,14 @@ namespace AIPlugin.PluginGUI.Windows
     public class ArtifactSelection
     {
         public bool AnySelected => Artifact != null;
-
         public Artifact Artifact { get; private set; } = null;
-        public void UpdateSelection(Artifact artifact)
+        public bool AllowControlFromServer = false;
+        public bool ReinforcementLearningActive = false;
+        public void UpdateArtifactSelection(Artifact artifact)
         {
             Artifact = artifact;
         }
-        public void RemoveSelection()
+        public void RemoveArtifactSelection()
         {
             Artifact = null;
         }
@@ -79,7 +80,7 @@ namespace AIPlugin.PluginGUI.Windows
             _artifactRequester.OnSuccess += UpdateAvailableArtifacts;
             _artifactRequester.OnError += NotifyError;
 
-            _service.OnDisconnected += Selection.RemoveSelection;
+            _service.OnDisconnected += Selection.RemoveArtifactSelection;
         }
         private void UpdateAvailableArtifacts(Requests.GetArtifacts.Response artifacts)
         {
@@ -87,7 +88,7 @@ namespace AIPlugin.PluginGUI.Windows
             BuildBossDropdownElements();
             if (!SelectionStillExists())
             {
-                Selection.RemoveSelection();    
+                Selection.RemoveArtifactSelection();    
             }
         }
         private bool SelectionStillExists()
@@ -103,7 +104,7 @@ namespace AIPlugin.PluginGUI.Windows
             if (selectedArtifact == null)
                 return false;
 
-            Selection.UpdateSelection(selectedArtifact);
+            Selection.UpdateArtifactSelection(selectedArtifact);
 
             return true;
         }
@@ -263,7 +264,7 @@ namespace AIPlugin.PluginGUI.Windows
 
                     if (!selected && GUILayout.Button("Select", Styles.Button, GUILayout.Width(150)))
                     {
-                        Selection.UpdateSelection(artifact);
+                        Selection.UpdateArtifactSelection(artifact);
                     }
                     if (selected && GUILayout.Button("Details / Config", Styles.Button, GUILayout.Width(150)))
                     {

@@ -5,37 +5,15 @@ from abc import abstractmethod, ABC
 from asyncio import Task
 from pathlib import Path
 from typing import Optional, TypeVar
+
 import msgpack
-from jedi.inference.arguments import TreeArguments
 
-from ai.behavioral_cloning.trainer import BehaviorCloningTrainer
-from networking.live_inference_service import LiveInferenceService
+from ai.behavioral_cloning.trainer import BCTrainer
+from ai.live_inference.live_inference_service import LiveInferenceService
+from client_manager import client_manager
 
-
-class ClientConnection:
-    def __init__(self, writer):
-        self.writer = writer
-        self.connected = True
-
-    async def send_event(self, event_type: str, payload: dict = None):
-        if not self.connected: return
-
-        payload_bytes = msgpack.packb(payload, use_bin_type=True)
-        msg = {"kind": "event", "type": event_type, "payload": payload_bytes}
-        try:
-            data = msgpack.packb(msg, use_bin_type=True)
-            self.writer.write(len(data).to_bytes(4, byteorder='big') + data)
-            await self.writer.drain()
-        except Exception:
-            print(f"Error: {traceback.format_exc()}")
-
-    def on_disconnected(self):
-        self.connected = False
-
-
-class ClientTask(ABC):
-    def __init__(self, client: ClientConnection):
-        self.client = client
+class ThreadedTask(ABC):
+    def __init__(self):
         self.task: Optional[Task] = None
         self.stop_event = threading.Event()
 
@@ -74,11 +52,10 @@ class ClientTask(ABC):
     def _can_start(self, *args, **kwargs) -> (bool, str):
         pass
 
-class BehavioralCloningTask(ClientTask):
-    def __init__(self, client: ClientConnection):
-        super().__init__(client)
-
-        self.trainer: Optional[BehaviorCloningTrainer] = None
+class BehavioralCloningTask(ThreadedTask):
+    def __init__(self):
+        super().__init__()
+        self.trainer: Optional[BCTrainer] = None
         self.results_handled = True
 
     def _can_start(self, *args, **kwargs):
@@ -98,7 +75,7 @@ class BehavioralCloningTask(ClientTask):
         self.results_handled = False
         self.trainer = trainer # needed for saving
 
-    def _task_loop(self, trainer, num_epochs, *, loop):
+    def _task_loop(self, trainer: BCTrainer, num_epochs: int, *, loop):
         try:
             start_epoch = trainer.model_artifact.metadata["behavioral_cloning"]["total_epochs"]
             end_epoch = start_epoch + num_epochs
@@ -113,32 +90,34 @@ class BehavioralCloningTask(ClientTask):
                 epoch_info["start_epoch"] = start_epoch
                 epoch_info["loss_history"] = trainer.model_artifact.metadata["behavioral_cloning"]["losses"]
                 print(epoch_info)
-                asyncio.run_coroutine_threadsafe(
-                    self.client.send_event("training_epoch", epoch_info), loop)
+                asyncio.run_coroutine_threadsafe(client_manager.send_host_event("bc_epoch", epoch_info), loop)
         except Exception as e:
             print(f"Training failed: {e}")
         finally:
-            asyncio.run_coroutine_threadsafe(
-                self.client.send_event("training_finished"), loop)
+            asyncio.run_coroutine_threadsafe(client_manager.send_host_event("bc_finished"), loop)
 
-T = TypeVar("T", bound="ClientTask")
-class ClientServices:
-    def __init__(self, client: ClientConnection):
-        self.client = client
+T = TypeVar("T", bound="ThreadedTask")
+class ServiceRegistry:
+    def __init__(self):
         self.live_inference_service = LiveInferenceService()
-        self._tasks: dict[type[ClientTask], ClientTask] = {}
+        self._tasks: dict[type[ThreadedTask], ThreadedTask] = {}
         self._initialize_tasks()
 
     def _initialize_tasks(self):
-        self._tasks[BehavioralCloningTask] = BehavioralCloningTask(self.client)
+        self._tasks[BehavioralCloningTask] = BehavioralCloningTask()
 
     def task(self, task_type: type[T]) -> T:
         return self._tasks[task_type]
 
-    def is_task_running(self, task: type[ClientTask]) -> bool:
+    def is_task_running(self, task: type[ThreadedTask]) -> bool:
         return self._tasks[task].is_running()
 
-    def on_disconnected(self):
-        self.client.on_disconnected()
+    def is_any_task_running(self) -> bool:
         for task in self._tasks.values():
-            task.request_stop()
+            if task.is_running(): return True
+
+        return False
+
+
+
+services = ServiceRegistry()

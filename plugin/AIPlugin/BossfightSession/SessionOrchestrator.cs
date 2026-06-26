@@ -21,18 +21,14 @@ namespace AIPlugin.BossfightSession
             Fighting,
             FinalizingSession
         }
-
         private SessionContext _sessionContext;
         private SessionRuntime _sessionRuntime;
-
         private SessionEvents _events;
         private GameStateController _gameStateController;
         private TeleportService _teleport;
         private SessionEnemyTracker _enemyManager;
-
         private CancellationHandle _cancel;
         public SessionState State { get; private set; } = SessionState.Idle;
-
         public void Initialize(SessionEvents events, GameStateController gameStateController, TeleportService teleport, SessionEnemyTracker enemyManager)
         {
             _events = events;
@@ -192,7 +188,8 @@ namespace AIPlugin.BossfightSession
             yield return _teleport.AwaitCanTeleport();
             
             _sessionRuntime.Dispose();
-            _teleport.TeleportToBench();
+
+            if(_sessionContext.Settings.ReturnToBench) _teleport.TeleportToBench();
         }
         public BossMetadata GetTarget() => _sessionContext.Boss;
         public int GetCurrentFightIdx() => _sessionRuntime.AttemptIndex;

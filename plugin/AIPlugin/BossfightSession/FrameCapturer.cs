@@ -1,15 +1,69 @@
-﻿using MessagePack;
-using System.Collections.Generic;
+﻿using AIPlugin.Utilities;
+using MessagePack;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Playables;
 using static AIPlugin.BossfightSession.BossfightRecorder;
-using AIPlugin.Utilities;
 
 namespace AIPlugin.BossfightSession
 {
+    public class CapturerEvents
+    {
+        private readonly List<IFrameCaptureListener> _frameCaptureListeners = new List<IFrameCaptureListener>();
+
+        public void Subscribe(IFrameCaptureListener listener)
+        {
+            if (!_frameCaptureListeners.Contains(listener))
+                _frameCaptureListeners.Add(listener);
+        }
+        public void Unsubscribe(IFrameCaptureListener listener)
+        {
+            if (_frameCaptureListeners.Contains(listener))
+                _frameCaptureListeners.Remove(listener);
+        }
+        public void RaiseFrameCaptured(RecordingFrame frameData)
+        {
+            foreach (var listener in _frameCaptureListeners)
+                try
+                {
+                    listener?.OnFrameCaptured(frameData);
+                }
+                catch (Exception ex)
+                {
+                    AIPlugin.Log.LogError($"RaiseFrameCaptured: {ex}");
+                }
+        }
+        public void RaiseCaptureStarted()
+        {
+            foreach (var listener in _frameCaptureListeners)
+                try
+                {
+                    listener?.OnCaptureStarted();
+                }
+                catch (Exception ex)
+                {
+                    AIPlugin.Log.LogError($"RaiseCaptureStarted: {ex}");
+                }
+        }
+        public void RaiseCaptureFinished(AttemptResult result)
+        {
+            foreach (var listener in _frameCaptureListeners)
+                try
+                {
+                    listener?.OnCaptureFinished(result);
+                }
+                catch (Exception ex)
+                {
+                    AIPlugin.Log.LogError($"RaiseCaptureFinished: {ex}");
+                }
+        }
+    }
+
     public class FrameCapturer: MonoBehaviour, ISessionListener
     {
-        private SessionEvents _events;
+        private readonly CapturerEvents _events = new CapturerEvents();
+        public CapturerEvents Events => _events;
 
         private int _framesToNextCapture = 0;
 
@@ -18,20 +72,21 @@ namespace AIPlugin.BossfightSession
         private SessionEnemyTracker _enemyTracker;
 
         private RecordingFrame _prevFrame = null;
-        public void Initialize(SessionEvents sessionEventHandler, SessionEnemyTracker enemyTracker)
+        public void Initialize(SessionEnemyTracker enemyTracker)
         {
             _enemyTracker = enemyTracker; 
-            _events = sessionEventHandler;
         }
         public void OnFightStarted()
         {
             _capturingActive = true;
             _prevFrame = null;
+            _events.RaiseCaptureStarted();
         }
         public void OnFightFinished(AttemptResult result)
         {
             _capturingActive = false;
             CaptureFrame(result);
+            _events.RaiseCaptureFinished(result);
         }
 
         private void Update()
@@ -67,7 +122,7 @@ namespace AIPlugin.BossfightSession
                     frame.Reward = RewardCalculator.Calculate(_prevFrame, frame, result);
                 }
 
-                NotifyFrameCaptured(frame);
+                _events.RaiseFrameCaptured(frame);
                 _prevFrame = frame;
             }
             catch (Exception e)
@@ -77,6 +132,5 @@ namespace AIPlugin.BossfightSession
             }
         }
 
-        private void NotifyFrameCaptured(RecordingFrame frameData) => _events.RaiseFrameCaptured(frameData);
     }
 }

@@ -1,9 +1,12 @@
 import bisect
 import itertools
 from pathlib import Path
+
 import torch
 from torch.utils.data import Dataset
+
 from data_processing.layout import SUPPORTED_LAYOUT_VERSION, LayoutNotSupported
+
 
 class BossFightDataset(Dataset):
     def __init__(self, dataset_file_path: Path, time_window: int = 2):

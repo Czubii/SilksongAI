@@ -8,8 +8,8 @@ import numpy as np
 import torch
 
 from shared import ModelDimensions
-from .layout import NamedState, SUPPORTED_LAYOUT_VERSION
 from .frame_processing import FrameProcessor
+from .layout import NamedState, SUPPORTED_LAYOUT_VERSION
 from .recording_reader import RecordingFilters, RecordingReader
 from .statistics import OnlineSampleStatistics
 from .vocabulary import Vocabulary

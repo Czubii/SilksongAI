@@ -1,11 +1,13 @@
 from dataclasses import asdict
 from typing import Tuple
+
 import numpy as np
 
 from shared import ModelDimensions
 from .layout import FrameData, NamedStatesContainer
 from .statistics import OnlineSampleStatistics
 from .vocabulary import Vocabulary
+
 
 class FrameProcessor:
     def __init__(self, vocabulary: Vocabulary, statistics: OnlineSampleStatistics, dims: ModelDimensions):

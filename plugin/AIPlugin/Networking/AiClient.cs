@@ -7,9 +7,6 @@ namespace AIPlugin.Networking
 {
     public class AiClient: IDisposable
     {
-        private readonly string _host;
-        private readonly int _port;
-
         private TcpClient _tcpClient;
         private NetworkStream _stream;
         private Task _recieveLoop;
@@ -23,18 +20,12 @@ namespace AIPlugin.Networking
         public event Action<byte[]> OnMessageRecieved;
 
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
-        public AiClient(string host, int port)
-        {
-            _host = host;
-            _port = port;
-        }
-
-        public async Task ConnectAsync()
+        public async Task ConnectAsync(string ip, int port)
         {
             _tcpClient = new TcpClient();
             try
             {
-                await _tcpClient.ConnectAsync(_host, _port).ConfigureAwait(false);
+                await _tcpClient.ConnectAsync(ip, port).ConfigureAwait(false);
                 _stream = _tcpClient.GetStream();
 
                 OnConnect?.Invoke();
@@ -74,14 +65,12 @@ namespace AIPlugin.Networking
                 _sendLock.Release();
             }
         }
-
         public async Task RecieveLoopAsync(CancellationToken token)
         {
             try
             {
                 while (!token.IsCancellationRequested)
                 {
-
                     byte[] legthBuffer = await ReadExactAsync(4, token);
                     if (BitConverter.IsLittleEndian)
                         Array.Reverse(legthBuffer); // now big-endian

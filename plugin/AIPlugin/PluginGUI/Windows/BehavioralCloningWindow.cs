@@ -14,7 +14,7 @@ using static AIPlugin.PluginGUI.CustomGUI;
 
 namespace AIPlugin.PluginGUI
 {
-    public class ArtifactTrainingWindow : BaseWindow
+    public class BehavioralCloningWindow : BaseWindow
     {
         private class Form : IForm
         {
@@ -53,10 +53,10 @@ namespace AIPlugin.PluginGUI
         private ArtifactSelection _artifactSelection;
         private Requests.GetArtifacts.Response.Artifact _traindedArtifact;
 
-        private TrainingEpoch _trainingInfo = null;
+        private BCEpoch _trainingInfo = null;
         private LinePlot _lossPlot;
         
-        public ArtifactTrainingWindow(string name, ArtifactSelection artifactSelection, AiService service) :
+        public BehavioralCloningWindow(string name, ArtifactSelection artifactSelection, AiService service) :
             base(name, new Rect(100, 300, 500, 550))
         {
             _service = service;
@@ -202,7 +202,7 @@ namespace AIPlugin.PluginGUI
                 if (GUILayout.Button("Go Back", Styles.Button))
                 {
                     _currentContent = Content.TrainingForm;
-                    _service.Gateway.Events.OnTrainingEpoch -= OnTrainingEpoch;
+                    _service.Gateway.Events.OnBCEpoch -= OnTrainingEpoch;
                     _service.Gateway.Events.OnTrainingFinished -= OnTrainingFinished;
                 }
                 return;
@@ -265,7 +265,7 @@ namespace AIPlugin.PluginGUI
             _finalizeTrainingRequest.OnError += HandleError;
             _currentContent = Content.FinalizationResults;
         }
-        private void OnTrainingEpoch(TrainingEpoch info)
+        private void OnTrainingEpoch(BCEpoch info)
         {
             _trainingInfo = info;
 
@@ -291,7 +291,7 @@ namespace AIPlugin.PluginGUI
         {
             _currentContent = Content.TrainingReuslts;
             _service.Gateway.Events.OnTrainingFinished -= OnTrainingFinished;
-            _service.Gateway.Events.OnTrainingEpoch -= OnTrainingEpoch;
+            _service.Gateway.Events.OnBCEpoch -= OnTrainingEpoch;
         }
         private void StartTraining()
         {
@@ -313,7 +313,7 @@ namespace AIPlugin.PluginGUI
             _trainingInfo = null;
             _lossPlot.Clear();
             _currentContent = Content.AwaitingTraining;
-            _service.Gateway.Events.OnTrainingEpoch += OnTrainingEpoch;
+            _service.Gateway.Events.OnBCEpoch += OnTrainingEpoch;
             _service.Gateway.Events.OnTrainingFinished += OnTrainingFinished;
         }
     }
