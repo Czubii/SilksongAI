@@ -6,10 +6,10 @@ from typing import List
 import numpy as np
 import torch
 
-from .base_model import BaseBossNet
-from .model_factory import ModelFactory
 from data_processing import FrameProcessor, SUPPORTED_LAYOUT_VERSION
 from shared import ModelDimensions
+from .base_model import BaseBossNet
+from .model_factory import ModelFactory
 
 
 class Artifact:

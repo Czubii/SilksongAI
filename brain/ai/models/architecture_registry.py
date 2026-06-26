@@ -1,4 +1,5 @@
 from typing import Type
+
 from .base_model import BaseBossNet
 
 model_registry: dict[str, Type[BaseBossNet]] = {}

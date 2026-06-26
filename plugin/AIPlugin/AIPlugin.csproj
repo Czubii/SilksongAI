@@ -163,13 +163,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BossfightSession\Agents\AgentManager.cs" />
     <Compile Include="BossfightSession\Agents\SimpleAgent.cs" />
     <Compile Include="BossfightSession\Agents\AIInputPatcher.cs" />
     <Compile Include="BossfightSession\Agents\BaseAgent.cs" />
     <Compile Include="BossfightSession\AttemptResult.cs" />
     <Compile Include="BossfightSession\CancellationHandle.cs" />
     <Compile Include="BossfightSession\FrameCapturer.cs" />
-    <Compile Include="BossfightSession\Agents\ReinforcedLearningAgent.cs" />
+    <Compile Include="BossfightSession\Agents\RLAgent.cs" />
+    <Compile Include="BossfightSession\RLManager.cs" />
     <Compile Include="BossfightSession\SessionContext.cs" />
     <Compile Include="BossfightSession\SessionDispatcher.cs" />
     <Compile Include="BossfightSession\SessionEnemyTracker.cs" />

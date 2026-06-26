@@ -1,12 +1,9 @@
 import os
 import time
-from dataclasses import fields
-from pprint import pprint
 
-import torch
-from shared import config, load_config
-from data_processing import UserInputs, NamedState, RecordingFilters, ChoosePercentBest, RecordingReader, Vocabulary, \
+from data_processing import NamedState, RecordingFilters, ChoosePercentBest, RecordingReader, Vocabulary, \
     RecordingProcessor
+from shared import config, load_config
 
 config = load_config()
 

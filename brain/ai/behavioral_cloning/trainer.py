@@ -1,16 +1,13 @@
-import io
-import threading
-
-import matplotlib.pyplot as plt
-import numpy as np
 from sympy.printing.pytorch import torch
 from torch import optim, nn
 from torch.utils.data import DataLoader
+
 from ai.behavioral_cloning.behavioral_cloning_dataset import BossFightDataset
 from ai.models import Artifact
 from ai.models.artifact_manager import *
 
-class BehaviorCloningTrainer:
+
+class BCTrainer:
     def __init__(self,
                  artifact: Artifact,
                  training_dataset: BossFightDataset,

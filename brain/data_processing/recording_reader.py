@@ -1,10 +1,11 @@
 import math
-import msgpack
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from os import listdir
 from os.path import isfile, join
 from typing import Optional, Iterable, Tuple, List
+
+import msgpack
 
 from .layout import SUPPORTED_LAYOUT_VERSION, RecordingFrame
 

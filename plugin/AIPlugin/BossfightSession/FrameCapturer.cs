@@ -8,9 +8,62 @@ using static AIPlugin.BossfightSession.BossfightRecorder;
 
 namespace AIPlugin.BossfightSession
 {
+    public class CapturerEvents
+    {
+        private readonly List<IFrameCaptureListener> _frameCaptureListeners = new List<IFrameCaptureListener>();
+
+        public void Subscribe(IFrameCaptureListener listener)
+        {
+            if (!_frameCaptureListeners.Contains(listener))
+                _frameCaptureListeners.Add(listener);
+        }
+        public void Unsubscribe(IFrameCaptureListener listener)
+        {
+            if (_frameCaptureListeners.Contains(listener))
+                _frameCaptureListeners.Remove(listener);
+        }
+        public void RaiseFrameCaptured(RecordingFrame frameData)
+        {
+            foreach (var listener in _frameCaptureListeners)
+                try
+                {
+                    listener?.OnFrameCaptured(frameData);
+                }
+                catch (Exception ex)
+                {
+                    AIPlugin.Log.LogError($"RaiseFrameCaptured: {ex}");
+                }
+        }
+        public void RaiseCaptureStarted()
+        {
+            foreach (var listener in _frameCaptureListeners)
+                try
+                {
+                    listener?.OnCaptureStarted();
+                }
+                catch (Exception ex)
+                {
+                    AIPlugin.Log.LogError($"RaiseCaptureStarted: {ex}");
+                }
+        }
+        public void RaiseCaptureFinished(AttemptResult result)
+        {
+            foreach (var listener in _frameCaptureListeners)
+                try
+                {
+                    listener?.OnCaptureFinished(result);
+                }
+                catch (Exception ex)
+                {
+                    AIPlugin.Log.LogError($"RaiseCaptureFinished: {ex}");
+                }
+        }
+    }
+
     public class FrameCapturer: MonoBehaviour, ISessionListener
     {
-        private SessionEvents _events;
+        private readonly CapturerEvents _events = new CapturerEvents();
+        public CapturerEvents Events => _events;
 
         private int _framesToNextCapture = 0;
 
@@ -19,10 +72,9 @@ namespace AIPlugin.BossfightSession
         private SessionEnemyTracker _enemyTracker;
 
         private RecordingFrame _prevFrame = null;
-        public void Initialize(SessionEvents sessionEventHandler, SessionEnemyTracker enemyTracker)
+        public void Initialize(SessionEnemyTracker enemyTracker)
         {
             _enemyTracker = enemyTracker; 
-            _events = sessionEventHandler;
         }
         public void OnFightStarted()
         {
@@ -34,7 +86,7 @@ namespace AIPlugin.BossfightSession
         {
             _capturingActive = false;
             CaptureFrame(result);
-            _events.RaiseFinished(result);
+            _events.RaiseCaptureFinished(result);
         }
 
         private void Update()

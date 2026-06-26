@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+
 from ai.models import BaseBossNet, register_model
 from shared import ModelDimensions
 

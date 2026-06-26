@@ -37,11 +37,11 @@ namespace AIPlugin.PluginGUI
 
         private readonly List<(string, BossMetadata)> _bossDropdownElements;
 
-        private ClientState _artifactSelection;
+        private ArtifactSelection _artifactSelection;
 
         public SessionControlsWindow(
             string name, 
-            ClientState artifactSelection,
+            ArtifactSelection artifactSelection,
             SessionDispatcher dispatcher): 
             base(name, new Rect(100, 100, 350, 500))
         {
@@ -85,7 +85,7 @@ namespace AIPlugin.PluginGUI
                .End();
         }
         private bool CanStart() => _dispatcher.CanStartSession() && _sessionForm.IsValid();
-        private bool CanStartAi() => _dispatcher.CanStartAiSession() && _sessionForm.IsValid();
+        private bool CanStartAi() => CanStart() && _artifactSelection.AnySelected;
         private void StartSession()
         {
             var settings = new SessionContext.SessionSettings(_sessionForm.KeepAbilities, _sessionForm.KeepTools);
@@ -99,7 +99,7 @@ namespace AIPlugin.PluginGUI
             var settings = new SessionContext.SessionSettings(_sessionForm.KeepAbilities, _sessionForm.KeepTools);
             //TODO add this functionality finally
 
-            _dispatcher.StartAiSession(_sessionForm.NumFights, settings, _sessionForm.RecordingEnabled, NotifyError);        
+            _dispatcher.StartAiSession(_sessionForm.NumFights, _artifactSelection, settings, _sessionForm.RecordingEnabled, NotifyError);        
         }
         private bool CanStop() => _dispatcher.IsSessionActive();
         private void StopSession()

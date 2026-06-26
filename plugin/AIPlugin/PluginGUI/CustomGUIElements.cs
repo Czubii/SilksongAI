@@ -145,7 +145,7 @@ namespace AIPlugin.PluginGUI
             return state;
         }
 
-        public static void ArtifactSelectionCard(ClientState selection)
+        public static void ArtifactSelectionCard(ArtifactSelection selection)
         {
             
             if(!selection?.AnySelected ?? true)

@@ -4,16 +4,16 @@ from collections import defaultdict
 from dataclasses import dataclass
 from operator import contains
 from pathlib import Path
+
 import torch
 
 from ai.models.model_artifact import ArtifactFactory
 from ai.models.path_manager import generate_artifact_root_path, generate_artifact_dataset_folder_path, \
     generate_artifact_path, generate_artifact_test_dataset_path, generate_artifact_training_dataset_path
-from shared import load_config
-from data_processing import SUPPORTED_LAYOUT_VERSION, RecordingQualityFilter, ChooseNBest, ChoosePercentBest
-
-from data_processing import RecordingProcessor
 from data_processing import RecordingFilters
+from data_processing import RecordingProcessor
+from data_processing import SUPPORTED_LAYOUT_VERSION, ChoosePercentBest
+from shared import load_config
 
 config = load_config()
 

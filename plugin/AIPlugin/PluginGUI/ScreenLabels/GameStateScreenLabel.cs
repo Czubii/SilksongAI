@@ -1,4 +1,5 @@
 ﻿using AIPlugin.BossfightSession;
+using AIPlugin.BossfightSession.Agents;
 using BepInEx.Configuration;
 using System;
 using System.Collections.Generic;
@@ -25,17 +26,17 @@ namespace AIPlugin.PluginGUI
         private ConfigEntry<bool> _enabledInConfig;
 
         private SessionOrchestrator _sessionOrchestrator;
-        private AIBossfightAgent _agent;
         private BossfightRecorder _recorder;
+        private AgentManager _agentManager;
 
         public void Initialize(
             ConfigFile config, 
             SessionOrchestrator sessionOrchestrator,
-            AIBossfightAgent agent,
+            AgentManager agentManager,
             BossfightRecorder recorder)
         {
+            _agentManager = agentManager;   
             _sessionOrchestrator = sessionOrchestrator;
-            _agent = agent;
             _recorder = recorder;
             _enabledInConfig = config.Bind("Labels", "Show Game State", true);
         }
@@ -67,8 +68,12 @@ namespace AIPlugin.PluginGUI
             {
                 GUI.Label(rect0, $"Recording: {(_recorder.enabled ? "enabled" : "disabled")}", _labelStyle);
                 rect0.y += _lineOffsetY;
-                GUI.Label(rect0, $"AI agent: {(_agent.enabled ? "enabled" : "disabled")}", _labelStyle);
-                rect0.y += _lineOffsetY;
+
+                if (_agentManager != null)
+                {
+                    GUI.Label(rect0, $"Average inference delay: {_agentManager.SelectedAgent.AverageServerDelay(): .0f}ms", _labelStyle);
+                    rect0.y += _lineOffsetY;
+                }
 
                 string BossName = _sessionOrchestrator.GetTarget().DisplayName;
                 int RecordedFights = _sessionOrchestrator.GetCurrentFightIdx();

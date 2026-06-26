@@ -13,7 +13,8 @@ namespace AIPlugin.Networking
 
         public event Action OnNewArtifactCreated;
         public event Action OnTrainingFinished;
-        public event Action<EventPayloads.TrainingEpoch> OnTrainingEpoch;
+        public event Action<EventPayloads.BCEpoch> OnBCEpoch;
+        public event Action OnRLEpoch;
         
         private void RegisterEvent<T>(string server_key, Action<T> handler)
         {
@@ -23,8 +24,9 @@ namespace AIPlugin.Networking
         public ServerEvents() 
         {
             RegisterEvent<object>("new_artifact", _ => OnNewArtifactCreated?.Invoke());
-            RegisterEvent<object>("training_finished", _ => OnTrainingFinished?.Invoke());
-            RegisterEvent<EventPayloads.TrainingEpoch>("training_epoch", payload => OnTrainingEpoch?.Invoke(payload));
+            RegisterEvent<object>("bc_finished", _ => OnTrainingFinished?.Invoke());
+            RegisterEvent<object>("rl_epoch", _ => OnRLEpoch?.Invoke());
+            RegisterEvent<EventPayloads.BCEpoch>("bc_epoch", payload => OnBCEpoch?.Invoke(payload));
         }
 
         public void RaiseEvent(string eventName, byte[] payload)

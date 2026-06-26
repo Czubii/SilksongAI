@@ -1,11 +1,9 @@
 import asyncio
 import traceback
-import uuid
 import msgpack
-
-from networking.client_registry import client_registry
+from networking.client_manager import client_manager, ClientConnection
 from networking.handler_registry import handler_registry
-from networking.client_services import ClientConnection, ClientServices
+
 
 async def read_msg(reader):
     length_bytes = await reader.readexactly(4)
@@ -21,11 +19,8 @@ async def write_msg(writer, msg):
     await writer.drain()
 
 async def handle_client(reader, writer):
-    client_ID = uuid.uuid4()
     client = ClientConnection(writer)
-    client_registry[client_ID] = client
-    services = ClientServices(client)
-
+    client_manager.register_client(client)
     addr = writer.get_extra_info("peername")
     print(f"Client connected: {addr}")
     try:
@@ -36,51 +31,44 @@ async def handle_client(reader, writer):
             req_type = request.get("type")
             payload = request.get("payload")
 
-            print(request)
-
             response = {"kind": "response", "request_ID": request_id, "success": True, "log": "Success!", "payload": None}
 
             if req_type in handler_registry:
-                try:
-                    result = await handler_registry[req_type](payload, services)
-                    response["payload"] = msgpack.packb(result, use_bin_type=True)
-                except Exception as e:
-                    response["success"] = False
+                handler = handler_registry[req_type]
 
-                    tb = traceback.format_exc()
-                    response["log"] = f"{e} \n {str(tb)}"
-                    print(f"Error: {tb}")
+                if handler.host_only and not client_manager.is_host_client(client):
+                    response["success"] = False
+                    response["log"] = f"Request \"{req_type}\" requires host privileges."
+                    print(f"Request \"{req_type}\" requires host privileges.")
+                else:
+                    try:
+                        result = await handler.func(payload)
+                        response["payload"] = msgpack.packb(result, use_bin_type=True)
+                    except Exception as e:
+                        response["success"] = False
+
+                        tb = traceback.format_exc()
+                        response["log"] = f"{e} \n {str(tb)}"
+                        print(f"Error: {tb}")
             else:
                 response["success"] = False
                 response["log"] = f"Unknown request type: {req_type}"
                 print(f"Unknown request type: {req_type}")
 
-
-            print(response)
             await write_msg(writer, response)
 
     except (asyncio.IncompleteReadError, ConnectionResetError):
         print(f"Client disconnected: {addr}")
     finally:
         writer.close()
-        services.on_disconnected()
-        client_registry.pop(client_ID)
+        client_manager.remove_client(client)
         await writer.wait_closed()
 
-async def broadcast_event(event_type: str, payload: dict = None):
-    payload_bytes = msgpack.packb(payload, use_bin_type=True)
-    msg = {"kind": "event", "type": event_type, "payload": payload_bytes}
-    for client_ID, client in client_registry.copy().items():
-        try:
-            data = msgpack.packb(msg, use_bin_type=True)
-            client.writer.write(len(data).to_bytes(4, byteorder='big') + data)
-            await client.writer.drain()
-        except Exception:
-            client_registry.pop(client_ID)
+
 
 
 async def main():
-    server = await asyncio.start_server(handle_client, '127.0.0.1', 5000)
+    server = await asyncio.start_server(handle_client, '0.0.0.0', 5000)
     print("Server listening on 127.0.0.1:5000")
 
     async with server:

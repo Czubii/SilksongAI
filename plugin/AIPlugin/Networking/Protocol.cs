@@ -41,7 +41,7 @@ namespace AIPlugin.Networking
     public static class EventPayloads
     {
         [MessagePackObject]
-        public class TrainingEpoch
+        public class BCEpoch
         {
             [Key("current_epoch")] public int CurrentEpoch;
             [Key("start_epoch")] public int StartEpoch;

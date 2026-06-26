@@ -12,7 +12,7 @@ using static AIPlugin.PluginGUI.Windows.ArtifactManager;
 
 namespace AIPlugin.PluginGUI.Windows
 {
-    public class ClientState
+    public class ArtifactSelection
     {
         public bool AnySelected => Artifact != null;
         public Artifact Artifact { get; private set; } = null;
@@ -31,7 +31,7 @@ namespace AIPlugin.PluginGUI.Windows
     {
 
         private AiService _service;
-        public ClientState Selection { get; private set; }
+        public ArtifactSelection Selection { get; private set; }
         private List<(string label, string value)> _bossDropdownElements = new List<(string label, string value)>();
         private CustomGUI.DropdownState<string> _bossDropdownState = new CustomGUI.DropdownState<string>();
         private Dictionary<string, List<Artifact>> _artifacts;
@@ -69,7 +69,7 @@ namespace AIPlugin.PluginGUI.Windows
         private ConfigForm _configForm = null;
         private Requests.SetArtifactConfig _setArtifactConfigRequest = null;
 
-        public ArtifactManager(string name, ClientState selection, AiService service): base(name, new Rect(100, 300, 500, 500)) 
+        public ArtifactManager(string name, ArtifactSelection selection, AiService service): base(name, new Rect(100, 300, 500, 500)) 
         {
             Selection = selection;
             _service = service;

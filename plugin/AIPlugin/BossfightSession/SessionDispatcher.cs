@@ -1,4 +1,5 @@
-﻿using AIPlugin.Networking;
+﻿using AIPlugin.BossfightSession.Agents;
+using AIPlugin.Networking;
 using AIPlugin.Networking.Requests;
 using AIPlugin.PluginGUI.Windows;
 using HutongGames.PlayMaker.Actions;
@@ -8,34 +9,31 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using static UnityEngine.Rendering.RayTracingAccelerationStructure;
 
 namespace AIPlugin.BossfightSession
 {
     public class SessionDispatcher
     {
-        private ClientState _artifactSelection;
         private SessionOrchestrator _sessionOrchestrator;
         private BossfightRecorder _recorder;
-        private AIBossfightAgent _agent;
         private AiService _service;
+        private AgentManager _agentManager;
 
-        private Requests.InitializeLiveInference _initializeInferenceRequest = null;
+        private Requests.InitializeInferenceSession _initializeInferenceRequest = null;
 
         public SessionDispatcher(
-            ClientState selection,
             SessionOrchestrator sessionOrchestrator,
             BossfightRecorder recorder,
-            AIBossfightAgent aiAgent,
+            AgentManager agentManager,
             AiService service) 
         { 
-            _artifactSelection = selection; 
             _sessionOrchestrator = sessionOrchestrator;
             _recorder = recorder;
-            _agent = aiAgent;
             _service = service;
+            _agentManager = agentManager;
         }
         public bool CanStartSession() => (_sessionOrchestrator?.CanStart() ?? false) & !InitializationInProgress();
-        public bool CanStartAiSession() => CanStartSession() && _artifactSelection.AnySelected && _service.IsConnected;
         private bool InitializationInProgress() => !_initializeInferenceRequest?.Finished() ?? false;
         public bool IsSessionActive() => _sessionOrchestrator.IsSessionActive();
 
@@ -44,17 +42,17 @@ namespace AIPlugin.BossfightSession
             BossMetadata boss,
             SessionContext.SessionSettings settings,
             bool record,
-            bool aiEnabled)
+            AgentManager.AgentSelection agent)
         {
-
             var context = new SessionContext(boss, numFights, settings);
 
+            _agentManager.SelectAgent(agent);
             _recorder.enabled = record;
-            _agent.enabled = aiEnabled;
-           
+            
 
             _sessionOrchestrator.TryStart(context);
         }
+
         public void StartSession(
             int numFights, 
             BossMetadata boss, 
@@ -62,34 +60,39 @@ namespace AIPlugin.BossfightSession
             bool record)
         {
             if(!CanStartSession()) return;
-            StartSessionInternal(numFights, boss, settings, record, false);    
+            StartSessionInternal(numFights, boss, settings, record, AgentManager.AgentSelection.None);    
         }
         public void StartAiSession(
             int numFights,
+            ArtifactSelection artifactSelection,
             SessionContext.SessionSettings settings,
             bool record,
             Action<string> OnServerError = null)
         {
-            if(!CanStartAiSession()) return;
+            if(!CanStartSession()) return;
 
-            var boss = BossReferenceDatabase.All.Find(x => x.InternalName == _artifactSelection.Artifact.BossName);
-            if (boss == null) throw new Exception($"Could not find boss with name {_artifactSelection.Artifact.BossName}");
+            var boss = BossReferenceDatabase.All.Find(x => x.InternalName == artifactSelection.Artifact.BossName);
+            if (boss == null) throw new Exception($"Could not find boss with name {artifactSelection.Artifact.BossName}");
 
-            var context = new SessionContext(boss, numFights, settings);
-
-            var payload = new Requests.InitializeLiveInference.Payload()
+            var payload = new Requests.InitializeInferenceSession.Payload()
             {
-                ArtifactName = _artifactSelection.Artifact.Name,
-                TargetBossName = _artifactSelection.Artifact.BossName,
+                ArtifactName = artifactSelection.Artifact.Name,
+                TargetBossName = artifactSelection.Artifact.BossName,
             };
 
-            _initializeInferenceRequest = new Requests.InitializeLiveInference(_service.Gateway, payload);
+            _initializeInferenceRequest = new Requests.InitializeInferenceSession(_service.Gateway, payload);
 
             _initializeInferenceRequest.OnError += OnServerError;
             _initializeInferenceRequest.OnSuccess += (_) => {
-                StartSessionInternal(numFights, boss, settings, record, true);
+                StartSessionInternal(numFights, boss, settings, record, AgentManager.AgentSelection.Simple);
             };
+        }
+        public void StartRLFight(string BossName)
+        {
+            var boss = BossReferenceDatabase.All.Find(x => x.InternalName == BossName);
+            var settings = new SessionContext.SessionSettings(false, false, false);
 
+            StartSessionInternal(1, boss, settings, false, AgentManager.AgentSelection.ReinforcementLearning);
         }
         public void RequestStop(string reason = null)
         { 

@@ -1,14 +1,19 @@
-from networking.client_services import ClientServices
+from ai.models import artifact_exists, ArtifactFactory, generate_artifact_path
+from networking.services import services
 from networking.handler_registry import register_handler
-from networking.server import broadcast_event
 
-@register_handler("initialize_live_inference")
-async def set_inference_artifact(payload: dict, services: ClientServices):
+
+@register_handler("initialize_inference_session", True)
+async def start_inference_session(payload: dict):
     boss_name = payload["target_boss_name"]
     artifact_name = payload["artifact_name"]
 
-    services.live_inference_service.select_artifact(boss_name, artifact_name)
+    if not artifact_exists(boss_name, artifact_name):
+        raise Exception(f"Artifact does not exist: {boss_name}: {artifact_name}")
 
-@register_handler("live_inference")
-async def live_inference(payload: dict, services: ClientServices):
+    artifact = ArtifactFactory.from_file(generate_artifact_path(boss_name, artifact_name))
+    services.live_inference_service.set_artifact(artifact)
+
+@register_handler("live_inference", True)
+async def live_inference(payload: dict):
     return services.live_inference_service.predict_inputs(payload)

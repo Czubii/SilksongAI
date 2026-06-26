@@ -9,10 +9,10 @@ namespace AIPlugin.BossfightSession.Agents
     /// </summary>
     public class SimpleAgent : BaseAgent
     {
-        protected Requests.PredictAction _actionRequest = null;
+        protected Requests.InferenceAction _actionRequest = null;
         protected override void CreateActionRequest(RecordingFrame frame, Action<FrameUserInputs> successCallback, out Func<bool> requestFinished)
         {
-            _actionRequest = new Requests.PredictAction(service.Gateway, InferenceFrame.FromRecordingFrameData(frame));
+            _actionRequest = new Requests.InferenceAction(service.Gateway, InferenceFrame.FromRecordingFrameData(frame));
             _actionRequest.OnSuccess += successCallback;
 
             requestFinished = _actionRequest.Finished;

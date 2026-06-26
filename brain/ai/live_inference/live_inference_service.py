@@ -1,5 +1,7 @@
 from typing import Optional
+
 import torch
+
 from ai.models import Artifact, artifact_exists, ArtifactFactory, generate_artifact_path
 from data_processing import LiveInferenceFrame
 
@@ -9,8 +11,6 @@ class LiveInferenceService:
     Wraps the live inference process for single client
     """
     def __init__(self):
-        self._selected_boss_name: Optional[str] = None
-        self._selected_model_name: Optional[str] = None
         self._artifact: Optional[Artifact] = None
 
         self._cont_buffer = torch.tensor([])
@@ -19,23 +19,8 @@ class LiveInferenceService:
         self._buffer_filled = False
         self._live_frame_buffer = None
 
-    def select_artifact(self, boss_name: str, model_name: str) -> bool:
-
-        self._artifact = None
-
-        if not artifact_exists(boss_name, model_name):
-            self._selected_boss_name = None
-            self._selected_model_name = None
-            raise Exception(f"Artifact does not exist: {boss_name}: {model_name}")
-            return False
-
-        print(f"Selected model: {self._selected_boss_name}-{self._selected_model_name}")
-        self._artifact = ArtifactFactory.from_file(generate_artifact_path(boss_name, model_name))  # TODO add separate button for loading or load when starting session
-
-        self._selected_model_name = model_name
-        self._selected_boss_name = boss_name
-
-        print(f"Selected model: {self._selected_boss_name}-{self._selected_model_name}")
+    def set_artifact(self, artifact: Artifact):
+        self._artifact = artifact
 
         model = self._artifact.model
         self._cont_buffer = torch.zeros([model.time_window, model.base_dimensions.input_continuous], dtype=torch.float32)
@@ -43,11 +28,6 @@ class LiveInferenceService:
         self._named_state_buffer = torch.zeros([model.time_window, model.base_dimensions.input_named_state], dtype=torch.long)
         self._buffer_filled = False
         self._live_frame_buffer = None
-        return True
-
-
-    def get_selected_artifact(self):
-        return [self._selected_boss_name, self._selected_model_name]
 
     def _update_buffer(self, cont_tensor, bool_tensor, named_state_tensor):
         # the higher the index the newer the frame
@@ -60,8 +40,6 @@ class LiveInferenceService:
         self._bool_buffer[idx] = bool_tensor
         self._named_state_buffer[idx] = named_state_tensor
         self._buffer_filled = True
-
-        print(self._named_state_buffer)
 
     def predict_inputs(self, frame_raw):
         if self._artifact is None:
@@ -80,7 +58,6 @@ class LiveInferenceService:
         cont_tensor = torch.tensor(continuous, dtype=torch.float32)
         bool_tensor = torch.tensor(boolean, dtype=torch.float32)
         named_state_tensor = torch.tensor(named_state, dtype=torch.long)
-        print(named_state_tensor)
         self._update_buffer(cont_tensor, bool_tensor, named_state_tensor)
 
         if not self._buffer_filled:
@@ -111,3 +88,4 @@ class LiveInferenceService:
         payload = cont_values + bool_values
 
         return payload
+

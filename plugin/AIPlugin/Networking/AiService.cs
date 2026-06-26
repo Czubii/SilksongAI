@@ -20,6 +20,7 @@ namespace AIPlugin.Networking
         private Task _connectTask;
         private Task _reconnectTask;
         public bool IsConnected => _client?.IsConnected ?? false;
+        public bool ConnectingInProgress => (!_connectTask?.IsCompleted) ?? false;
 
         private bool _autoReconnect = true;
         private int _reconnectAttempts = 10;
@@ -29,9 +30,9 @@ namespace AIPlugin.Networking
         public event Action OnDisconnected;
 
       
-        public void Initialize(string ip, int port)
+        public void Initialize()
         {
-            _client = new AiClient(ip, port);
+            _client = new AiClient();
             _gateway = new AiGateway(_client);
 
             _client.OnDisconnect += HandleDisconnect;
@@ -44,58 +45,56 @@ namespace AIPlugin.Networking
                 OnDisconnected?.Invoke();
 
                 AIPlugin.Log.LogWarning("Lost Connection to the AI server");
-                if (_autoReconnect && _reconnectTask == null)
-                {
-                    AIPlugin.Log.LogWarning("Trying to reconnect...");
-                    _reconnectTask = TryReconnect();
-                }
+                //if (_autoReconnect && _reconnectTask == null)
+                //{
+                //    AIPlugin.Log.LogWarning("Trying to reconnect...");
+                //    _reconnectTask = TryReconnect();
+                //}
             });
         }
         private void HandleConnect() 
         {
-            _clientState = new ClientState();
             MainThreadDispatcher.Enqueue(() =>
             {
                 OnConnected?.Invoke();
             });
         }
-
-        public void ConnectToServer()
+        public void Connect(string ip, int port)
         {
             if (IsConnected || _connectTask != null) return;
 
-            _connectTask = Connect();
+            _connectTask = ConnectTask(ip, port);
         }
-        private async Task TryReconnect()
-        {
-            try
-            {
-                for (int i = 0; i < _reconnectAttempts; i++)
-                {
-                    await Task.Delay(_reconnectAttemptDelay);
+        //private async Task TryReconnect()
+        //{
+        //    try
+        //    {
+        //        for (int i = 0; i < _reconnectAttempts; i++)
+        //        {
+        //            await Task.Delay(_reconnectAttemptDelay);
 
-                    await Connect();
+        //            await ConnectTask(ip, port);
 
-                    if (IsConnected)
-                    {
-                        ThreadSafeLogService.Log($"Reconnected Succesfully", AIPlugin.Log.LogMessage);
-                        return;
-                    }
-                }
-                ThreadSafeLogService.Log($"Could not reconnect after {_reconnectAttempts} attempts", AIPlugin.Log.LogMessage);
-            }
-            finally
-            {
-                _reconnectTask = null;
-            }
+        //            if (IsConnected)
+        //            {
+        //                ThreadSafeLogService.Log($"Reconnected Succesfully", AIPlugin.Log.LogMessage);
+        //                return;
+        //            }
+        //        }
+        //        ThreadSafeLogService.Log($"Could not reconnect after {_reconnectAttempts} attempts", AIPlugin.Log.LogMessage);
+        //    }
+        //    finally
+        //    {
+        //        _reconnectTask = null;
+        //    }
 
-        }
-        private async Task Connect()
+        //}
+        private async Task ConnectTask(string ip, int port)
         {
             try
             {
                 if (IsConnected) return;
-                await _client.ConnectAsync();
+                await _client.ConnectAsync(ip, port);
             }
             catch (Exception ex)
             {

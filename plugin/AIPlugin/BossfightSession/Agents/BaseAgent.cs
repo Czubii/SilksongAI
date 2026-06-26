@@ -52,7 +52,7 @@ namespace AIPlugin.BossfightSession.Agents
         protected AiService service;
         private Func<bool> _actionRequestFinished;
         private InferenceDelay _inferenceDelay;
-
+        public double AverageServerDelay() => _inferenceDelay.AverageMS();
         public virtual void Initialize(AiService service)
         {
             this.service = service;
@@ -81,15 +81,15 @@ namespace AIPlugin.BossfightSession.Agents
         {
             enabled = false;
         }
-        public void OnCaptureStarted()
+        public virtual void OnCaptureStarted()
         {
             _inferenceDelay.Reset();
             if (enabled)
             {
-                AIInputState.AIControlEnabled = true;
+                AIInputState.AIControlEnabled = true; // TODO this may cause problems 
             }
         }
-        public void OnCaptureFinished(AttemptResult result)
+        public virtual void OnCaptureFinished(AttemptResult result)
         {
             AIInputState.AIControlEnabled = false;
         }
