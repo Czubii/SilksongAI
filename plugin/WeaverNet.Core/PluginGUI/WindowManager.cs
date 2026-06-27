@@ -3,71 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using WeaverNet.PluginGUI;
 
-namespace AIPlugin.PluginGUI
+namespace WeaverNet.Core.PluginGUI
 {
 
     public abstract class BaseScreenLabel : MonoBehaviour
     {
         protected int _lineOffsetY = 20;
         public abstract bool EnabledInConfig();
-    }
-    public abstract class BaseWindow
-    {
-        public string Name { get; }
-        public bool Enabled { get; set; }
-
-        private Rect _windowRect;
-
-        private List<string> _errors = new List<string>();
-        private Vector2 _errorLogScroll = new Vector2();
-
-        public BaseWindow(string name, Rect windowRect)
-        {
-            _windowRect = windowRect;
-            Name = name;
-            Enabled = false;
-        }
-
-        public void MakeWindow(int ID)
-        {
-            if (Enabled)
-            {
-                if (!CanEnable())
-                {
-                    Enabled = false;
-                    return;
-                }
-                _windowRect = GUILayout.Window(ID, _windowRect, DrawBase, GUIContent.none, Styles.Window);
-            }
-        }
-        public void DrawBase(int ID)
-        {
-            if (CustomGUI.TopBar(Name)) Enabled = false;
-            if (_errors.Count > 0) DrawError();
-            else DrawContent();
-            GUI.DragWindow();
-        }
-        public void NotifyError(string error)
-        {
-            _errors.Add(error);
-        }
-        private void DrawError()
-        {
-            _errorLogScroll = GUILayout.BeginScrollView(_errorLogScroll, Styles.ScrollView, Styles.VerticalScrollbar, GUILayout.ExpandHeight(true));
-            GUI.skin.verticalScrollbarThumb = Styles.VerticalScrollbarThumb;
-
-            GUILayout.Label("Exception Has Occured Somhere: ");
-            GUILayout.Label(_errors[0]);
-            GUILayout.FlexibleSpace();
-            if(GUILayout.Button("Okay", Styles.Button))
-            {
-                _errors.RemoveAt(0);
-            }
-            GUILayout.EndScrollView();
-        }
-        public abstract void DrawContent();
-        public abstract bool CanEnable();
     }
 
     public class PluginWindowManager : MonoBehaviour
@@ -122,7 +66,7 @@ namespace AIPlugin.PluginGUI
             if (_enableKey != null && _enableKey.Value.IsDown())
             {
                 _drawingEabled = !_drawingEabled;
-                CursorManager.ForceFisible = _drawingEabled;
+                CursorPatcher.ForceFisible = _drawingEabled;
             }
         }
         void OnGUI()
@@ -130,7 +74,7 @@ namespace AIPlugin.PluginGUI
             if (!_drawingEabled) return;
             UpdateRect();
 
-            _windowRect = GUILayout.Window(0, _windowRect, Draw, GUIContent.none, Styles.Window);
+            _windowRect = GUILayout.Window(0, _windowRect, Draw, GUIContent.none, PluginGUIStyles.Window);
             for(int i = 0; i<_windows.Count; i++)
             {
                 _windows.Keys.ToArray()[i].MakeWindow(i+1);
@@ -146,7 +90,7 @@ namespace AIPlugin.PluginGUI
                 GUI.enabled = kvp.Key.CanEnable();
                 kvp.Key.Enabled = 
                     GUILayout.Toggle(kvp.Key.Enabled, kvp.Key.Name, 
-                    Styles.ToggleButton,
+                    PluginGUIStyles.ToggleButton,
                     GUILayout.Height(40), 
                     GUILayout.Width(_buttonWidth));
             }
