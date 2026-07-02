@@ -39,7 +39,8 @@
     <Reference Include="0Harmony">
       <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="BepInEx">
+    <Reference Include="BepInEx, Version=5.4.23.2, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -67,10 +68,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Infrastructure\Logger.cs" />
+    <Compile Include="Orchestration\BossFightOrchestrator.cs" />
+    <Compile Include="Orchestration\FightContext.cs" />
+    <Compile Include="Orchestration\GameController.cs" />
+    <Compile Include="Orchestration\IFightService.cs" />
     <Compile Include="PluginGUI\BaseWindow.cs" />
     <Compile Include="PluginGUI\CursorPatcher.cs" />
     <Compile Include="PluginGUI\PluginGUIElements.cs" />
     <Compile Include="PluginGUI\PluginGUIStyles.cs" />
+    <Compile Include="PluginGUI\Windows\UtilitiesWindow.cs" />
+    <Compile Include="Infrastructure\PluginRuntime.cs" />
+    <Compile Include="Infrastructure\PluginState.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PluginGUI\WindowManager.cs" />
   </ItemGroup>

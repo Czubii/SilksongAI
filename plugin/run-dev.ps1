@@ -1,11 +1,12 @@
 param(
-    [string]$DllPath
+    [string]$BuildDir
 )
 
 # =========================
 # CONFIG
 # =========================
-$GameDir = "C:\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong\"
+
+$GameDir = "C:\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong"
 $PluginDir = Join-Path $GameDir "BepInEx\plugins\WeaverNet"
 $Exe = Join-Path $GameDir "Hollow Knight Silksong.exe"
 
@@ -13,17 +14,17 @@ $Exe = Join-Path $GameDir "Hollow Knight Silksong.exe"
 # INPUT SANITIZATION
 # =========================
 
-$DllPath = $DllPath.Trim('"')
+$BuildDir = $BuildDir.Trim('"')
 
-Write-Host "DLL Path: $DllPath"
+Write-Host "BuildDir: $BuildDir"
 
 # =========================
 # VALIDATION
 # =========================
 
-if (!(Test-Path $DllPath)) {
-    Write-Host "ERROR: DLL not found at build output:"
-    Write-Host $DllPath
+if (!(Test-Path $BuildDir)) {
+    Write-Host "ERROR: Build directory not found:"
+    Write-Host $BuildDir
     exit 1
 }
 
@@ -45,7 +46,8 @@ if (Test-Path $PluginDir) {
 
 New-Item -ItemType Directory -Path $PluginDir | Out-Null
 
-Copy-Item $DllPath $PluginDir -Force
+# Copy ALL build outputs (important for Core.dll, dependencies, etc.)
+Copy-Item (Join-Path $BuildDir "*") $PluginDir -Recurse -Force
 
 Write-Host "Mod deployed successfully."
 
