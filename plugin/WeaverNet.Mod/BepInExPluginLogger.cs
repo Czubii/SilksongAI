@@ -1,5 +1,5 @@
 ﻿using BepInEx.Logging;
-using WeaverNet.Core.Infrastructure;
+using WeaverNet.Core.Infrastructure.Interfaces;
 
 namespace WeaverNet.Mod
 {

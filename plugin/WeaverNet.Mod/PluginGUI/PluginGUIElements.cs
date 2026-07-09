@@ -1,12 +1,8 @@
 ﻿using BepInEx;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
-namespace WeaverNet.Core.PluginGUI
+namespace WeaverNet.Mod.PluginGUI
 {
     public static class PluginGUIElements
     {

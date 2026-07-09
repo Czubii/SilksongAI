@@ -2,9 +2,9 @@
 using HarmonyLib;
 using UnityEngine;
 using WeaverNet.Core.Infrastructure;
-using WeaverNet.Core.PluginGUI;
-using WeaverNet.Core.PluginGUI.Windows;
-using WeaverNet.PluginGUI;
+using WeaverNet.Mod.PluginGUI;
+using WeaverNet.Mod.PluginGUI.Windows;
+
 
 namespace WeaverNet.Mod
 {

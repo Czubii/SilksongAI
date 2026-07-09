@@ -1,17 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using WeaverNet.Core.Infrastructure.Interfaces;
 
 namespace WeaverNet.Core.Infrastructure
 {
-    public interface IPluginLogger
-    {
-        void Info(string message);
-        void Warning(string message);
-        void Error(string message);
-    }
     public static class PluginLog
     {
         private static IPluginLogger _logger;

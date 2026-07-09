@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace WeaverNet.Core.PluginGUI
+namespace WeaverNet.Mod.PluginGUI
 {
     public abstract class BaseWindow
     {

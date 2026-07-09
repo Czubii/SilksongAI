@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using WeaverNet.Core.Infrastructure;
 
-namespace WeaverNet.Core.PluginGUI.Windows
+namespace WeaverNet.Mod.PluginGUI.Windows
 {
     public class UtilitiesWindow : BaseWindow
     {

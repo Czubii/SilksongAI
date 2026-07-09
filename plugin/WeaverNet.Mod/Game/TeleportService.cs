@@ -6,23 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
 using static GameManager;
 
-namespace WeaverNet.Core.Game
+namespace WeaverNet.Mod.Game
 {
-    public interface ITeleportService
-    {
-        void Teleport(string targetSceneName, Vector3 targetPos, bool requireSceneReload);
-        void TeleportToBench();
-        bool CanTeleport();
-    }
     public class TeleportService : MonoBehaviour, ITeleportService
     {
-        //public void TeleportTo(BossMetadata boss, bool requireSceneReload)
-        //{
-        //    TeleportTo(boss.ArenaSceneName, boss.ArenaPosition, requireSceneReload);
-        //}
         public void Teleport(string targetSceneName, Vector3 targetPos, bool requireSceneReload)
         {
             if (!TryStartTeleport()) return;

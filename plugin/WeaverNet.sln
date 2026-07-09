@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeaverNet.Mod", "WeaverNet.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeaverNet.Core", "WeaverNet.Core\WeaverNet.Core.csproj", "{0245C8F0-8C87-4283-A410-31EDB52340F0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeaverNET.Infrastructure", "WeaverNET.Infrastructure\WeaverNET.Infrastructure.csproj", "{D185D190-5FA4-438D-A6A4-85F83DAAEE3E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +32,10 @@ Global
 		{0245C8F0-8C87-4283-A410-31EDB52340F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0245C8F0-8C87-4283-A410-31EDB52340F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0245C8F0-8C87-4283-A410-31EDB52340F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D185D190-5FA4-438D-A6A4-85F83DAAEE3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D185D190-5FA4-438D-A6A4-85F83DAAEE3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D185D190-5FA4-438D-A6A4-85F83DAAEE3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D185D190-5FA4-438D-A6A4-85F83DAAEE3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

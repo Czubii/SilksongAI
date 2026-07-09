@@ -3,9 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using WeaverNet.PluginGUI;
 
-namespace WeaverNet.Core.PluginGUI
+namespace WeaverNet.Mod.PluginGUI
 {
 
     public abstract class BaseScreenLabel : MonoBehaviour

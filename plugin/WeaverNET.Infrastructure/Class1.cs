@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WeaverNet.Core.Orchestration
+namespace WeaverNET.Infrastructure
 {
-    internal class GameController
+    public class Class1
     {
     }
 }
