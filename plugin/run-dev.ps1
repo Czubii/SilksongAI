@@ -56,7 +56,7 @@ if ($RunningGame) {
     }
 
     # Give Windows a moment to release resources
-    Start-Sleep -Seconds 2
+    Start-Sleep -Seconds 3
 
     Write-Host "Game closed."
 }

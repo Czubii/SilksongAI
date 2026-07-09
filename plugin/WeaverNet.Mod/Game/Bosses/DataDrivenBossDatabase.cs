@@ -36,6 +36,7 @@ namespace WeaverNet.Mod.Game.Bosses
             try
             {
                 string[] files = Directory.GetFiles(_metadataRootPath, "*.json", SearchOption.AllDirectories);
+                _allBosses = new List<BossMetadata>();
 
                 foreach (string file in files)
                 {

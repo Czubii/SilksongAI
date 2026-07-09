@@ -1,9 +1,12 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using System;
 using System.IO;
 using UnityEngine;
+using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
+using WeaverNet.Mod.Game;
 using WeaverNet.Mod.Game.Bosses;
 using WeaverNet.Mod.PluginGUI;
 using WeaverNet.Mod.PluginGUI.Windows;
@@ -17,43 +20,45 @@ namespace WeaverNet.Mod
     )]
     public class WeaverNetPlugin : BaseUnityPlugin
     {
-        private ConfigEntry<string> _bossMetadataPath;
         private void Awake()
         {
-            Logger.LogInfo("WeaverNet Mod loading...");
+            try
+            {
+                Logger.LogInfo("WeaverNet Mod loading...");
 
-            PluginRuntime.Initialize();
-            var logger = new BepInExPluginLogger(Logger);
-            PluginLog.Bind(logger);
-
-
-            DataDrivenBossDatabase bossDatabase = new DataDrivenBossDatabase(Path.Combine(Paths.PluginPath, "WeaverNet", "Data", "Bosses"));
-            bossDatabase.Load();
-
-            Logger.LogInfo("Configs Loaded Successfully");
+                PluginRuntime.Initialize();
+                var logger = new BepInExPluginLogger(Logger);
+                PluginLog.Bind(logger);
 
 
+                DataDrivenBossDatabase bossDatabase = new DataDrivenBossDatabase(Path.Combine(Paths.PluginPath, "WeaverNet", "Data", "Bosses"));
+                bossDatabase.Load();
 
-            var windowManager = gameObject.AddComponent<PluginWindowManager>();
-            windowManager.Initialize(Config);
+                Logger.LogInfo("Configs Loaded Successfully");
 
-            var utilitiesWindow = new UtilitiesWindow("Utilities");
+                ITeleportService tpService = gameObject.AddComponent<TeleportService>();
 
-            windowManager.Register(utilitiesWindow, true);
+                Logger.LogInfo("Services Initialized Successfully");
 
-            Logger.LogInfo("Patching started...");
-            Harmony.CreateAndPatchAll(typeof(CursorPatcher), null);
-            Logger.LogInfo("Everything loaded successfully");
+                var windowManager = gameObject.AddComponent<PluginWindowManager>();
+                windowManager.Initialize(Config);
 
-        }
-        private void LoadConfigs()
-        {
-            _bossMetadataPath = Config.Bind(
-                    "Paths",
-                    "Boss Metadata Directory Path",
-                    Path.Combine(Paths.PluginPath, "BossMetadata"),
-                    "Specify the absolute path to the directory."
-                );
+                var utilitiesWindow = new UtilitiesWindow("Utilities", tpService, bossDatabase);
+
+                windowManager.Register(utilitiesWindow, true);
+
+                Logger.LogInfo("GUI Initialized Successfully");
+
+                Harmony.CreateAndPatchAll(typeof(CursorPatcher), null);
+
+                Logger.LogInfo("Harmony Patching Successufll");
+
+                Logger.LogInfo("Everything loaded successfully");
+            }
+            catch(Exception ex)
+            {
+                 PluginLog.Error(ex.Message);
+            }
         }
         private void OnDestroy()
         {
