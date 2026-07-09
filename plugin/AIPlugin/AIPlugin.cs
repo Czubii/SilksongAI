@@ -17,6 +17,7 @@ using AIPlugin.PluginGUI;
 using AIPlugin.PluginGUI.Windows;
 using AIPlugin.BossfightSession.Agents;
 
+
 namespace AIPlugin
 {
     [BepInPlugin("com.czubii.AIPlugin", "AI Plugin", "1.0.0")]

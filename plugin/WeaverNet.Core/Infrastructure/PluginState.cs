@@ -9,5 +9,6 @@ namespace WeaverNet.Core.Infrastructure
     public class PluginState
     {
         public bool IsSessionActive;
+        public bool TeleportInProgress;
     }
 }

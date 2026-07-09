@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using WeaverNet.Core.Infrastructure;
 
 namespace WeaverNet.Core.PluginGUI.Windows
 {
