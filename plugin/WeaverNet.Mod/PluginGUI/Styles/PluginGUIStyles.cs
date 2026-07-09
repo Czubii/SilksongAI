@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace WeaverNet.Mod.PluginGUI
+namespace WeaverNet.Mod.PluginGUI.Styles
 {
     public static class PluginGUIStyles
     {

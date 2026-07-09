@@ -1,51 +1,29 @@
 ﻿using BepInEx;
 using System.Collections.Generic;
 using UnityEngine;
+using WeaverNet.Mod.PluginGUI.Styles;
 
-namespace WeaverNet.Mod.PluginGUI
+namespace WeaverNet.Mod.PluginGUI.Elements
 {
-    public static class PluginGUIElements
+    public class DropdownState<T>
+               where T : class
     {
-        public static bool TopBar(string text)
+        public int SelectedIdx = -1;
+        public T SelectedOption;
+        public bool SelectionChanged = false;
+        public bool Expanded = false;
+
+        public void Reset()
         {
-            bool pressed = false;
-            GUILayout.BeginHorizontal(GUI.skin.label);
-
-            GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-            labelStyle.fontStyle = FontStyle.Bold;
-            labelStyle.fontSize = 20;
-            labelStyle.alignment = TextAnchor.MiddleCenter;
-
-            GUILayout.Label(text, labelStyle, GUILayout.ExpandWidth(true));
-
-            GUILayout.FlexibleSpace();
-
-            if (GUILayout.Button("✕", PluginGUIStyles.CloseButton, GUILayout.Width(20), GUILayout.Height(20)))
-            {
-                pressed = true;
-            }
-
-            GUILayout.EndHorizontal();
-
-            return pressed;
+            SelectedIdx = -1;
+            SelectedOption = null;
+            Expanded = false;
+            SelectionChanged = true;
         }
-
-        public class DropdownState<T>
-            where T : class
-        {
-            public int SelectedIdx = -1;
-            public T SelectedOption;
-            public bool SelectionChanged = false;
-            public bool Expanded = false;
-
-            public void Reset()
-            {
-                SelectedIdx = -1;
-                SelectedOption = null;
-                Expanded = false;
-                SelectionChanged = true;
-            }
-        }
+    
+    }
+    public static partial class PluginGUIElements
+    {
         public static DropdownState<T> Dropdown<T>(DropdownState<T> state, List<(string label, T value)> elements, string label = "")
             where T : class
         {
@@ -130,44 +108,6 @@ namespace WeaverNet.Mod.PluginGUI
 
             if (state.SelectedIdx != oldSelection) state.SelectionChanged = true;
             return state;
-        }
-        public static bool LabeledToggle(bool value, string text, params GUILayoutOption[] options)
-        {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(text, GUILayout.ExpandWidth(true));
-            GUILayout.FlexibleSpace();
-            value = GUILayout.Toggle(value, "", PluginGUIStyles.Toggle, options);
-            GUILayout.EndHorizontal();
-            return value;
-        }
-        public static int IntegerField(int value, params GUILayoutOption[] options)
-        {
-            string text = GUILayout.TextField(value.ToString(), PluginGUIStyles.TextField, options);
-
-            if (int.TryParse(text, out int parsed))
-                return parsed;
-
-            return value; // keep previous value if invalid
-        }
-        public static void ProgressBar(float progress, string label = null, params GUILayoutOption[] options)
-        {
-            progress = Mathf.Clamp01(progress);
-
-            Rect rect = GUILayoutUtility.GetRect(1, 25, options);
-
-            GUI.Box(rect, GUIContent.none, PluginGUIStyles.ProgressBarBackground);
-
-            Rect fill = new Rect(rect.x, rect.y, rect.width * progress, rect.height);
-            GUI.Box(fill, GUIContent.none, PluginGUIStyles.ProgressBarFill);
-
-            if (!string.IsNullOrEmpty(label))
-            {
-                GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-                labelStyle.alignment = TextAnchor.MiddleCenter;
-                labelStyle.fontStyle = FontStyle.Bold;
-
-                GUI.Label(rect, label, labelStyle);
-            }
         }
     }
 }

@@ -123,8 +123,12 @@
     <Compile Include="Game\TeleportService.cs" />
     <Compile Include="PluginGUI\BaseWindow.cs" />
     <Compile Include="PluginGUI\CursorPatcher.cs" />
-    <Compile Include="PluginGUI\PluginGUIElements.cs" />
-    <Compile Include="PluginGUI\PluginGUIStyles.cs" />
+    <Compile Include="PluginGUI\Elements\Dropdown.cs" />
+    <Compile Include="PluginGUI\Elements\InputFields.cs" />
+    <Compile Include="PluginGUI\Elements\Labeled.cs" />
+    <Compile Include="PluginGUI\Elements\ProgressBar.cs" />
+    <Compile Include="PluginGUI\Elements\TopBar.cs" />
+    <Compile Include="PluginGUI\Styles\PluginGUIStyles.cs" />
     <Compile Include="PluginGUI\WindowManager.cs" />
     <Compile Include="PluginGUI\Windows\UtilitiesWindow.cs" />
     <Compile Include="WeaverNetPlugin.cs" />
