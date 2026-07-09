@@ -1,0 +1,33 @@
+{
+  "ID": "Bone Beast",
+  "DisplayName": "Bell Beast",
+  "ArenaSceneName": "Bone_05",
+  "ArenaPosition": {
+    "x": 78.59,
+    "y": 3.57,
+    "z": 0.0
+  },
+  "RequireHardSceneReload": true,
+
+  "Abilities": {
+    "Dash": false,
+    "DoubleJump": false,
+    "WallJump": false,
+    "HarpoonDash": false,
+    "SuperJump": false,
+    "Brolly": false,
+    "ChargeSlash": false,
+
+    "HP": 5,
+    "Silk": 8,
+    "SilkRegen": 0
+  },
+
+  "RespawnFlags": {
+    "PlayerDataBools": {
+      "defeatedBellBeast": false
+    },
+    "SceneBools": [],
+    "SceneInts": []
+  }
+}

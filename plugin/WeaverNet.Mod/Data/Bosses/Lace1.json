@@ -1,0 +1,33 @@
+{
+  "ID": "Lace Boss1",
+  "DisplayName": "Lace 1",
+  "ArenaSceneName": "Bone_East_12",
+  "ArenaPosition": {
+    "x": 90.0,
+    "y": 7.57,
+    "z": 0.0
+  },
+  "RequireHardSceneReload": true,
+
+  "Abilities": {
+    "Dash": true,
+    "DoubleJump": false,
+    "WallJump": false,
+    "HarpoonDash": false,
+    "SuperJump": false,
+    "Brolly": false,
+    "ChargeSlash": false,
+
+    "HP": 5,
+    "Silk": 8,
+    "SilkRegen": 0
+  },
+
+  "RespawnFlags": {
+    "PlayerDataBools": {
+      "defeatedLace1": false
+    },
+    "SceneBools": [],
+    "SceneInts": []
+  }
+}

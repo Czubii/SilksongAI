@@ -1,0 +1,42 @@
+{
+  "ID": "Mossbone Mother",
+  "DisplayName": "Moss Mother",
+  "ArenaSceneName": "Tut_03",
+  "ArenaPosition": {
+    "x": 68.0,
+    "y": 17.6,
+    "z": 0.0
+  },
+  "RequireHardSceneReload": true,
+
+  "Abilities": {
+    "Dash": false,
+    "DoubleJump": false,
+    "WallJump": false,
+    "HarpoonDash": false,
+    "SuperJump": false,
+    "Brolly": false,
+    "ChargeSlash": false,
+
+    "HP": 10,
+    "Silk": 8,
+    "SilkRegen": 0
+  },
+
+  "RespawnFlags": {
+    "PlayerDataBools": {
+      "defeatedMossMother": false,
+      "spinnerDefeated": false
+    },
+
+    "SceneBools": [
+      {
+        "SceneName": "Tut_03",
+        "ID": "Battle Scene",
+        "Value": false
+      }
+    ],
+    "SceneInts": [
+    ]
+  }
+}

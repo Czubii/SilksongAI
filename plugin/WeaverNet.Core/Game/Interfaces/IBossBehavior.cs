@@ -4,6 +4,7 @@ namespace WeaverNet.Core.Game.Interfaces
 {
     public interface IBossBehavior
     {
-        void Respawn(TemporaryStateModifier modifier);
+        void Respawn();
+        void RespawnTemporary(TemporaryStateModifier modifier);
     }
 }

@@ -51,7 +51,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Game\BossMetadata.cs" />
+    <Compile Include="Game\Interfaces\IAbilitySet.cs" />
     <Compile Include="Game\Interfaces\IBossBehavior.cs" />
+    <Compile Include="Game\Interfaces\IBossDatabase.cs" />
+    <Compile Include="Game\Interfaces\ICrestToolSet.cs" />
     <Compile Include="Game\Interfaces\ITeleportService.cs" />
     <Compile Include="Infrastructure\GameStateScope.cs" />
     <Compile Include="Infrastructure\Interfaces\IPluginLogger.cs" />

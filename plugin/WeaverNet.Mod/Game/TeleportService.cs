@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
 using static GameManager;
@@ -14,6 +15,10 @@ namespace WeaverNet.Mod.Game
 {
     public class TeleportService : MonoBehaviour, ITeleportService
     {
+        public void Teleport(BossMetadata boss, bool requireSceneReload)
+        {
+            Teleport(boss.ArenaSceneName, boss.ArenaPosition, requireSceneReload);
+        }
         public void Teleport(string targetSceneName, Vector3 targetPos, bool requireSceneReload)
         {
             if (!TryStartTeleport()) return;

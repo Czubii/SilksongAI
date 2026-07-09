@@ -5,12 +5,14 @@ namespace WeaverNet.Core.Game
 {
     public class BossMetadata
     {
-        public string DisplayName;
         public string ID;
+        public string DisplayName;
         public string ArenaSceneName;
         public Vector3 ArenaPosition;
-        public bool CanRespawnOnArena = true; // TODO: implement (for example false for fouth chorus)
+        public bool CanRespawnOnArena = true;
         public bool RequireHardSceneReload = false;
-        public IBossBehavior behavior;
+        public IAbilitySet Abilities;
+        public ICrestToolSet Tools;
+        public IBossBehavior Behavior;
     }
 }
