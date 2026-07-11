@@ -1,31 +1,68 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 using WeaverNet.Core.Infrastructure;
+using WeaverNet.Core.Orchestration.Interfaces;
 
 namespace WeaverNet.Core.Orchestration
 {
-    //public class BossFightOrchestrator // Single use
-    //{
-    //    private readonly FightDefinition _definition;
-    //    public BossFightOrchestrator(FightDefinition definition)
-    //    {
-    //        _definition = definition;
-    //    }
-    //    public async Task RunFightAsync(FightContext ctx)
-    //    {
-    //        await RunPhaseAsync(FightPhase.PreFightInit, ctx);
-    //    }
+    /// <summary>
+    /// Executes a single boss fight.
+    /// Assumes the player is already in the arena and ready to engage.
+    /// Waits for the boss to become active, monitors the fight until it concludes,
+    /// and returns the fight result.
+    /// </summary>
+    public class BossFightOrchestrator 
+    {
+        private readonly IBossfightExecutor _executor;
+        private readonly List<IBossfightPlugin> _plugins;
+        public BossFightOrchestrator(IBossfightExecutor executor, List<IBossfightPlugin> plugins)
+        {
+            _executor = executor;
+            _plugins = plugins;
+        }
+        public async Task<BossfightResult> RunAsync(FightContext ctx,CancellationToken ct)
+        {
+            try
+            {
+                using (var startTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct))
+                {
+                    startTimeoutCts.CancelAfter(TimeSpan.FromSeconds(20));
 
-    //    private async Task RunPhaseAsync(FightPhase phase, FightContext ctx)
-    //    {
-    //        PluginLog.Info($"Starting Boss fight phase {phase}");
+                    await _executor.AwaitFightStartAsync(
+                        ctx.Boss.ID,
+                        startTimeoutCts.Token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                if (ct.IsCancellationRequested)
+                    throw;
 
-    //        var tasks = _definition.Services.Select(service => service.OnPhaseAsync(phase, ctx));
+                return BossfightResult.BossNeverAppeared;
+            }
 
-    //        await Task.WhenAll(tasks);
-    //    }
-    //}
+            try
+            {
+                using (var fightTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct))
+                {
+                    fightTimeoutCts.CancelAfter(TimeSpan.FromSeconds(400));
+
+                    return await _executor.AwaitFightEndAsync(
+                        ctx.Boss.ID,
+                        fightTimeoutCts.Token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                if (ct.IsCancellationRequested)
+                    throw;
+
+                return BossfightResult.FightTimeout;
+            }
+        }
+
+    }
 }

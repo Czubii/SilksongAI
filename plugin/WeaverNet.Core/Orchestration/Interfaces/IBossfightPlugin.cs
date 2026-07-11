@@ -6,11 +6,7 @@ using System.Threading.Tasks;
 
 namespace WeaverNet.Core.Orchestration.Interfaces
 {
-    public interface ISessionGameControlelr
+    public interface IBossfightPlugin
     {
-        void OnBeforeSession();
-        void OnBeforeFight();
-        void OnAfterFight();
-        void OnAfterSession();
     }
 }

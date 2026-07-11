@@ -16,7 +16,7 @@ namespace WeaverNet.Core.Infrastructure
         }
 
         public static void Info(string msg) => _logger?.Info(msg);
-        public static void Warn(string msg) => _logger?.Warning(msg);
+        public static void Warning(string msg) => _logger?.Warning(msg);
         public static void Error(string msg) => _logger?.Error(msg);
     }
 }

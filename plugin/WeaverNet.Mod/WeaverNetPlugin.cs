@@ -37,7 +37,7 @@ namespace WeaverNet.Mod
                 Logger.LogInfo("Configs Loaded Successfully");
 
                 ITeleportService tpService = gameObject.AddComponent<TeleportService>();
-
+                gameObject.AddComponent<HitboxVisualizer>();
                 Logger.LogInfo("Services Initialized Successfully");
 
                 var windowManager = gameObject.AddComponent<PluginWindowManager>();

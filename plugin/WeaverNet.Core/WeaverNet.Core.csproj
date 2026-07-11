@@ -61,14 +61,14 @@
     <Compile Include="Infrastructure\Logger.cs" />
     <Compile Include="Infrastructure\TemporaryStateModifier.cs" />
     <Compile Include="Orchestration\BossFightOrchestrator.cs" />
+    <Compile Include="Orchestration\BossfightResult.cs" />
     <Compile Include="Orchestration\FightContext.cs" />
     <Compile Include="Infrastructure\PluginRuntime.cs" />
     <Compile Include="Infrastructure\PluginState.cs" />
-    <Compile Include="Game\Interfaces\ISessionGameControlelr.cs" />
+    <Compile Include="Orchestration\Interfaces\IBossfightExecutor.cs" />
+    <Compile Include="Orchestration\Interfaces\IBossfightPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Orchestration\Interfaces\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

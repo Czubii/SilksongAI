@@ -32,6 +32,7 @@ namespace WeaverNet.Mod.PluginGUI.Windows
             if (GUILayout.Button("Teleport", PluginGUIStyles.Button))
             {
                 var bossMetadata = _bossDatabase.All.Find(a => a.ID == _bossDropdownState.SelectedOption);
+                bossMetadata.Behavior.Respawn();
                 _teleportService.Teleport(bossMetadata, true);
             }
             GUI.enabled = true;

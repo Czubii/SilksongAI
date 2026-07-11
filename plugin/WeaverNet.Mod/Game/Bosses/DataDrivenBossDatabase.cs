@@ -56,7 +56,7 @@ namespace WeaverNet.Mod.Game.Bosses
 
             if ((_allBosses?.Count ?? 0) == 0)
             {
-                PluginLog.Warn("No Boss Metadata Files Found!");
+                PluginLog.Warning("No Boss Metadata Files Found!");
             }
 
             _loaded = true;

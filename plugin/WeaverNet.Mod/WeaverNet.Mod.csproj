@@ -120,6 +120,8 @@
     <Compile Include="Game\Bosses\DataDrivenBossBehavior.cs" />
     <Compile Include="Game\Bosses\DataDrivenBossDatabase.cs" />
     <Compile Include="Game\Bosses\RawBossMetadata.cs" />
+    <Compile Include="Game\BossfightExecutor.cs" />
+    <Compile Include="Game\HitboxVisualizer.cs" />
     <Compile Include="Game\TeleportService.cs" />
     <Compile Include="PluginGUI\BaseWindow.cs" />
     <Compile Include="PluginGUI\CursorPatcher.cs" />
