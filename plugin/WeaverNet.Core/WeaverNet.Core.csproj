@@ -50,22 +50,34 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Game\BossMetadata.cs" />
-    <Compile Include="Game\Interfaces\IAbilitySet.cs" />
-    <Compile Include="Game\Interfaces\IBossBehavior.cs" />
+    <Compile Include="Game\BossDefinition.cs" />
+    <Compile Include="Game\BossPreset.cs" />
+    <Compile Include="Game\AbilitySet.cs" />
+    <Compile Include="Game\Interfaces\IBossSpawner.cs" />
     <Compile Include="Game\Interfaces\IBossDatabase.cs" />
-    <Compile Include="Game\Interfaces\ICrestToolSet.cs" />
+    <Compile Include="Game\CrestToolSet.cs" />
+    <Compile Include="Game\Interfaces\ILoadoutManager.cs" />
+    <Compile Include="Game\Interfaces\IRespawnPoint.cs" />
     <Compile Include="Game\Interfaces\ITeleportService.cs" />
+    <Compile Include="Game\Loadout.cs" />
     <Compile Include="Infrastructure\GameStateScope.cs" />
     <Compile Include="Infrastructure\Interfaces\IPluginLogger.cs" />
     <Compile Include="Infrastructure\Logger.cs" />
     <Compile Include="Infrastructure\TemporaryStateModifier.cs" />
     <Compile Include="Infrastructure\PluginRuntime.cs" />
     <Compile Include="Infrastructure\PluginState.cs" />
+    <Compile Include="Orchestration\BossfightContext.cs" />
+    <Compile Include="Orchestration\BossfightSession.cs" />
+    <Compile Include="Orchestration\BossfightSessionBuilder.cs" />
+    <Compile Include="Orchestration\BossfightSessionOrchestrator.cs" />
+    <Compile Include="Orchestration\BossfightSessionRuntime.cs" />
+    <Compile Include="Orchestration\Boundaries\IBossfightSessionBoundary.cs" />
+    <Compile Include="Orchestration\Boundaries\IterationBoundary.cs" />
+    <Compile Include="Orchestration\FightResult.cs" />
+    <Compile Include="Orchestration\Interfaces\IBossfightSessionGameController.cs" />
+    <Compile Include="Orchestration\Interfaces\IBossfightSessionPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Orchestration\Interfaces\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

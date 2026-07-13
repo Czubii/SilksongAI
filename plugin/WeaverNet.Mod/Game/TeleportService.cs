@@ -15,7 +15,7 @@ namespace WeaverNet.Mod.Game
 {
     public class TeleportService : MonoBehaviour, ITeleportService
     {
-        public void Teleport(BossMetadata boss, bool requireSceneReload)
+        public void Teleport(BossDefinition boss, bool requireSceneReload)
         {
             Teleport(boss.ArenaSceneName, boss.ArenaPosition, requireSceneReload);
         }

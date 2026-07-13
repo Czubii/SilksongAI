@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WeaverNet.Core.Game.Interfaces
+namespace WeaverNet.Core.Orchestration
 {
-    public interface IBossDatabase
+    public class BossfightSessionBuilder
     {
-        IReadOnlyList<BossPreset> All { get; }
+
+        public BossfightSessionBuilder 
     }
 }

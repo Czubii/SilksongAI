@@ -7,9 +7,8 @@ using WeaverNet.Core.Infrastructure;
 
 namespace WeaverNet.Core.Game.Interfaces
 {
-    public interface ICrestToolSet
+    public interface IRespawnPoint 
     {
-        void Apply();
-        void ApplyTemporary(TemporaryStateModifier modifier);
+        void UseAsTemporary(TemporaryStateModifier modifier, int type = 0);
     }
 }

@@ -1,10 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Numerics;
-using System.Reflection;
 using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
@@ -17,9 +14,9 @@ namespace WeaverNet.Mod.Game.Bosses
     {
         private readonly string _metadataRootPath;
 
-        private List<BossMetadata> _allBosses = null;
+        private List<BossPreset> _allBosses = null;
         private bool _loaded = false;
-        public List<BossMetadata> All
+        public IReadOnlyList<BossPreset> All
         {
             get
             {
@@ -36,7 +33,7 @@ namespace WeaverNet.Mod.Game.Bosses
             try
             {
                 string[] files = Directory.GetFiles(_metadataRootPath, "*.json", SearchOption.AllDirectories);
-                _allBosses = new List<BossMetadata>();
+                _allBosses = new List<BossPreset>();
 
                 foreach (string file in files)
                 {

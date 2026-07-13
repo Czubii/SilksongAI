@@ -8,10 +8,10 @@ using WeaverNet.Core.Infrastructure;
 
 namespace WeaverNet.Mod.Game.Bosses
 {
-    public class DataDrivenBossBehavior: IBossBehavior
+    public class DataDrivenBossSpawner: IBossSpawner
     {
         private readonly RespawnFlags _flags;
-        public DataDrivenBossBehavior(RespawnFlags flags)
+        public DataDrivenBossSpawner(RespawnFlags flags)
         {
             _flags = flags;
         }

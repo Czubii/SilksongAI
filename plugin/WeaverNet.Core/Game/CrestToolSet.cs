@@ -5,11 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using WeaverNet.Core.Infrastructure;
 
-namespace WeaverNet.Core.Game.Interfaces
+namespace WeaverNet.Core.Game
 {
-    public interface IAbilitySet
+    public class CrestToolSet //TODO
     {
-        void Apply();
-        void ApplyTemporary(TemporaryStateModifier modifier);
     }
 }

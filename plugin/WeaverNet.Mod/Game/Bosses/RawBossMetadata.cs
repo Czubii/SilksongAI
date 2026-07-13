@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using WeaverNet.Core.Game;
-using WeaverNet.Core.Game.Interfaces;
 
 namespace WeaverNet.Mod.Game.Bosses
 {
@@ -18,23 +13,29 @@ namespace WeaverNet.Mod.Game.Bosses
         public bool CanRespawnOnArena { get; set; }
         public bool RequireHardSceneReload { get; set; }
         public AbilitySet Abilities { get; set; }
-        public ICrestToolSet Tools { get; set; }
+        public CrestToolSet Tools { get; set; }
         public RespawnFlags RespawnFlags { get; set; }
 
-        public BossMetadata Build()
+        public BossPreset Build()
         {
-            return new BossMetadata
-            {
-                ID = ID,
-                DisplayName = DisplayName,
-                ArenaSceneName = ArenaSceneName,
-                ArenaPosition = ArenaPosition,
-                CanRespawnOnArena = CanRespawnOnArena,
-                RequireHardSceneReload = RequireHardSceneReload,
-                Abilities = Abilities,
-                Tools = Tools,
-                Behavior = new DataDrivenBossBehavior(RespawnFlags)
-            };
+            return new BossPreset
+            (
+                new BossDefinition
+                (
+                    ID,
+                    DisplayName,
+                    ArenaSceneName,
+                    ArenaPosition,
+                    new DataDrivenBossSpawner(RespawnFlags),
+                    CanRespawnOnArena,
+                    RequireHardSceneReload
+                ),
+                new Loadout
+                (
+                    Abilities,
+                    Tools
+                )
+            );
         }
     }
 

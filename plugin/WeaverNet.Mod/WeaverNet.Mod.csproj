@@ -91,6 +91,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="TeamCherry.SharedUtils, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="UnityEngine">
       <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
@@ -116,12 +117,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BepInExPluginLogger.cs" />
-    <Compile Include="Game\AbilitySet.cs" />
-    <Compile Include="Game\Bosses\DataDrivenBossBehavior.cs" />
+    <Compile Include="Game\Bosses\DataDrivenBossSpawner.cs" />
     <Compile Include="Game\Bosses\DataDrivenBossDatabase.cs" />
     <Compile Include="Game\Bosses\RawBossMetadata.cs" />
-    <Compile Include="Game\BossfightExecutor.cs" />
+    <Compile Include="Game\BossfightSessionGameController.cs" />
     <Compile Include="Game\HitboxVisualizer.cs" />
+    <Compile Include="Game\LoadoutManager.cs" />
+    <Compile Include="Game\RespawnPoint.cs" />
     <Compile Include="Game\TeleportService.cs" />
     <Compile Include="PluginGUI\BaseWindow.cs" />
     <Compile Include="PluginGUI\CursorPatcher.cs" />

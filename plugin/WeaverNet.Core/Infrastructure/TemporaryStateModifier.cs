@@ -21,7 +21,7 @@ namespace WeaverNet.Core.Infrastructure
         {
             _undoActions.Add(action);
         }
-        public void RestoreState()
+        public void RestoreState() // TODO: add here safe guard to automatically restore the state either before saving or quiting to menu
         {
             for (int i = _undoActions.Count - 1; i >= 0; i--) // loop backwards to get to the first state
                 _undoActions[i].Invoke();
