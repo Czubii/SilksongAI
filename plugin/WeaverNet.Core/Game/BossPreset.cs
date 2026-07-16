@@ -8,12 +8,11 @@ namespace WeaverNet.Core.Game
 {
     public class BossPreset
     {
-        public readonly BossDefinition Definition;
-        public readonly Loadout Loadout;
-
-        public BossPreset(BossDefinition definition, Loadout loadout)
+        public BossData Boss { get; }
+        public Loadout Loadout { get; }
+        public BossPreset(BossData definition, Loadout loadout)
         {
-            Definition = definition;
+            Boss = definition;
             Loadout = loadout;
         }
     }

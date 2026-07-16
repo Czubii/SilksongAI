@@ -1,0 +1,55 @@
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
+using WeaverNet.Core.Game.Interfaces;
+using WeaverNet.Mod.Game;
+using WeaverNet.Mod.Game.Debug;
+using WeaverNet.Mod.PluginGUI.Elements;
+using WeaverNet.Mod.PluginGUI.Styles;
+using WeaverNet.Diagnostics.Extensions;
+using WeaverNet.Core.Game;
+
+namespace WeaverNet.Mod.PluginGUI.Windows
+{
+    public class DebugWindow : BaseWindow
+    {
+        private HitboxVisualizer HitboxVisualizer { get; }
+        private ILoadoutManager LoadoutManager { get; }
+        private bool _hitboxesEnabled = false;
+        private Loadout _loadout = null;
+        public DebugWindow(string name, HitboxVisualizer hitbox) : base(name, new Rect(0, 0, 200, 150))
+        {
+            HitboxVisualizer = hitbox;
+            LoadoutManager = new LoadoutManager();//TODO remove 
+        }
+        public override bool CanEnable() => true;
+        public override void DrawContent()
+        {
+            GUILayout.BeginVertical();
+            _hitboxesEnabled = PluginGUIElements.LabeledToggle(_hitboxesEnabled, "Hitboxes");
+            if(_hitboxesEnabled != HitboxVisualizer.enabled)
+            {
+                HitboxVisualizer.enabled = _hitboxesEnabled;
+            }
+
+            GUILayout.Label("Loadouts");
+            if (GUILayout.Button("Print Current Loadout", PluginGUIStyles.Button))
+            {
+                LoadoutManager.GetLoadout().Print();
+            }
+            if (GUILayout.Button("Store Current Loadout", PluginGUIStyles.Button))
+            {
+                _loadout = LoadoutManager.GetLoadout();
+            }
+            GUI.enabled = _loadout != null;
+            if (GUILayout.Button("Apply Stored Loadout", PluginGUIStyles.Button))
+            {
+                LoadoutManager.SetLoadout(_loadout);
+            }
+
+            GUI.enabled = true;
+            GUILayout.EndVertical();
+
+        }
+    }
+}

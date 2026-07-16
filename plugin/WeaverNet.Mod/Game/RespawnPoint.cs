@@ -12,7 +12,7 @@ namespace WeaverNet.Mod.Game
         private string _scene;
         private GameObject _go;
         private bool _disposed;
-        public RespawnPoint(string name, string scene, Vector3 position)
+        public RespawnPoint(string scene, Vector3 position, string name = "WeaverNetSpawnPoint")
         {
             _scene = scene;
             _go = new GameObject(name);

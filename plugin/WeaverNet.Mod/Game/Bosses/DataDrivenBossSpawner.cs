@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
 
@@ -10,8 +6,8 @@ namespace WeaverNet.Mod.Game.Bosses
 {
     public class DataDrivenBossSpawner: IBossSpawner
     {
-        private readonly RespawnFlags _flags;
-        public DataDrivenBossSpawner(RespawnFlags flags)
+        private readonly BossRespawnFlags _flags;
+        public DataDrivenBossSpawner(BossRespawnFlags flags)
         {
             _flags = flags;
         }

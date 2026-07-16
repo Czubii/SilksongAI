@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering;
+using WeaverNet.Core.Infrastructure;
 
-namespace WeaverNet.Mod.Game
+namespace WeaverNet.Mod.Game.Debug
 {
     public class HitboxVisualizer : MonoBehaviour//TODO finish this 
     {
@@ -11,10 +12,11 @@ namespace WeaverNet.Mod.Game
 
         void Awake()
         {
+            enabled = false;
             Shader shader = Shader.Find("Hidden/Internal-Colored");
             if (shader == null)
             {
-                Debug.LogError("Couldn't find Hidden/Internal-Colored shader.");
+                PluginLog.Error("Couldn't find Hidden/Internal-Colored shader.");
                 enabled = false;
                 return;
             }

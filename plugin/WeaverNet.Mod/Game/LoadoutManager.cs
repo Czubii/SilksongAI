@@ -1,9 +1,8 @@
-﻿using System;
+﻿using BepInEx;
+using HutongGames.PlayMaker.Actions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
 using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
@@ -19,10 +18,8 @@ namespace WeaverNet.Mod.Game
                 return PlayerData.instance; 
             }  
         }
-        public AbilitySet GetAbilities()
+        private AbilitySet GetAbilities(PlayerData pd)
         {
-            var pd = CurrentPlayerData;
-
             return new AbilitySet(
                pd.hasDash,
                pd.hasDoubleJump,
@@ -31,26 +28,47 @@ namespace WeaverNet.Mod.Game
                pd.hasSuperJump,
                pd.hasBrolly,
                pd.hasChargeSlash,
-               pd.maxHealth,
-               pd.silkMax,
-               pd.silkRegenMax
+               pd.hasNeedolin,
+               pd.HasBoundCrestUpgrader
            );
 
         }
-        public CrestToolSet GetCrestToolSet()
+        private CrestToolSet GetCrestToolSet(PlayerData pd)
         {
-            throw new NotImplementedException();
+            string crestId = pd.CurrentCrestID;
+            var tools = ToolItemManager.GetEquippedToolsForCrest(crestId);
+
+            return new CrestToolSet(
+                crestId,
+                tools.Select(a => a?.name ?? "").ToList(),
+                pd.ExtraToolEquips.GetData("Defend1").EquippedTool,
+                pd.ExtraToolEquips.GetData("Explore1").EquippedTool,
+                pd.UnlockedExtraBlueSlot,
+                pd.UnlockedExtraYellowSlot
+            );
+        }
+        private PlayerUpgradeSet GetPlayerUpgradeSet(PlayerData pd)
+        {
+            return new PlayerUpgradeSet(
+                pd.maxHealthBase,
+                pd.silkMax,
+                pd.silkRegenMax,
+                pd.ToolKitUpgrades,
+                pd.ToolPouchUpgrades,
+                pd.nailUpgrades
+            );
         }
         public Loadout GetLoadout()
         {
-            throw new NotImplementedException();
-        }
-        public void SetAbilities(AbilitySet abilitySet)
-        {
-            if (abilitySet == null)
-                throw new ArgumentNullException(nameof(abilitySet));
-
             var pd = CurrentPlayerData;
+            return new Loadout(
+                GetAbilities(pd),
+                GetCrestToolSet(pd),
+                GetPlayerUpgradeSet(pd)
+            );
+        }
+        private void SetAbilities(PlayerData pd, AbilitySet abilitySet)
+        {
 
             pd.hasDash = abilitySet.Dash;
             pd.hasDoubleJump = abilitySet.DoubleJump;
@@ -59,42 +77,48 @@ namespace WeaverNet.Mod.Game
             pd.hasSuperJump = abilitySet.SuperJump;
             pd.hasBrolly = abilitySet.Brolly;
             pd.hasChargeSlash = abilitySet.ChargeSlash;
+            pd.hasNeedolin = abilitySet.Needolin;
+            pd.HasBoundCrestUpgrader = abilitySet.Sylphsong;
 
-            pd.maxHealth = abilitySet.HP;
-            pd.maxHealthBase = abilitySet.HP;
-            pd.silkMax = abilitySet.Silk;
-            pd.silkRegenMax = abilitySet.SilkRegen;
         }
-        public void SetAbilitiesTemporary(AbilitySet abilitySet, TemporaryStateModifier modifier)
+        private void SetCrestToolSet(PlayerData pd, CrestToolSet toolSet)
         {
-            if (abilitySet == null)
-                throw new ArgumentNullException(nameof(abilitySet));
+            ToolItemManager.SetEquippedTools(toolSet.CrestID, toolSet.ToolNames.ToList());
+            ToolItemManager.SetExtraEquippedTool("Defend1", toolSet.ExtraBlueSlotToolName);
+            ToolItemManager.SetExtraEquippedTool("Explore1", toolSet.ExtraYellowSlotToolName);
+            pd.UnlockedExtraBlueSlot = toolSet.ExtraBlueSlotUnlocked;
+            pd.UnlockedExtraYellowSlot = toolSet.ExtraYellowSlotUnlocked;
+            
+            ToolItemManager.SetEquippedCrest(toolSet.CrestID);
+        }
+        private void SetPlayerUpgradeSet(PlayerData pd, PlayerUpgradeSet pus)
+        {
+            pd.maxHealthBase = pus.HP;
+            pd.silkMax = pus.Silk;
+            pd.silkRegenMax = pus.SilkHearts;
+            pd.ToolKitUpgrades = pus.CraftingKits;
+            pd.ToolPouchUpgrades = pus.ToolPouches;
+            pd.nailUpgrades = pus.NailUpgrades;
+        }
 
+        public void SetLoadout(Loadout loadout)
+        {
             var pd = CurrentPlayerData;
+            
+            SetCrestToolSet(pd, loadout.Tools);
+            SetAbilities(pd, loadout.Abilities);
+            SetPlayerUpgradeSet(pd, loadout.Upgrades);
 
-            var currentAbilities = GetAbilities();
-            modifier.AddUndo(() =>
-            {
-                SetAbilities(currentAbilities);
-            });
-
-            SetAbilities(abilitySet);
-        }
-        public void SetCrestToolSet(CrestToolSet toolSet)
-        {
-            throw new NotImplementedException();
-        }
-        public void SetCrestToolSetTemporary(CrestToolSet toolSet, TemporaryStateModifier modifier)
-        {
-            throw new NotImplementedException();
-        }
-        public void SetLoadout(Loadout Loadout)
-        {
-            throw new NotImplementedException();
+            ToolItemManager.SendEquippedChangedEvent(true); // refreshes UI for health + silk + tools + crest (easiest method i found so far)
         }
         public void SetLoadoutTemporary(Loadout Loadout, TemporaryStateModifier modifier)
         {
-            throw new NotImplementedException();
+            var currLoadout = GetLoadout();
+            modifier.AddUndo(() =>
+            {
+                SetLoadout(currLoadout);
+            });
+            SetLoadout(Loadout);
         }
     }
 }

@@ -7,7 +7,7 @@ using WeaverNet.Core.Infrastructure;
 
 namespace WeaverNet.Core.Game.Interfaces
 {
-    public interface IRespawnPoint 
+    public interface IRespawnPoint: IDisposable
     {
         void UseAsTemporary(TemporaryStateModifier modifier, int type = 0);
     }

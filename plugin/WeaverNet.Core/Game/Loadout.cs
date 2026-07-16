@@ -1,4 +1,5 @@
-﻿using WeaverNet.Core.Game.Interfaces;
+﻿using System;
+using WeaverNet.Core.Game.Interfaces;
 
 namespace WeaverNet.Core.Game
 {
@@ -6,10 +7,12 @@ namespace WeaverNet.Core.Game
     {
         public AbilitySet Abilities { get; }
         public CrestToolSet Tools { get; }
-        public Loadout(AbilitySet abilities, CrestToolSet tools)
+        public PlayerUpgradeSet Upgrades { get; }
+        public Loadout(AbilitySet abilities, CrestToolSet tools, PlayerUpgradeSet upgrades)
         {
-            Abilities = abilities;
-            Tools = tools;
+            Abilities = abilities ?? throw new ArgumentNullException(nameof(abilities)); //TODO implement such pattern in the remaining data classes
+            Tools = tools ?? throw new ArgumentNullException(nameof(tools));
+            Upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
         }
     }
 }

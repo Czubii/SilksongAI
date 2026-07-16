@@ -93,11 +93,13 @@ namespace WeaverNet.Core.Orchestration
         }
         private async Task PrepareFight(BossfightSessionRuntime runtime)
         {
-            var boss = runtime.Session.Boss;
-            if (runtime.FirstIteration)
-            {
-                _controller.TeleportToArena(boss.ArenaSceneName, boss.ArenaPosition);
-            }
+
+            await Task.Delay(5000);
+            //var boss = runtime.Session.Boss;
+            //if (runtime.FirstIteration)
+            //{
+            //    _controller.TeleportToArena(boss.ArenaSceneName, boss.ArenaPosition);
+            //}
 
         }
         private Task NotifySessionStart(BossfightSession session)

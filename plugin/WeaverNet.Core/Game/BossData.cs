@@ -5,7 +5,7 @@ using WeaverNet.Core.Game.Interfaces;
 namespace WeaverNet.Core.Game
 {
 
-    public class BossDefinition
+    public class BossData
     {
         public string ID { get; }
         public string DisplayName { get; }
@@ -13,14 +13,14 @@ namespace WeaverNet.Core.Game
         public Vector3 ArenaPosition { get; }
         public bool CanRespawnOnArena { get; }
         public bool RequireHardSceneReload { get; }
-        public IBossSpawner Spawner { get; }
+        public BossRespawnFlags RespawnFlags { get; }
 
-        public BossDefinition(
+        public BossData(
             string id,
             string displayName,
             string arenaSceneName,
             Vector3 arenaPosition,
-            IBossSpawner spawner,
+            BossRespawnFlags respawnFlags,
             bool canRespawnOnArena = true,
             bool requireHardSceneReload = false)
         {
@@ -28,7 +28,7 @@ namespace WeaverNet.Core.Game
             DisplayName = displayName;
             ArenaSceneName = arenaSceneName;
             ArenaPosition = arenaPosition;
-            Spawner = spawner;
+            RespawnFlags = respawnFlags;
             CanRespawnOnArena = canRespawnOnArena;
             RequireHardSceneReload = requireHardSceneReload;
         }

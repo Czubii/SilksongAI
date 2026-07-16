@@ -16,10 +16,8 @@ namespace WeaverNet.Core.Game
         public bool SuperJump { get; }
         public bool Brolly { get; }
         public bool ChargeSlash { get; }
-
-        public int HP { get; }
-        public int Silk { get; }
-        public int SilkRegen { get; }
+        public bool Needolin { get;}
+        public bool Sylphsong { get; }
 
         public AbilitySet(
             bool dash,
@@ -29,9 +27,8 @@ namespace WeaverNet.Core.Game
             bool superJump,
             bool brolly,
             bool chargeSlash,
-            int hp,
-            int silk,
-            int silkRegen)
+            bool needolin,
+            bool sylphsong)
         {
             Dash = dash;
             DoubleJump = doubleJump;
@@ -40,10 +37,8 @@ namespace WeaverNet.Core.Game
             SuperJump = superJump;
             Brolly = brolly;
             ChargeSlash = chargeSlash;
-
-            HP = hp;
-            Silk = silk;
-            SilkRegen = silkRegen;
+            Needolin = needolin;
+            Sylphsong = sylphsong;
         }
     }
 }

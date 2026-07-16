@@ -8,6 +8,7 @@ using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
 using WeaverNet.Mod.Game;
 using WeaverNet.Mod.Game.Bosses;
+using WeaverNet.Mod.Game.Debug;
 using WeaverNet.Mod.PluginGUI;
 using WeaverNet.Mod.PluginGUI.Windows;
 
@@ -20,6 +21,7 @@ namespace WeaverNet.Mod
     )]
     public class WeaverNetPlugin : BaseUnityPlugin
     {
+
         private void Awake()
         {
             try
@@ -37,15 +39,17 @@ namespace WeaverNet.Mod
                 Logger.LogInfo("Configs Loaded Successfully");
 
                 ITeleportService tpService = gameObject.AddComponent<TeleportService>();
-                gameObject.AddComponent<HitboxVisualizer>();
+                var hitboxVisualizer = gameObject.AddComponent<HitboxVisualizer>();
                 Logger.LogInfo("Services Initialized Successfully");
 
                 var windowManager = gameObject.AddComponent<PluginWindowManager>();
                 windowManager.Initialize(Config);
 
                 var utilitiesWindow = new UtilitiesWindow("Utilities", tpService, bossDatabase);
+                var debugWindow = new DebugWindow("Debug", hitboxVisualizer);
 
                 windowManager.Register(utilitiesWindow, true);
+                windowManager.Register(debugWindow, true);
 
                 Logger.LogInfo("GUI Initialized Successfully");
 

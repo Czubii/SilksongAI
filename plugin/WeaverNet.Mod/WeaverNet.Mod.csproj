@@ -119,9 +119,8 @@
     <Compile Include="BepInExPluginLogger.cs" />
     <Compile Include="Game\Bosses\DataDrivenBossSpawner.cs" />
     <Compile Include="Game\Bosses\DataDrivenBossDatabase.cs" />
-    <Compile Include="Game\Bosses\RawBossMetadata.cs" />
     <Compile Include="Game\BossfightSessionGameController.cs" />
-    <Compile Include="Game\HitboxVisualizer.cs" />
+    <Compile Include="Game\Debug\HitboxVisualizer.cs" />
     <Compile Include="Game\LoadoutManager.cs" />
     <Compile Include="Game\RespawnPoint.cs" />
     <Compile Include="Game\TeleportService.cs" />
@@ -134,6 +133,7 @@
     <Compile Include="PluginGUI\Elements\TopBar.cs" />
     <Compile Include="PluginGUI\Styles\PluginGUIStyles.cs" />
     <Compile Include="PluginGUI\WindowManager.cs" />
+    <Compile Include="PluginGUI\Windows\DebugWindow.cs" />
     <Compile Include="PluginGUI\Windows\UtilitiesWindow.cs" />
     <Compile Include="WeaverNetPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -143,10 +143,15 @@
       <Project>{0245c8f0-8c87-4283-a410-31edb52340f0}</Project>
       <Name>WeaverNet.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\WeaverNet.Diagnostics\WeaverNet.Diagnostics.csproj">
+      <Project>{67e56cc6-b3cb-4e92-a0f4-564b86ac9bbc}</Project>
+      <Name>WeaverNet.Diagnostics</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
     <None Include="Data\Bosses\BellBeast.json" />
+    <None Include="Data\Bosses\BossPreset.schema.json" />
     <None Include="Data\Bosses\FourthChorus.json" />
     <None Include="Data\Bosses\Lace1.json" />
     <None Include="Data\Bosses\Moorwing.json" />

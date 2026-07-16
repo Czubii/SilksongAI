@@ -41,9 +41,9 @@ namespace WeaverNet.Mod.Game.Bosses
 
                     string jsonContent = File.ReadAllText(file);
 
-                    RawBossMetadata boss = JsonConvert.DeserializeObject<RawBossMetadata>(jsonContent);
+                    //RawBossMetadata boss = JsonConvert.DeserializeObject<RawBossMetadata>(jsonContent); TODO
 
-                    _allBosses.Add(boss.Build());
+                    //_allBosses.Add(boss.Build());
                 }
             }
             catch (Exception ex)

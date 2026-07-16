@@ -6,7 +6,7 @@ namespace WeaverNet.Core.Orchestration.Interfaces
     {
         Task OnSessionStart();
         Task OnSessionEnd();
-        Task OnFightStart(FightContext context);
+        Task OnFightStart(BossfightContext context);
         Task OnFightEnd(FightResult result);
     }
 }
