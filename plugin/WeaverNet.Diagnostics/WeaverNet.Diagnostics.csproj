@@ -46,7 +46,6 @@
   <ItemGroup>
     <Compile Include="Extensions\AbilitySetDebugExtensions.cs" />
     <Compile Include="Extensions\BossDataDebugExtensions.cs" />
-    <Compile Include="Extensions\BossPresetDebugExtensions.cs" />
     <Compile Include="Extensions\BossRespawnFlagsDebugExtensions.cs" />
     <Compile Include="Extensions\CrestToolSetDebugExtensions.cs" />
     <Compile Include="Extensions\LoadoutDebugExtensions.cs" />

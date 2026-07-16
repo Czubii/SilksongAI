@@ -51,7 +51,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Game\BossData.cs" />
-    <Compile Include="Game\BossPreset.cs" />
     <Compile Include="Game\AbilitySet.cs" />
     <Compile Include="Game\BossRespawnFlags.cs" />
     <Compile Include="Game\Interfaces\IBossSpawner.cs" />

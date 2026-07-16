@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+
+  "type": "object",
+  "properties": {
+    "Abilities": { "$ref": "#/$defs/AbilitySet" },
+    "Tools": { "$ref": "#/$defs/CrestToolSet" },
+    "Upgrades": { "$ref": "#/$defs/PlayerUpgradeSet" }
+  },
+
+  "$defs": {
+    "AbilitySet": {
+      "type": "object",
+      "properties": {
+        "Dash": { "type": "boolean" },
+        "DoubleJump": { "type": "boolean" },
+        "WallJump": { "type": "boolean" },
+        "HarpoonDash": { "type": "boolean" },
+        "SuperJump": { "type": "boolean" },
+        "Brolly": { "type": "boolean" },
+        "ChargeSlash": { "type": "boolean" },
+        "Needolin": { "type": "boolean" },
+        "Sylphsong": { "type": "boolean" }
+      }
+    },
+
+    "CrestToolSet": {
+      "type": "object",
+      "properties": {
+        "CrestID": { "type": "string" },
+
+        "ToolNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+
+        "ExtraBlueSlotToolName": { "type": "string" },
+        "ExtraYellowSlotToolName": { "type": "string" },
+
+        "ExtraBlueSlotUnlocked": { "type": "boolean" },
+        "ExtraYellowSlotUnlocked": { "type": "boolean" }
+      }
+    },
+
+    "PlayerUpgradeSet": {
+      "type": "object",
+      "properties": {
+        "HP": { "type": "integer" },
+        "Silk": { "type": "integer" },
+        "SilkHearts": { "type": "integer" },
+        "CraftingKits": { "type": "integer" },
+        "ToolPouches": { "type": "integer" },
+        "NailUpgrades": { "type": "integer" }
+      }
+    }
+  }
+}

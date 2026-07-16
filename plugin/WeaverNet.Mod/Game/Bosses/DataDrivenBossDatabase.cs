@@ -14,9 +14,9 @@ namespace WeaverNet.Mod.Game.Bosses
     {
         private readonly string _metadataRootPath;
 
-        private List<BossPreset> _allBosses = null;
+        private List<BossData> _allBosses = null;
         private bool _loaded = false;
-        public IReadOnlyList<BossPreset> All
+        public IReadOnlyList<BossData> All
         {
             get
             {
@@ -33,7 +33,7 @@ namespace WeaverNet.Mod.Game.Bosses
             try
             {
                 string[] files = Directory.GetFiles(_metadataRootPath, "*.json", SearchOption.AllDirectories);
-                _allBosses = new List<BossPreset>();
+                _allBosses = new List<BossData>();
 
                 foreach (string file in files)
                 {
@@ -41,9 +41,9 @@ namespace WeaverNet.Mod.Game.Bosses
 
                     string jsonContent = File.ReadAllText(file);
 
-                    //RawBossMetadata boss = JsonConvert.DeserializeObject<RawBossMetadata>(jsonContent); TODO
+                    BossData boss = JsonConvert.DeserializeObject<BossData>(jsonContent);
 
-                    //_allBosses.Add(boss.Build());
+                    _allBosses.Add(boss);
                 }
             }
             catch (Exception ex)

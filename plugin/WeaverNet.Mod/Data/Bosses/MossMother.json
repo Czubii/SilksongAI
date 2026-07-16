@@ -7,21 +7,8 @@
     "y": 17.6,
     "z": 0.0
   },
+  "CanRespawnOnArena": true,
   "RequireHardSceneReload": true,
-
-  "Abilities": {
-    "Dash": false,
-    "DoubleJump": false,
-    "WallJump": false,
-    "HarpoonDash": false,
-    "SuperJump": false,
-    "Brolly": false,
-    "ChargeSlash": false,
-
-    "HP": 10,
-    "Silk": 8,
-    "SilkRegen": 0
-  },
 
   "RespawnFlags": {
     "PlayerDataBools": {
@@ -36,7 +23,6 @@
         "Value": false
       }
     ],
-    "SceneInts": [
-    ]
+    "SceneInts": []
   }
 }

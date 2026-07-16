@@ -151,13 +151,14 @@
   <ItemGroup />
   <ItemGroup>
     <None Include="Data\Bosses\BellBeast.json" />
-    <None Include="Data\Bosses\BossPreset.schema.json" />
+    <None Include="Data\Bosses\BossData.schema.json" />
     <None Include="Data\Bosses\FourthChorus.json" />
     <None Include="Data\Bosses\Lace1.json" />
     <None Include="Data\Bosses\Moorwing.json" />
     <None Include="Data\Bosses\MossMother.json" />
     <None Include="Data\Bosses\SisterSplinter.json" />
     <None Include="Data\Bosses\Widow.json" />
+    <None Include="Data\Loadouts\Loadout.schema.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

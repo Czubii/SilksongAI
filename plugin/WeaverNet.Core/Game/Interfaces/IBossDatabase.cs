@@ -8,6 +8,6 @@ namespace WeaverNet.Core.Game.Interfaces
 {
     public interface IBossDatabase
     {
-        IReadOnlyList<BossPreset> All { get; }
+        IReadOnlyList<BossData> All { get; }
     }
 }
