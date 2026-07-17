@@ -7,7 +7,7 @@ namespace WeaverNet.Core.Game
 
     public class BossData
     {
-        public string ID { get; }
+        public string Id { get; }
         public string DisplayName { get; }
         public string ArenaSceneName { get; }
         public Vector3 ArenaPosition { get; }
@@ -21,10 +21,10 @@ namespace WeaverNet.Core.Game
             string arenaSceneName,
             Vector3 arenaPosition,
             BossRespawnFlags respawnFlags,
-            bool canRespawnOnArena = true,
-            bool requireHardSceneReload = false)
+            bool canRespawnOnArena,
+            bool requireHardSceneReload)
         {
-            ID = id;
+            Id = id;
             DisplayName = displayName;
             ArenaSceneName = arenaSceneName;
             ArenaPosition = arenaPosition;

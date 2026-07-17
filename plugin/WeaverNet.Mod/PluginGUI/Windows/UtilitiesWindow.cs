@@ -19,7 +19,7 @@ namespace WeaverNet.Mod.PluginGUI.Windows
         {
             _teleportService = teleportService;
             _bossDatabase = bossDatabase;
-            bossDropdownElements = _bossDatabase.All.Select((a) => (a.Boss.DisplayName, a.Boss.ID)).ToList();
+            bossDropdownElements = _bossDatabase.All.Select((a) => (a.DisplayName, a.ID)).ToList();
         }
         public override bool CanEnable() => true;
         public override void DrawContent()
@@ -31,9 +31,9 @@ namespace WeaverNet.Mod.PluginGUI.Windows
             GUI.enabled = _teleportService.CanTeleport();
             if (GUILayout.Button("Teleport", PluginGUIStyles.Button))
             {
-                var bossPreset = _bossDatabase.All.First(a => a.Boss.ID == _bossDropdownState.SelectedOption);
+                var bossPreset = _bossDatabase.All.First(a => a.ID == _bossDropdownState.SelectedOption);
 
-                _teleportService.Teleport(bossPreset.Boss.ArenaSceneName, bossPreset.Boss.ArenaPosition, true);
+                _teleportService.Teleport(bossPreset.ArenaSceneName, bossPreset.ArenaPosition, true);
             }
             GUI.enabled = true;
 

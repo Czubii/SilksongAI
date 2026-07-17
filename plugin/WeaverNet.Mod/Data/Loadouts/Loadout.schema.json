@@ -3,9 +3,16 @@
 
   "type": "object",
   "properties": {
-    "Abilities": { "$ref": "#/$defs/AbilitySet" },
-    "Tools": { "$ref": "#/$defs/CrestToolSet" },
-    "Upgrades": { "$ref": "#/$defs/PlayerUpgradeSet" }
+    "Name": { "type": "string" },
+
+    "Loadout": {
+      "type": "object",
+      "properties": {
+        "Abilities": { "$ref": "#/$defs/AbilitySet" },
+        "Tools": { "$ref": "#/$defs/CrestToolSet" },
+        "Upgrades": { "$ref": "#/$defs/PlayerUpgradeSet" }
+      }
+    }
   },
 
   "$defs": {

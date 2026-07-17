@@ -118,10 +118,9 @@
   <ItemGroup>
     <Compile Include="BepInExPluginLogger.cs" />
     <Compile Include="Game\Bosses\DataDrivenBossSpawner.cs" />
-    <Compile Include="Game\Bosses\DataDrivenBossDatabase.cs" />
     <Compile Include="Game\BossfightSessionGameController.cs" />
     <Compile Include="Game\Debug\HitboxVisualizer.cs" />
-    <Compile Include="Game\LoadoutManager.cs" />
+    <Compile Include="Game\Player\LoadoutManager.cs" />
     <Compile Include="Game\RespawnPoint.cs" />
     <Compile Include="Game\TeleportService.cs" />
     <Compile Include="PluginGUI\BaseWindow.cs" />
@@ -158,7 +157,9 @@
     <None Include="Data\Bosses\MossMother.json" />
     <None Include="Data\Bosses\SisterSplinter.json" />
     <None Include="Data\Bosses\Widow.json" />
+    <None Include="Data\Loadouts\Crests.json" />
     <None Include="Data\Loadouts\Loadout.schema.json" />
+    <None Include="Data\Loadouts\Tools.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

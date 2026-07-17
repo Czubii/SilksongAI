@@ -17,7 +17,7 @@ namespace WeaverNet.Diagnostics.Extensions
                 "  CanRespawnOnArena:     {4}\n" +
                 "  RequireHardSceneReload:{5}\n" +
                 "{6}",
-                boss.ID,
+                boss.Id,
                 boss.DisplayName,
                 boss.ArenaSceneName,
                 boss.ArenaPosition,

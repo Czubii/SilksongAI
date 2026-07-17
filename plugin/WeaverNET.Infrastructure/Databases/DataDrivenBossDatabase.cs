@@ -3,11 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using WeaverNet.Core.Game;
-using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
 
 
-namespace WeaverNet.Mod.Game.Bosses
+namespace WeaverNet.Infrastructure.Databases
 {
    
     public class DataDrivenBossDatabase : IBossDatabase
@@ -37,11 +36,19 @@ namespace WeaverNet.Mod.Game.Bosses
 
                 foreach (string file in files)
                 {
+#if DEBUG
                     PluginLog.Info($"Loading Boss Metadata File: {Path.GetFileName(file)}");
+#endif
 
                     string jsonContent = File.ReadAllText(file);
 
                     BossData boss = JsonConvert.DeserializeObject<BossData>(jsonContent);
+
+                    if (boss == null)
+                    {
+                        PluginLog.Warning($"Failed loading loadout: {file}");
+                        continue;
+                    }
 
                     _allBosses.Add(boss);
                 }

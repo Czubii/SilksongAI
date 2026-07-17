@@ -1,13 +1,10 @@
-﻿using BepInEx;
-using HutongGames.PlayMaker.Actions;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
 
-namespace WeaverNet.Mod.Game
+namespace WeaverNet.Mod.Game.Player
 {
     public class LoadoutManager : ILoadoutManager
     {
