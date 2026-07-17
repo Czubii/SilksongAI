@@ -3,17 +3,29 @@
 
   "type": "object",
   "properties": {
-    "Name": { "type": "string" },
+    "Name": {
+      "type": "string"
+    },
 
-    "Loadout": {
-      "type": "object",
-      "properties": {
-        "Abilities": { "$ref": "#/$defs/AbilitySet" },
-        "Tools": { "$ref": "#/$defs/CrestToolSet" },
-        "Upgrades": { "$ref": "#/$defs/PlayerUpgradeSet" }
-      }
+    "Abilities": {
+      "$ref": "#/$defs/AbilitySet"
+    },
+
+    "Tools": {
+      "$ref": "#/$defs/CrestToolSet"
+    },
+
+    "Upgrades": {
+      "$ref": "#/$defs/PlayerUpgradeSet"
     }
   },
+
+  "required": [
+    "Name",
+    "Abilities",
+    "Tools",
+    "Upgrades"
+  ],
 
   "$defs": {
     "AbilitySet": {
@@ -34,7 +46,9 @@
     "CrestToolSet": {
       "type": "object",
       "properties": {
-        "CrestID": { "type": "string" },
+        "CrestID": {
+          "type": "string"
+        },
 
         "ToolNames": {
           "type": "array",
@@ -43,23 +57,50 @@
           }
         },
 
-        "ExtraBlueSlotToolName": { "type": "string" },
-        "ExtraYellowSlotToolName": { "type": "string" },
+        "ExtraBlueSlotToolName": {
+          "type": "string"
+        },
 
-        "ExtraBlueSlotUnlocked": { "type": "boolean" },
-        "ExtraYellowSlotUnlocked": { "type": "boolean" }
+        "ExtraYellowSlotToolName": {
+          "type": "string"
+        },
+
+        "ExtraBlueSlotUnlocked": {
+          "type": "boolean"
+        },
+
+        "ExtraYellowSlotUnlocked": {
+          "type": "boolean"
+        }
       }
     },
 
     "PlayerUpgradeSet": {
       "type": "object",
       "properties": {
-        "HP": { "type": "integer" },
-        "Silk": { "type": "integer" },
-        "SilkHearts": { "type": "integer" },
-        "CraftingKits": { "type": "integer" },
-        "ToolPouches": { "type": "integer" },
-        "NailUpgrades": { "type": "integer" }
+        "HP": {
+          "type": "integer"
+        },
+
+        "Silk": {
+          "type": "integer"
+        },
+
+        "SilkHearts": {
+          "type": "integer"
+        },
+
+        "CraftingKits": {
+          "type": "integer"
+        },
+
+        "ToolPouches": {
+          "type": "integer"
+        },
+
+        "NailUpgrades": {
+          "type": "integer"
+        }
       }
     }
   }
