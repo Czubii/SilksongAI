@@ -143,7 +143,7 @@ namespace WeaverNet.Mod.PluginGUI.Styles
                     _closeButton = new GUIStyle(GUI.skin.button);
 
                     Texture2D normalTex = LightBackgroundTex;
-                    Texture2D hoverTex = MakeTex(new Color(1f, 0f, 0f, 1f));
+                    Texture2D hoverTex = MakeTex(new Color(232.0f / 255.0f, 52.0f / 255.0f, 39.0f / 255.0f));
                     Texture2D activeTex = MakeTex(new Color(0.8f, 0f, 0f, 1f));
 
                     _textures.Add(normalTex);

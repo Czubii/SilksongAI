@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
@@ -33,7 +34,10 @@ namespace WeaverNet.Mod.Game.Player
         private CrestToolSet GetCrestToolSet(PlayerData pd)
         {
             string crestId = pd.CurrentCrestID;
-            var tools = ToolItemManager.GetEquippedToolsForCrest(crestId);
+
+            List<ToolItem> tools = ToolItemManager.GetEquippedToolsForCrest(crestId);
+
+            if (tools == null) throw new InvalidOperationException($"Could not retrieve tools for crest \"{crestId}\"");
 
             return new CrestToolSet(
                 crestId,
@@ -55,10 +59,11 @@ namespace WeaverNet.Mod.Game.Player
                 pd.nailUpgrades
             );
         }
-        public Loadout GetLoadout()
+        public Loadout BuildLoadout(string name)
         {
             var pd = CurrentPlayerData;
             return new Loadout(
+                name,
                 GetAbilities(pd),
                 GetCrestToolSet(pd),
                 GetPlayerUpgradeSet(pd)
@@ -110,7 +115,7 @@ namespace WeaverNet.Mod.Game.Player
         }
         public void SetLoadoutTemporary(Loadout Loadout, TemporaryStateModifier modifier)
         {
-            var currLoadout = GetLoadout();
+            var currLoadout = BuildLoadout("TemporaryLoadoutContainer");
             modifier.AddUndo(() =>
             {
                 SetLoadout(currLoadout);

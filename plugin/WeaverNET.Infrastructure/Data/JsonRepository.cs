@@ -3,16 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WeaverNET.Infrastructure.Data.Interfaces;
+using WeaverNet.Core.Infrastructure.Interfaces;
 
 namespace WeaverNET.Infrastructure.Data
 {
     public class JsonRepository<TData> : JsonRepositoryBase<TData>, IRepository<TData>
     {
+        public event Action RepositoryChanged;
         public JsonRepository(string repositoryRoot, Func<TData, string> idSelector) : base(repositoryRoot, idSelector) { }
-        public IReadOnlyCollection<TData> GetAll
+        public IReadOnlyCollection<TData> All
         {
             get
             {
@@ -22,8 +21,11 @@ namespace WeaverNET.Infrastructure.Data
         }
         public TData GetById(string id)
         {
-            EnsureLoaded();
-            return GetByIdInternal(id);
+            var entry = GetByIdInternal(id);
+            if (entry == null)
+                throw new KeyNotFoundException($"Entry '{id}' was not found.");
+
+            return entry.Data;
         }
         public void Add(TData data)
         {
@@ -39,6 +41,7 @@ namespace WeaverNET.Infrastructure.Data
 
             SaveEntry(data, filePath);
             UpdateEntry(data, filePath);
+            NotifyChanged();
         }
         public void AddOrReplace(TData data)
         {
@@ -49,11 +52,31 @@ namespace WeaverNET.Infrastructure.Data
 
             SaveEntry(data, filePath);
             UpdateEntry(data, filePath);
+            NotifyChanged();
+        }
+        public void Remove(string id)
+        {
+            EnsureLoaded();
+            var entry = GetByIdInternal(id);
+            if (entry == null) return;
+
+            File.Delete(entry.SourcePath);
+            _entries.Remove(entry);
+            _entriesById.Remove(id);
+
+            _data = _entries.Select(x => x.Data).ToList();
+            NotifyChanged();
         }
         private void SaveEntry(TData data, string filePath)
         {
+            Directory.CreateDirectory(_repositoryRoot);
             string json = JsonConvert.SerializeObject(data, Formatting.Indented);
             File.WriteAllText(filePath, json);
         }
+        private void NotifyChanged()
+        {
+            RepositoryChanged?.Invoke();
+        }
+        
     }
 }

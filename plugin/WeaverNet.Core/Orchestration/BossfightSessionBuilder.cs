@@ -26,7 +26,7 @@ namespace WeaverNet.Core.Orchestration
         {
             Boss = boss;
             Boundary = boundary;
-            Loadout = loadoutManager.GetLoadout();
+            Loadout = loadoutManager.BuildLoadout("Bossfight session loadout");
             Plugins = new List<IBossfightSessionPlugin>();
 
             if (Boss.CanRespawnOnArena)

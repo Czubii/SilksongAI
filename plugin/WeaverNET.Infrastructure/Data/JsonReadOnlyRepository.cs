@@ -1,18 +1,13 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using WeaverNet.Core.Infrastructure;
-using WeaverNET.Infrastructure.Data.Interfaces;
+using WeaverNet.Core.Infrastructure.Interfaces;
 
 namespace WeaverNET.Infrastructure.Data
 {
     public class JsonReadOnlyRepository<TData>: JsonRepositoryBase<TData>, IReadOnlyRepository<TData>
     {
         public JsonReadOnlyRepository(string repositoryRoot, Func<TData, string> idSelector) : base(repositoryRoot, idSelector) { }
-        public IReadOnlyCollection<TData> GetAll
+        public IReadOnlyCollection<TData> All
         {
             get
             {
@@ -22,8 +17,11 @@ namespace WeaverNET.Infrastructure.Data
         }
         public TData GetById(string id)
         {
-            EnsureLoaded();
-            return GetByIdInternal(id);
+            var entry = GetByIdInternal(id);
+            if (entry == null)
+                throw new KeyNotFoundException($"Entry '{id}' was not found.");
+
+            return entry.Data;
         }
     }
 }

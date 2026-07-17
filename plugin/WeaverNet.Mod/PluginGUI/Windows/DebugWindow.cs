@@ -8,6 +8,7 @@ using WeaverNet.Mod.PluginGUI.Elements;
 using WeaverNet.Mod.PluginGUI.Styles;
 using WeaverNet.Diagnostics.Extensions;
 using WeaverNet.Core.Game;
+using WeaverNet.Mod.Game.Player;
 
 namespace WeaverNet.Mod.PluginGUI.Windows
 {
@@ -35,11 +36,11 @@ namespace WeaverNet.Mod.PluginGUI.Windows
             GUILayout.Label("Loadouts");
             if (GUILayout.Button("Print Current Loadout", PluginGUIStyles.Button))
             {
-                LoadoutManager.GetLoadout().Print();
+                LoadoutManager.BuildLoadout("Debug Print Loadout").Print();
             }
             if (GUILayout.Button("Store Current Loadout", PluginGUIStyles.Button))
             {
-                _loadout = LoadoutManager.GetLoadout();
+                _loadout = LoadoutManager.BuildLoadout("Debug Store Loadout");
             }
             GUI.enabled = _loadout != null;
             if (GUILayout.Button("Apply Stored Loadout", PluginGUIStyles.Button))

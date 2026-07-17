@@ -9,8 +9,10 @@ using WeaverNet.Core.Infrastructure;
 using WeaverNet.Mod.Game;
 using WeaverNet.Mod.Game.Bosses;
 using WeaverNet.Mod.Game.Debug;
+using WeaverNet.Mod.Game.Player;
 using WeaverNet.Mod.PluginGUI;
 using WeaverNet.Mod.PluginGUI.Windows;
+using WeaverNET.Infrastructure.Data;
 
 namespace WeaverNet.Mod
 {
@@ -32,11 +34,15 @@ namespace WeaverNet.Mod
                 var logger = new BepInExPluginLogger(Logger);
                 PluginLog.Bind(logger);
 
+                var bossRepoPath = Path.Combine(Paths.PluginPath, "WeaverNet", "Data", "Bosses");
+                JsonBossRepository bossRepo = new JsonBossRepository(bossRepoPath);
 
-                DataDrivenBossDatabase bossDatabase = new DataDrivenBossDatabase(Path.Combine(Paths.PluginPath, "WeaverNet", "Data", "Bosses"));
-                bossDatabase.Load();
+                var loadoutRepoPath = Path.Combine(Paths.PluginPath, "WeaverNet", "Data", "Loadouts");
+                JsonLoadoutRepository loadoutRepo = new JsonLoadoutRepository(loadoutRepoPath);
 
                 Logger.LogInfo("Configs Loaded Successfully");
+
+                var loadoutManager = new LoadoutManager();
 
                 ITeleportService tpService = gameObject.AddComponent<TeleportService>();
                 var hitboxVisualizer = gameObject.AddComponent<HitboxVisualizer>();
@@ -45,10 +51,13 @@ namespace WeaverNet.Mod
                 var windowManager = gameObject.AddComponent<PluginWindowManager>();
                 windowManager.Initialize(Config);
 
-                var utilitiesWindow = new UtilitiesWindow("Utilities", tpService, bossDatabase);
+                var utilitiesWindow = new UtilitiesWindow("Utilities", tpService, bossRepo);
+                var loadoutWindow = new LoadoutWindow("Loadouts", loadoutManager, loadoutRepo);
                 var debugWindow = new DebugWindow("Debug", hitboxVisualizer);
 
+
                 windowManager.Register(utilitiesWindow, true);
+                windowManager.Register(loadoutWindow, true);
                 windowManager.Register(debugWindow, true);
 
                 Logger.LogInfo("GUI Initialized Successfully");

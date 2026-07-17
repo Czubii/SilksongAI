@@ -1,5 +1,4 @@
 ﻿using System;
-using WeaverNet.Core.Game.Interfaces;
 
 namespace WeaverNet.Core.Game
 {

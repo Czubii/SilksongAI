@@ -1,0 +1,38 @@
+{
+  "Name": "Exemplay Loadout",
+  "Abilities": {
+    "Dash": true,
+    "DoubleJump": true,
+    "WallJump": true,
+    "HarpoonDash": true,
+    "SuperJump": true,
+    "Brolly": true,
+    "ChargeSlash": true,
+    "Needolin": true,
+    "Sylphsong": true
+  },
+  "Tools": {
+    "CrestID": "Reaper",
+    "ToolNames": [
+      "Silk Spear",
+      "Pimpilo",
+      "WebShot Architect",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "ExtraBlueSlotToolName": "Quickbind",
+    "ExtraYellowSlotToolName": "Weighted Anklet",
+    "ExtraBlueSlotUnlocked": true,
+    "ExtraYellowSlotUnlocked": true
+  },
+  "Upgrades": {
+    "HP": 10,
+    "Silk": 18,
+    "SilkHearts": 3,
+    "CraftingKits": 4,
+    "ToolPouches": 4,
+    "NailUpgrades": 0
+  }
+}

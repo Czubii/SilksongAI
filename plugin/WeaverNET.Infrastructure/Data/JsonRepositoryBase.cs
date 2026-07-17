@@ -23,7 +23,7 @@ namespace WeaverNET.Infrastructure.Data
 
         protected JsonRepositoryBase(string repositoryRoot, Func<TData, string> idSelector)
         {
-            _repositoryRoot = repositoryRoot;
+            _repositoryRoot = repositoryRoot ?? throw new ArgumentNullException(nameof(repositoryRoot));
             _idSelector = idSelector ?? throw new ArgumentNullException(nameof(idSelector));
         }
 
@@ -39,16 +39,16 @@ namespace WeaverNET.Infrastructure.Data
             }
         }
 
-        protected TData GetByIdInternal(string id)
+        protected JsonRepositoryEntry<TData> GetByIdInternal(string id)
         {
             EnsureLoaded();
 
             JsonRepositoryEntry<TData> entry;
 
             if (_entriesById.TryGetValue(id, out entry))
-                return entry.Data;
+                return entry;
 
-            return default;
+            return null;
         }
 
         protected virtual void Load()

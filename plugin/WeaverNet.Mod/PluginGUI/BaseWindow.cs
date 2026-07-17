@@ -15,6 +15,10 @@ public abstract class BaseWindow
 
     private List<string> _errors = new List<string>();
     private Vector2 _errorLogScroll = new Vector2();
+
+    private List<string> _notifications = new List<string>();
+    private Vector2 _notificationLogScroll = new Vector2();
+
     private Texture2D _resizeCursorTexture;
 
     // State tracking for reliable resizing
@@ -48,6 +52,7 @@ public abstract class BaseWindow
         if (PluginGUIElements.TopBar(Name)) Enabled = false;
 
         if (_errors.Count > 0) DrawError();
+        else if(_notifications.Count > 0) DrawNotification();
         else DrawContent();
 
         // Handle resizing BEFORE DragWindow
@@ -155,12 +160,15 @@ public abstract class BaseWindow
         }
     }
 
-    public void NotifyError(string error)
+    protected void NotifyError(string error)
     {
         _errors.Add(error);
     }
-
-    private void DrawError()
+    protected void Notify(string message)
+    {
+        _notifications.Add(message);
+    }
+    protected virtual void DrawError()
     {
         _errorLogScroll = GUILayout.BeginScrollView(_errorLogScroll, PluginGUIStyles.ScrollView, PluginGUIStyles.VerticalScrollbar, GUILayout.ExpandHeight(true));
         GUI.skin.verticalScrollbarThumb = PluginGUIStyles.VerticalScrollbarThumb;
@@ -171,6 +179,19 @@ public abstract class BaseWindow
         if (GUILayout.Button("Okay", PluginGUIStyles.Button))
         {
             _errors.RemoveAt(0);
+        }
+        GUILayout.EndScrollView();
+    }
+    protected virtual void DrawNotification()
+    {
+        _notificationLogScroll = GUILayout.BeginScrollView(_notificationLogScroll, PluginGUIStyles.ScrollView, PluginGUIStyles.VerticalScrollbar, GUILayout.ExpandHeight(true));
+        GUI.skin.verticalScrollbarThumb = PluginGUIStyles.VerticalScrollbarThumb;
+
+        GUILayout.Label(_notifications[0]);
+        GUILayout.FlexibleSpace();
+        if (GUILayout.Button("Okay", PluginGUIStyles.Button))
+        {
+            _notifications.RemoveAt(0);
         }
         GUILayout.EndScrollView();
     }
