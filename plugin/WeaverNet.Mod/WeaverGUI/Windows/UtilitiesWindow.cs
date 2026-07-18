@@ -4,10 +4,10 @@ using System.Linq;
 using UnityEngine;
 using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
-using WeaverNet.Mod.PluginGUI.Elements;
-using WeaverNet.Mod.PluginGUI.Styles;
+using WeaverNet.Mod.WeaverGUI.Elements;
+using WeaverNet.Mod.WeaverGUI.Styles;
 
-namespace WeaverNet.Mod.PluginGUI.Windows
+namespace WeaverNet.Mod.WeaverGUI.Windows
 {
     public class UtilitiesWindow : BaseWindow
     {
@@ -37,7 +37,7 @@ namespace WeaverNet.Mod.PluginGUI.Windows
         {
             GUILayout.BeginVertical();
 
-            PluginGUIElements.Dropdown(_bossDropdownState, _bossDropdownElements, "Boss");
+            Elements.PluginGUI.Dropdown(_bossDropdownState, _bossDropdownElements, "Boss");
 
             GUI.enabled = _teleportService.CanTeleport();
 

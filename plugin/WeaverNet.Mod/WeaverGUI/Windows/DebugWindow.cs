@@ -4,13 +4,13 @@ using UnityEngine;
 using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Mod.Game;
 using WeaverNet.Mod.Game.Debug;
-using WeaverNet.Mod.PluginGUI.Elements;
-using WeaverNet.Mod.PluginGUI.Styles;
+using WeaverNet.Mod.WeaverGUI.Elements;
+using WeaverNet.Mod.WeaverGUI.Styles;
 using WeaverNet.Diagnostics.Extensions;
 using WeaverNet.Core.Game;
 using WeaverNet.Mod.Game.Player;
 
-namespace WeaverNet.Mod.PluginGUI.Windows
+namespace WeaverNet.Mod.WeaverGUI.Windows
 {
     public class DebugWindow : BaseWindow
     {
@@ -27,7 +27,7 @@ namespace WeaverNet.Mod.PluginGUI.Windows
         public override void DrawContent()
         {
             GUILayout.BeginVertical();
-            _hitboxesEnabled = PluginGUIElements.LabeledToggle(_hitboxesEnabled, "Hitboxes");
+            _hitboxesEnabled = Elements.PluginGUI.LabeledToggle(_hitboxesEnabled, "Hitboxes");
             if(_hitboxesEnabled != HitboxVisualizer.enabled)
             {
                 HitboxVisualizer.enabled = _hitboxesEnabled;

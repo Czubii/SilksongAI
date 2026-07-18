@@ -13,51 +13,35 @@ namespace WeaverNet.Core.Orchestration
 {
     public class BossfightSessionBuilder
     {
-        private BossData Boss { get; }
-        private IBossfightSessionBoundary Boundary { get; }
-        private Loadout Loadout { get; set; }
-        private IReadOnlyCollection<IBossfightSessionPlugin> Plugins { get; set; }
-        private IRespawnPoint RespawnPoint { get; set; }
-        public BossfightSessionBuilder(
-            BossData boss, 
-            IBossfightSessionBoundary boundary, 
-            ILoadoutManager loadoutManager,
-            IRespawnPointFactory rpf)
+        private readonly BossData _boss;
+        private IBossfightSessionBoundary _boundary;
+        private Loadout _loadout;
+        private readonly List<IBossfightSessionPlugin> _plugins = new List<IBossfightSessionPlugin>();
+        private IRespawnPoint _respawnPoint;
+        public BossfightSessionBuilder(BossData boss)
         {
-            Boss = boss;
-            Boundary = boundary;
-            Loadout = loadoutManager.BuildLoadout("Bossfight session loadout");
-            Plugins = new List<IBossfightSessionPlugin>();
-
-            if (Boss.CanRespawnOnArena)
-            {
-                RespawnPoint = rpf.RespawnPoint(Boss.ArenaSceneName, Boss.ArenaPosition); // TODO we have to deal with disposing this somehow if for example one calls UseRespawnPoint the old game object will remain in game forever
-            }
-            else
-            {
-                RespawnPoint = rpf.DefaultRespawnPoint();
-            }
+            _boss = boss;
         }
-        public BossfightSessionBuilder UseRespawnPoint(IRespawnPoint respawnPoint)
+        public BossfightSessionBuilder UseBoundary(
+            IBossfightSessionBoundary boundary)
         {
-            RespawnPoint = respawnPoint;
+            _boundary = boundary;
             return this;
         }
-        public BossfightSessionBuilder UseLoadout(Loadout loadout)
+        public BossfightSessionBuilder AddPlugin(
+            IBossfightSessionPlugin plugin)
         {
-            Loadout = loadout;
+            _plugins.Add(plugin);
             return this;
         }
-
         public BossfightSession Build()
         {
             return new BossfightSession(
-                Boss,
-                Loadout,
-                Boundary,
-                Plugins,
-                RespawnPoint
-            );
+                _boss,
+                _loadout,
+                _boundary,
+                _plugins,
+                _respawnPoint);
         }
     }
 }

@@ -96,6 +96,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\BossfightCatalog.cs" />
     <Compile Include="Data\JsonBossRepository.cs" />
     <Compile Include="Data\JsonLoadoutRepository.cs" />
     <Compile Include="Data\JsonReadOnlyRepository.cs" />

@@ -9,15 +9,19 @@ using WeaverNet.Core.Orchestration.Interfaces;
 
 namespace WeaverNet.Core.Orchestration
 {
-    public class BossfightSessionOrchestrator
+    public class BossfightSessionOrchestrator: IBossfightSessionOrchestrator
     {
         private readonly IBossfightSessionGameController _controller;
         private Task _runningTask;
         private readonly object _startLock = new object();
         private CancellationTokenSource _cts;
-        BossfightSessionOrchestrator(IBossfightSessionGameController controller)
+        public BossfightSessionOrchestrator(IBossfightSessionGameController controller)
         {
             _controller = controller;
+        }
+        public bool CanStart()
+        {
+            return _runningTask == null || _runningTask.IsCompleted;
         }
         public Task StartAsync(BossfightSession session, CancellationToken ct)
         {

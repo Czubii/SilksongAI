@@ -1,9 +1,9 @@
-﻿using WeaverNet.Mod.PluginGUI.Styles;
+﻿using WeaverNet.Mod.WeaverGUI.Styles;
 using UnityEngine;
 
-namespace WeaverNet.Mod.PluginGUI.Elements
+namespace WeaverNet.Mod.WeaverGUI.Elements
 {
-    public static partial class PluginGUIElements
+    public static partial class PluginGUI
     {
         public static bool TopBar(string text)
         {

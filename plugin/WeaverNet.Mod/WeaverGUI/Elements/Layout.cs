@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
-using WeaverNet.Mod.PluginGUI.Styles;
+using WeaverNet.Mod.WeaverGUI.Styles;
 using Vector2 = UnityEngine.Vector2;
 
-namespace WeaverNet.Mod.PluginGUI.Elements
+namespace WeaverNet.Mod.WeaverGUI.Elements
 {
-    public static partial class PluginGUIElements
+    public static partial class PluginGUI
     {
         public static Vector2 BeginScrollView(Vector2 scroll)
         {
@@ -16,6 +16,11 @@ namespace WeaverNet.Mod.PluginGUI.Elements
             GUI.skin.verticalScrollbarThumb = PluginGUIStyles.VerticalScrollbarThumb;
             return scroll;
         }
-
+        public static void EndScrollView()
+        {
+            GUILayout.EndScrollView();
+        }
+        public static void BeginHorizontal() => GUILayout.BeginHorizontal();
+        public static void EndHorizontal() => GUILayout.EndHorizontal();
     }
 }

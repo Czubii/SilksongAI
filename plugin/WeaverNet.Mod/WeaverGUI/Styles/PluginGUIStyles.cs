@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace WeaverNet.Mod.PluginGUI.Styles
+namespace WeaverNet.Mod.WeaverGUI.Styles
 {
     public static class PluginGUIStyles
     {
@@ -46,6 +46,26 @@ namespace WeaverNet.Mod.PluginGUI.Styles
                     _orangeBackgroundTex = MakeTex(UIOrange);
                 }
                 return _orangeBackgroundTex;
+            }
+        }
+
+        private static GUIStyle _viewTitle = null;
+        public static GUIStyle ViewTitle
+        {
+            get
+            {
+                if (_viewTitle == null)
+                {
+                    _viewTitle = new GUIStyle(GUI.skin.label);
+                    
+                    _viewTitle.fontStyle = FontStyle.Bold;
+                    _viewTitle.fontSize = 16;
+                    _viewTitle.alignment = TextAnchor.MiddleLeft;
+                    _viewTitle.margin = new RectOffset(10, 4, 2, 8);
+                    _viewTitle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
+                }
+
+                return _viewTitle;
             }
         }
 

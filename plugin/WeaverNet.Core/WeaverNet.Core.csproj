@@ -67,6 +67,7 @@
     <Compile Include="Game\SceneBool.cs" />
     <Compile Include="Game\SceneInt.cs" />
     <Compile Include="Infrastructure\GameStateScope.cs" />
+    <Compile Include="Infrastructure\Interfaces\IBossfightSetupData.cs" />
     <Compile Include="Infrastructure\Interfaces\IPluginLogger.cs" />
     <Compile Include="Infrastructure\Interfaces\IReadOnlyRepository.cs" />
     <Compile Include="Infrastructure\Interfaces\IRepository.cs" />
@@ -83,6 +84,7 @@
     <Compile Include="Orchestration\Boundaries\IterationBoundary.cs" />
     <Compile Include="Orchestration\FightResult.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionGameController.cs" />
+    <Compile Include="Orchestration\Interfaces\IBossfightSessionOrchestrator.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

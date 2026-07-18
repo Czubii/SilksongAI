@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using WeaverNet.Mod.PluginGUI.Styles;
+using WeaverNet.Mod.WeaverGUI.Styles;
 
-namespace WeaverNet.Mod.PluginGUI
+namespace WeaverNet.Mod.WeaverGUI
 {
 
     public abstract class BaseScreenLabel : MonoBehaviour

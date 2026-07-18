@@ -4,22 +4,13 @@ using System.Linq;
 using UnityEngine;
 using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
-using WeaverNet.Mod.PluginGUI.Elements;
-using WeaverNet.Mod.PluginGUI.Styles;
+using WeaverNet.Mod.WeaverGUI.Elements;
+using WeaverNet.Mod.WeaverGUI.Styles;
 
-namespace WeaverNet.Mod.PluginGUI.Windows
+namespace WeaverNet.Mod.WeaverGUI.Windows
 {
-    public class LoadoutWindow : BaseWindow
+    public class LoadoutWindow : MultiViewWindow
     {
-        private enum Views
-        {
-            Main,
-            CreateFromCurrent,
-            CreateFromExisting,
-            Manage,
-        }
-
-        private Views _currentView = Views.Main;
 
         private readonly ILoadoutManager _loadoutManager;
         private readonly ILoadoutRepository _loadoutRepository;
@@ -40,6 +31,10 @@ namespace WeaverNet.Mod.PluginGUI.Windows
             _loadoutRepository = loadoutRepository;
             loadoutRepository.RepositoryChanged += UpdateLoadoutCache;
             UpdateLoadoutCache();
+
+            AddView("Main", DrawMain);
+            AddView("CreateFromCurrent", DrawCreateFromCurrent);
+            AddView("Manager", DrawManager);
         }
 
         public override bool CanEnable() => true;
@@ -47,31 +42,6 @@ namespace WeaverNet.Mod.PluginGUI.Windows
         private void UpdateLoadoutCache()
         {
             _loadoutCache = _loadoutRepository.All.ToList();
-        }
-        public override void DrawContent()
-        {
-            switch (_currentView)
-            {
-                case Views.Main:
-                    DrawMain();
-                    break;
-
-                case Views.CreateFromCurrent:
-                    DrawCreateFromCurrent();
-                    break;
-
-                case Views.CreateFromExisting:
-                    DrawCreateFromExisting();
-                    break;
-
-                case Views.Manage:
-                    DrawManage();
-                    break;
-
-                default:
-                    _currentView = Views.Main;
-                    break;
-            }
         }
         
         private void DrawMain()
@@ -81,17 +51,11 @@ namespace WeaverNet.Mod.PluginGUI.Windows
             if (GUILayout.Button("Create New from Current Equipment", PluginGUIStyles.Button))
             {
                 _newLoadoutName = "";
-                _currentView = Views.CreateFromCurrent;
+                SwitchView("CreateFromCurrent");
             }
-
-            if (GUILayout.Button("Create New from Existing", PluginGUIStyles.Button))
-            {
-                _currentView = Views.CreateFromExisting;
-            }
-
             if (GUILayout.Button("Manage Loadouts", PluginGUIStyles.Button))
             {
-                _currentView = Views.Manage;
+                SwitchView("Manager");
             }
 
             GUILayout.EndVertical();
@@ -110,7 +74,7 @@ namespace WeaverNet.Mod.PluginGUI.Windows
             if (GUILayout.Button("Cancel", PluginGUIStyles.Button))
             {
                 _newLoadoutName = "";
-                _currentView = Views.Main;
+                SwitchView("Main");
             }
 
             GUI.enabled = !string.IsNullOrWhiteSpace(_newLoadoutName);
@@ -139,27 +103,10 @@ namespace WeaverNet.Mod.PluginGUI.Windows
 
             GUILayout.EndVertical();
         }
-
-        private void DrawCreateFromExisting()
+        private void DrawManager()
         {
             GUILayout.BeginVertical();
-
-            GUILayout.Label("Not implemented yet.");
-
-            if (GUILayout.Button("Back", PluginGUIStyles.Button))
-            {
-                _currentView = Views.Main;
-            }
-
-            GUILayout.EndVertical();
-        }
-
-        private void DrawManage()
-        {
-
-         
-            GUILayout.BeginVertical();
-            _managerScroll = PluginGUIElements.BeginScrollView(_managerScroll);
+            _managerScroll = Elements.PluginGUI.BeginScrollView(_managerScroll);
 
             if (_loadoutCache.Count > 0)
             {
@@ -176,7 +123,7 @@ namespace WeaverNet.Mod.PluginGUI.Windows
             GUILayout.EndScrollView();
             if (GUILayout.Button("Back", PluginGUIStyles.Button))
             {
-                _currentView = Views.Main;
+                SwitchView("Main");
             }
 
             GUILayout.EndVertical();

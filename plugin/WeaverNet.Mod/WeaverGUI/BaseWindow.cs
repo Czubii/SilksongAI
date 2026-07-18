@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using WeaverNet.Mod.PluginGUI.Elements;
-using WeaverNet.Mod.PluginGUI.Styles;
+using WeaverNet.Mod.WeaverGUI.Elements;
+using WeaverNet.Mod.WeaverGUI.Styles;
 
 public abstract class BaseWindow
 {
@@ -27,7 +27,7 @@ public abstract class BaseWindow
     private Vector2 _resizeStartWindowSize;
     private int _resizeControlID;
 
-    public BaseWindow(string name, Rect windowRect)
+    protected BaseWindow(string name, Rect windowRect)
     {
         _windowRect = windowRect;
         Name = name;
@@ -49,7 +49,7 @@ public abstract class BaseWindow
 
     public void DrawBase(int ID)
     {
-        if (PluginGUIElements.TopBar(Name)) Enabled = false;
+        if (PluginGUI.TopBar(Name)) Enabled = false;
 
         if (_errors.Count > 0) DrawError();
         else if(_notifications.Count > 0) DrawNotification();

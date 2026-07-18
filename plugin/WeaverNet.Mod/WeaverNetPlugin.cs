@@ -10,8 +10,8 @@ using WeaverNet.Mod.Game;
 using WeaverNet.Mod.Game.Bosses;
 using WeaverNet.Mod.Game.Debug;
 using WeaverNet.Mod.Game.Player;
-using WeaverNet.Mod.PluginGUI;
-using WeaverNet.Mod.PluginGUI.Windows;
+using WeaverNet.Mod.WeaverGUI;
+using WeaverNet.Mod.WeaverGUI.Windows;
 using WeaverNET.Infrastructure.Data;
 
 namespace WeaverNet.Mod
@@ -53,11 +53,13 @@ namespace WeaverNet.Mod
 
                 var utilitiesWindow = new UtilitiesWindow("Utilities", tpService, bossRepo);
                 var loadoutWindow = new LoadoutWindow("Loadouts", loadoutManager, loadoutRepo);
+                var bossfightSessionWindow = new BossfightSessionWindow("Bossfight Session", bossRepo, loadoutRepo);
                 var debugWindow = new DebugWindow("Debug", hitboxVisualizer);
 
 
                 windowManager.Register(utilitiesWindow, true);
                 windowManager.Register(loadoutWindow, true);
+                windowManager.Register(bossfightSessionWindow, true);
                 windowManager.Register(debugWindow, true);
 
                 Logger.LogInfo("GUI Initialized Successfully");

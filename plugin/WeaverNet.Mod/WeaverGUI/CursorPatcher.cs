@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 
-namespace WeaverNet.Mod.PluginGUI
+namespace WeaverNet.Mod.WeaverGUI
 {
     public static class CursorPatcher
     {

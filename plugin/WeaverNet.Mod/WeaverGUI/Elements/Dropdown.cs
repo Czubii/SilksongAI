@@ -1,9 +1,10 @@
 ﻿using BepInEx;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using WeaverNet.Mod.PluginGUI.Styles;
+using WeaverNet.Mod.WeaverGUI.Styles;
 
-namespace WeaverNet.Mod.PluginGUI.Elements
+namespace WeaverNet.Mod.WeaverGUI.Elements
 {
     public class DropdownState<T>
                where T : class
@@ -22,9 +23,13 @@ namespace WeaverNet.Mod.PluginGUI.Elements
         }
     
     }
-    public static partial class PluginGUIElements
+    public static partial class PluginGUI
     {
-        public static DropdownState<T> Dropdown<T>(DropdownState<T> state, List<(string label, T value)> elements, string label = "")
+        public static DropdownState<T> Dropdown<T>(
+            DropdownState<T> state, 
+            IReadOnlyList<T> elements, 
+            Func<T, string> optionLabelSelector,
+            string label = "")
             where T : class
         {
             var oldSelection = state.SelectedIdx;
@@ -41,7 +46,7 @@ namespace WeaverNet.Mod.PluginGUI.Elements
             {
                 if (elements.Count > 0)
                 {
-                    string buttonText = elements[state.SelectedIdx].label;
+                    string buttonText = optionLabelSelector(elements[state.SelectedIdx]);
 
                     if (!label.IsNullOrWhiteSpace())
                     {
@@ -76,7 +81,7 @@ namespace WeaverNet.Mod.PluginGUI.Elements
                     // Draw a highlight box for the current selection
                     if (i == state.SelectedIdx)
                     {
-                        if (GUILayout.Button(elements[i].label, PluginGUIStyles.GreenButton))
+                        if (GUILayout.Button(optionLabelSelector(elements[i]), PluginGUIStyles.GreenButton))
                         {
                             state.SelectedIdx = i;
                             state.Expanded = false;
@@ -84,7 +89,7 @@ namespace WeaverNet.Mod.PluginGUI.Elements
                     }
                     else
                     {
-                        if (GUILayout.Button(elements[i].label, PluginGUIStyles.Button))
+                        if (GUILayout.Button(optionLabelSelector(elements[i]), PluginGUIStyles.Button))
                         {
                             state.SelectedIdx = i;
                             state.Expanded = false;
@@ -99,7 +104,7 @@ namespace WeaverNet.Mod.PluginGUI.Elements
 
             if (elements.Count > 0)
             {
-                state.SelectedOption = elements[state.SelectedIdx].value;
+                state.SelectedOption = elements[state.SelectedIdx];
             }
             else
             {
