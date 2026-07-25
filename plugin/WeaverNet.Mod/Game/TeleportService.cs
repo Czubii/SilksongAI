@@ -1,54 +1,76 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
+using static DamageReference;
 using static GameManager;
 
 namespace WeaverNet.Mod.Game
 {
-    public class TeleportService : MonoBehaviour, ITeleportService
+    public class TeleportService : ITeleportService
     {
-        public void Teleport(string targetSceneName, Vector3 targetPos, bool requireSceneReload)
+        private Task _runningTask;
+        private readonly object _startLock = new object();
+        public Task TeleportAsync(string targetSceneName, Vector3 targetPos, bool requireSceneReload) // no cancellation token as those cannot realistically be cancelled
         {
-            if (!TryStartTeleport()) return;
-
-            PluginRuntime.State.TeleportInProgress = true;
-            StartCoroutine(TeleportRutine(targetSceneName, targetPos, requireSceneReload));
+            lock (_startLock)
+            {
+                EnsureCanTeleport();
+                _runningTask = ExecuteTeleportAsync(targetSceneName, targetPos, requireSceneReload);
+            }
+            return _runningTask;
         }
-        public void TeleportToBench()
+        public Task TeleportToBenchAsync() // no cancellation token as those cannot realistically be cancelled
         {
-            if (!TryStartTeleport()) return;
-
-            PluginRuntime.State.TeleportInProgress = true;
-            StartCoroutine(TeleportToBenchRutine());
+            lock (_startLock)
+            {
+                EnsureCanTeleport();
+                _runningTask = ExecuteTeleportToBenchAsync();
+            }
+            return _runningTask;
         }
+        public void Teleport(string targetSceneName, Vector3 targetPos, bool requireSceneReload) => _ = TeleportAsync(targetSceneName, targetPos, requireSceneReload);
+        public void TeleportToBench() => _ = TeleportToBenchAsync();
         public bool CanTeleport()
         {
-            if (PluginRuntime.State.TeleportInProgress)
+            try
+            {
+                EnsureCanTeleport();
+                return true;
+            }
+            catch
+            {
                 return false;
-
-            if (PlayerData.instance != null && PlayerData.instance.health <= 0)
-                return false;
-
-            if (PlayerData.instance != null && PlayerData.instance.atBench)
-                return false;
-
-            if (PlayerData.instance != null && !PlayerData.instance.bindCutscenePlayed)
-                return false;
-
-            if (GameManager.instance != null && GameManager.instance.RespawningHero)
-                return false;
-
-            return true;
+            }
         }
-        private IEnumerator TeleportRutine(string targetSceneName, Vector3 targetPos, bool requireSceneReload)
+        public bool TeleportInProgress() => _runningTask != null && !_runningTask.IsCompleted;
+        private void EnsureCanTeleport()
+        {
+            if (TeleportInProgress())
+                throw new InvalidOperationException("A teleport is already in progress.");
+
+            var playerData = PlayerData.instance;
+            if (playerData != null)
+            {
+                if (playerData.health <= 0)
+                    throw new InvalidOperationException("Cannot teleport while dead.");
+
+                if (playerData.atBench)
+                    throw new InvalidOperationException("Cannot teleport while resting at a bench.");
+
+                if (!playerData.bindCutscenePlayed)
+                    throw new InvalidOperationException("Cannot teleport before the bind cutscene has played.");
+            }
+
+            var gameManager = GameManager.instance;
+            if (gameManager != null && gameManager.RespawningHero)
+                throw new InvalidOperationException("Cannot teleport while the hero is respawning.");
+        }
+        private async Task ExecuteTeleportAsync(string targetSceneName, Vector3 targetPos, bool requireSceneReload)
         {
             try
             {
@@ -67,50 +89,46 @@ namespace WeaverNet.Mod.Game
                         AlwaysUnloadUnusedAssets = true,
                         WaitForSceneTransitionCameraFade = true,
                     });
-                    yield return null; // Wait one frame so GameManager sets transition flags internally
+                    await Task.Yield(); // Wait one frame so GameManager sets transition flags internally
                 }
 
-                yield return AwaitTransitionFinished(); // Make sure we are ready to teleport hero
+                await AwaitTransitionFinished(); // Make sure we are ready to teleport hero
 
                 TeleportHero(targetPos);
 
                 var gm = GameManager.instance;
 
-                if (gm == null) yield break;
+                if (gm == null) return;
 
                 for (int i = 0; i < 10; i++) // this delay is needed as in some larger rooms the camera would not snap to player if there was no delay 
                 {
-                    yield return null;
+                    await Task.Yield();
                 }
                 gm.cameraCtrl.PositionToHeroInstant(true);
 
             }
             finally { PluginRuntime.State.TeleportInProgress = false; }
         }
-        private IEnumerator TeleportToBenchRutine()
+        private async Task ExecuteTeleportToBenchAsync()
         {
-            try
+            var gm = GameManager.instance;
+
+            gm.RespawningHero = true;
+            GetRespawnInfo(out var scene, out var marker);
+
+            gm.BeginSceneTransition(new SceneLoadInfo
             {
-                var gm = GameManager.instance;
+                SceneName = scene,
+                EntryGateName = marker,
+                EntrySkip = CanSkipEntry(),
+                HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
+                EntryDelay = 0f,
+                Visualization = SceneLoadVisualizations.Default,
+                AlwaysUnloadUnusedAssets = true,
+                WaitForSceneTransitionCameraFade = true,
+            });
 
-                gm.RespawningHero = true;
-                GetRespawnInfo(out var scene, out var marker);
-
-                gm.BeginSceneTransition(new SceneLoadInfo
-                {
-                    SceneName = scene,
-                    EntryGateName = marker,
-                    EntrySkip = CanSkipEntry(),
-                    HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
-                    EntryDelay = 0f,
-                    Visualization = SceneLoadVisualizations.Default,
-                    AlwaysUnloadUnusedAssets = true,
-                    WaitForSceneTransitionCameraFade = true,
-                });
-
-                yield return AwaitTransitionFinished();
-            }
-            finally { PluginRuntime.State.TeleportInProgress = false; }
+            await AwaitTransitionFinished();
         }
         private void TeleportHero(Vector3 pos)
         {
@@ -132,33 +150,24 @@ namespace WeaverNet.Mod.Game
                 HeroController.instance.cState.transitioning = false;
             }
         }
-        private bool TryStartTeleport()
+        private async Task AwaitTransitionFinished()
         {
-            if (PluginRuntime.State.TeleportInProgress)
+            while (true)
             {
-                PluginLog.Error("Cannot teleport, the old one is still in progress");
-                return false;
-            }
-            if (!CanTeleport())
-            {
-                PluginLog.Error("Cannot teleport.");
-                return false;
-            }
-            return true;
-        }
-        private IEnumerator AwaitTransitionFinished()
-        {
-            yield return new WaitWhile(() =>
-            {
-
                 var gm = GameManager.instance;
                 var hc = HeroController.instance;
 
-                if (gm == null || hc == null) return true;
+                if (gm != null &&
+                    hc != null &&
+                    hc.isHeroInPosition &&
+                    !hc.cState.transitioning &&
+                    !gm.IsInSceneTransition)
+                {
+                    return;
+                }
 
-                return !hc.isHeroInPosition || hc.cState.transitioning || gm.IsInSceneTransition;
-
-            });
+                await Task.Yield();
+            }
         }
         private bool CanSkipEntry()
         {
