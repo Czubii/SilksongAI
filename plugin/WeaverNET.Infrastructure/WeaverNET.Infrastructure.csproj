@@ -97,12 +97,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\BossfightCatalog.cs" />
-    <Compile Include="Data\JsonBossRepository.cs" />
-    <Compile Include="Data\JsonLoadoutRepository.cs" />
-    <Compile Include="Data\JsonReadOnlyRepository.cs" />
-    <Compile Include="Data\JsonRepository.cs" />
-    <Compile Include="Data\JsonRepositoryBase.cs" />
-    <Compile Include="Data\JsonRepositoryEntry.cs" />
+    <Compile Include="Data\Json\JsonBossRepository.cs" />
+    <Compile Include="Data\Json\JsonLoadoutRepository.cs" />
+    <Compile Include="Data\Json\JsonReadOnlyRepository.cs" />
+    <Compile Include="Data\Json\JsonRepository.cs" />
+    <Compile Include="Data\Json\JsonRepositoryBase.cs" />
+    <Compile Include="Data\Json\JsonRepositoryEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

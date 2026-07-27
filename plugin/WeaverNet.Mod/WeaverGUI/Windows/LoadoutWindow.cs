@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEngine;
 using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
-using WeaverNet.Mod.WeaverGUI.Elements;
 using WeaverNet.Mod.WeaverGUI.Styles;
 
 namespace WeaverNet.Mod.WeaverGUI.Windows
@@ -48,12 +47,12 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
         {
             GUILayout.BeginVertical();
 
-            if (GUILayout.Button("Create New from Current Equipment", PluginGUIStyles.Button))
+            if (GUILayout.Button("Create New from Current Equipment", WeaverNetStyles.Button))
             {
                 _newLoadoutName = "";
                 SwitchView("CreateFromCurrent");
             }
-            if (GUILayout.Button("Manage Loadouts", PluginGUIStyles.Button))
+            if (GUILayout.Button("Manage Loadouts", WeaverNetStyles.Button))
             {
                 SwitchView("Manager");
             }
@@ -67,11 +66,11 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
             GUILayout.Label("Creating new loadout repository entry based on current player data");
             GUILayout.BeginHorizontal();
             GUILayout.Label("Name: ");
-            _newLoadoutName = GUILayout.TextField(_newLoadoutName, PluginGUIStyles.TextField);
+            _newLoadoutName = GUILayout.TextField(_newLoadoutName, WeaverNetStyles.TextField);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Cancel", PluginGUIStyles.Button))
+            if (GUILayout.Button("Cancel", WeaverNetStyles.Button))
             {
                 _newLoadoutName = "";
                 SwitchView("Main");
@@ -79,7 +78,7 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
 
             GUI.enabled = !string.IsNullOrWhiteSpace(_newLoadoutName);
 
-            if (GUILayout.Button("Save", PluginGUIStyles.Button))
+            if (GUILayout.Button("Save", WeaverNetStyles.Button))
             {
                 try
                 {
@@ -121,7 +120,7 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
             }
 
             GUILayout.EndScrollView();
-            if (GUILayout.Button("Back", PluginGUIStyles.Button))
+            if (GUILayout.Button("Back", WeaverNetStyles.Button))
             {
                 SwitchView("Main");
             }
@@ -130,17 +129,17 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
         }
         private void DrawManagerEntry(Loadout entry)
         {
-            GUILayout.BeginVertical(PluginGUIStyles.Card);
-            GUILayout.Label(entry.Name, PluginGUIStyles.HeaderLabel);
+            GUILayout.BeginVertical(WeaverNetStyles.Card);
+            GUILayout.Label(entry.Name, WeaverNetStyles.WindowTitleLabel);
             GUILayout.BeginHorizontal();
             try
             {
-                if (GUILayout.Button("Apply", PluginGUIStyles.Button))
+                if (GUILayout.Button("Apply", WeaverNetStyles.Button))
                 {
                     _loadoutManager.SetLoadout(entry);
                     Notify($"Loadout \"{entry.Name}\" applied successfully!");
                 }
-                if (GUILayout.Button("Delete", PluginGUIStyles.Button))
+                if (GUILayout.Button("Delete", WeaverNetStyles.Button))
                 {
                     _loadoutRepository.Remove(entry.Name);
                     Notify($"Loadout \"{entry.Name}\" removed successfully!");

@@ -9,13 +9,13 @@ using WeaverNet.Mod.WeaverGUI.Styles;
 
 namespace WeaverNet.Mod.WeaverGUI.Windows
 {
-    public class UtilitiesWindow : BaseWindow
+    public class UtilitiesWindow : __BaseWindow
     {
         private readonly ITeleportService _teleportService;
         private readonly IBossRepository _bossRepository;
 
         private readonly DropdownState<BossData> _bossDropdownState = new DropdownState<BossData>();
-        private readonly List<(string, BossData)> _bossDropdownElements;
+        private readonly IReadOnlyList<BossData> _bossDropdownElements;
 
         public UtilitiesWindow(
             string name,
@@ -26,9 +26,7 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
             _teleportService = teleportService;
             _bossRepository = bossRepository;
 
-            _bossDropdownElements = _bossRepository.All
-                .Select(b => (b.DisplayName, b))
-                .ToList();
+            _bossDropdownElements = _bossRepository.All.ToList();
         }
 
         public override bool CanEnable() => true;
@@ -37,11 +35,11 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
         {
             GUILayout.BeginVertical();
 
-            Elements.PluginGUI.Dropdown(_bossDropdownState, _bossDropdownElements, "Boss");
+            //PluginGUI.Dropdown(_bossDropdownState, _bossDropdownElements, a=>a.DisplayName);
 
             GUI.enabled = _teleportService.CanTeleport();
 
-            if (GUILayout.Button("Teleport", PluginGUIStyles.Button))
+            if (GUILayout.Button("Teleport", WeaverNetStyles.Button))
             {
                 var bossData = _bossDropdownState.SelectedOption;
 

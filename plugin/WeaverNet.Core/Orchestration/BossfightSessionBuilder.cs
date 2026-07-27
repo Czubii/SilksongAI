@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JetBrains.Annotations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ using WeaverNet.Core.Orchestration.Interfaces;
 
 namespace WeaverNet.Core.Orchestration
 {
-    public class BossfightSessionBuilder
+    internal class BossfightSessionBuilder
     {
         private readonly BossData _boss;
         private IBossfightSessionBoundary _boundary;
@@ -27,6 +28,17 @@ namespace WeaverNet.Core.Orchestration
         {
             _boundary = boundary;
             return this;
+        }
+        public BossfightSessionBuilder UseLoadout(
+            Loadout loadout)
+        {
+            _loadout = loadout;
+            return this;
+        }
+        public BossfightSessionBuilder UseRespawnPoint(IRespawnPoint respawnPoint)
+        {
+            _respawnPoint = respawnPoint;
+            return this;    
         }
         public BossfightSessionBuilder AddPlugin(
             IBossfightSessionPlugin plugin)

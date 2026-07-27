@@ -6,7 +6,7 @@ using WeaverNet.Core.Infrastructure;
 
 namespace WeaverNet.Mod.Game
 {
-    public class RespawnPoint : IDisposable, IRespawnPoint //TODO finish this (now it cannot be constructed inside the orchestrator. maybe a factory?)
+    public class RespawnPoint : IDisposable, IRespawnPoint 
     {
         private RespawnMarker _marker;
         private string _scene;

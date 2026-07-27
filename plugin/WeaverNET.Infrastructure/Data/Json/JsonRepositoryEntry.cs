@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WeaverNET.Infrastructure.Data
+namespace WeaverNET.Infrastructure.Data.Json
 {
     public class JsonRepositoryEntry<TData>
     {

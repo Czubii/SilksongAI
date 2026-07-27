@@ -4,23 +4,18 @@ using WeaverNet.Core.Infrastructure;
 
 namespace WeaverNet.Mod.Game.Bosses
 {
-    public class DataDrivenBossSpawner: IBossSpawner
+    public class BossSpawner: IBossSpawner
     {
-        private readonly BossRespawnFlags _flags;
-        public DataDrivenBossSpawner(BossRespawnFlags flags)
-        {
-            _flags = flags;
-        }
-        public void Respawn()
+        public void Respawn(BossRespawnFlags flags)
         {
             var pd = PlayerData.instance;
-            foreach(var playerFlag in _flags.PlayerDataBools)
+            foreach(var playerFlag in flags.PlayerDataBools)
             {
                 pd.SetBool(playerFlag.Key, playerFlag.Value);
             }
 
             var sd = SceneData.instance;
-            foreach(var sceneFlag in _flags.SceneBools)
+            foreach(var sceneFlag in flags.SceneBools)
             {
                 sd.PersistentBools.SetValue(new PersistentItemData<bool>
                 {
@@ -29,7 +24,7 @@ namespace WeaverNet.Mod.Game.Bosses
                     Value = sceneFlag.Value
                 });
             }
-            foreach (var sceneInt in _flags.SceneInts)
+            foreach (var sceneInt in flags.SceneInts)
             {
                 sd.PersistentInts.SetValue(new PersistentItemData<int>
                 {
@@ -40,10 +35,10 @@ namespace WeaverNet.Mod.Game.Bosses
                 });
             }
         }
-        public void RespawnTemporary(TemporaryStateModifier modifier)
+        public void RespawnTemporary(BossRespawnFlags flags, TemporaryStateModifier modifier)
         {
             var pd = PlayerData.instance;
-            foreach (var playerFlag in _flags.PlayerDataBools)
+            foreach (var playerFlag in flags.PlayerDataBools)
             {
                 var currentValue = pd.GetBool(playerFlag.Key);
                 pd.SetBool(playerFlag.Key, playerFlag.Value);
@@ -54,7 +49,7 @@ namespace WeaverNet.Mod.Game.Bosses
             }
 
             var sd = SceneData.instance;
-            foreach (var sceneFlag in _flags.SceneBools)
+            foreach (var sceneFlag in flags.SceneBools)
             {
                 var currentValue = sd.PersistentBools.GetValueOrDefault(sceneFlag.SceneName, sceneFlag.ID);
 
@@ -76,7 +71,7 @@ namespace WeaverNet.Mod.Game.Bosses
                 });
             }
 
-            foreach (var sceneInt in _flags.SceneInts)
+            foreach (var sceneInt in flags.SceneInts)
             {
                 var currentValue = sd.PersistentInts.GetValueOrDefault(sceneInt.SceneName, sceneInt.ID);
 

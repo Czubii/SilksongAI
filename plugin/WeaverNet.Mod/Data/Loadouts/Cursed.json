@@ -1,0 +1,30 @@
+{
+  "Name": "Cursed",
+  "Abilities": {
+    "Dash": true,
+    "DoubleJump": true,
+    "WallJump": true,
+    "HarpoonDash": true,
+    "SuperJump": false,
+    "Brolly": true,
+    "ChargeSlash": false,
+    "Needolin": true,
+    "Sylphsong": false
+  },
+  "Tools": {
+    "CrestID": "Cursed",
+    "ToolNames": [],
+    "ExtraBlueSlotToolName": null,
+    "ExtraYellowSlotToolName": null,
+    "ExtraBlueSlotUnlocked": false,
+    "ExtraYellowSlotUnlocked": false
+  },
+  "Upgrades": {
+    "HP": 5,
+    "Silk": 9,
+    "SilkHearts": 2,
+    "CraftingKits": 0,
+    "ToolPouches": 0,
+    "NailUpgrades": 2
+  }
+}

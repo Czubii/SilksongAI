@@ -7,6 +7,6 @@ using WeaverNet.Core.Infrastructure.Interfaces;
 
 namespace WeaverNet.Core.Game.Interfaces
 {
-    public interface IBossRepository: IReadOnlyRepository<BossData> {}
+    public interface IBossRepository: IReadOnlyRepository<BossData, string> {}
 }
     

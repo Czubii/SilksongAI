@@ -50,10 +50,9 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
 
         public static IntFieldState IntField(
        IntFieldState state,
-       string label,
        params GUILayoutOption[] options)
         {
-            string text = TextField(state.Text, label, options);
+            string text = TextField(state.Text, options);
 
             text = FilterInteger(text);
 
@@ -67,12 +66,11 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
 
         public static IntFieldState IntField(
             IntFieldState state,
-            string label,
             int min,
             int max,
             params GUILayoutOption[] options)
         {
-            string text = TextField(state.Text, label, options);
+            string text = TextField(state.Text, options);
 
             text = FilterInteger(text);
 
@@ -89,21 +87,15 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
 
         public static string TextField(
             string value,
-            string label,
             params GUILayoutOption[] options)
         {
-            BeginHorizontal();
-
-            Label(label);
 
             value = GUILayout.TextField(
                 value,
-                PluginGUIStyles.TextField,
+                WeaverNetStyles.TextField,
                 MergeOptions(
                     GUILayout.Width(150),
                     options));
-
-            EndHorizontal();
 
             return value;
         }

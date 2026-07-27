@@ -7,29 +7,23 @@ using WeaverNet.Mod.WeaverGUI.Styles;
 namespace WeaverNet.Mod.WeaverGUI.Elements
 {
     public class DropdownState<T>
-               where T : class
+        where T : class
     {
         public int SelectedIdx = -1;
         public T SelectedOption;
-        public bool SelectionChanged = false;
-        public bool Expanded = false;
+        public bool SelectionChanged;
+        public bool Expanded;
 
-        public void Reset()
-        {
-            SelectedIdx = -1;
-            SelectedOption = null;
-            Expanded = false;
-            SelectionChanged = true;
-        }
-    
+        public Rect ButtonRect;
+        public Rect ScreenButtonRect;
     }
     public static partial class PluginGUI
     {
         public static DropdownState<T> Dropdown<T>(
-            DropdownState<T> state, 
-            IReadOnlyList<T> elements, 
-            Func<T, string> optionLabelSelector,
-            string label = "")
+            IGUIContext context,
+            DropdownState<T> state,
+            IReadOnlyList<T> elements,
+            Func<T, string> optionLabelSelector)
             where T : class
         {
             var oldSelection = state.SelectedIdx;
@@ -37,82 +31,108 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
 
             var oldEnabled = GUI.enabled;
 
-            state.SelectedIdx = elements.Count <= 0 ? 0 : Mathf.Clamp(state.SelectedIdx, 0, elements.Count - 1);
-
-            if ((state.Expanded && !GUI.enabled) || elements.Count == 0)
-                state.Expanded = false;
-
-            if (!state.Expanded)
+            if (elements.Count == 0)
             {
-                if (elements.Count > 0)
-                {
-                    string buttonText = optionLabelSelector(elements[state.SelectedIdx]);
-
-                    if (!label.IsNullOrWhiteSpace())
-                    {
-                        buttonText = $"{label}: {buttonText}";
-                    }
-
-                    // Button showing current selection
-                    if (GUILayout.Button(buttonText, PluginGUIStyles.Button))
-                    {
-                        state.Expanded = !state.Expanded;
-                    }
-                }
-                else
-                {
-                    string buttonText = "No options available";
-
-                    if (!label.IsNullOrWhiteSpace())
-                    {
-                        buttonText = $"{label}: {buttonText}";
-                    }
-
-                    GUI.enabled = false;
-                    GUILayout.Button(buttonText, PluginGUIStyles.Button);
-                }
+                state.SelectedIdx = -1;
+                state.SelectedOption = null;
+                state.Expanded = false;
             }
             else
             {
-                GUILayout.BeginVertical("box");
-
-                for (int i = 0; i < elements.Count; i++)
-                {
-                    // Draw a highlight box for the current selection
-                    if (i == state.SelectedIdx)
-                    {
-                        if (GUILayout.Button(optionLabelSelector(elements[i]), PluginGUIStyles.GreenButton))
-                        {
-                            state.SelectedIdx = i;
-                            state.Expanded = false;
-                        }
-                    }
-                    else
-                    {
-                        if (GUILayout.Button(optionLabelSelector(elements[i]), PluginGUIStyles.Button))
-                        {
-                            state.SelectedIdx = i;
-                            state.Expanded = false;
-                        }
-                    }
-                }
-
-                GUILayout.EndVertical();
+                state.SelectedIdx = Mathf.Clamp(
+                    state.SelectedIdx,
+                    0,
+                    elements.Count - 1);
             }
 
-            GUI.enabled = oldEnabled;
+            string buttonText;
 
             if (elements.Count > 0)
             {
-                state.SelectedOption = elements[state.SelectedIdx];
+                buttonText = optionLabelSelector(elements[state.SelectedIdx]);
             }
             else
             {
-                state.SelectedOption = null;
+                buttonText = "No options available";
+                GUI.enabled = false;
             }
 
-            if (state.SelectedIdx != oldSelection) state.SelectionChanged = true;
+            Rect buttonRect = GUILayoutUtility.GetRect(
+                GUIContent.none,
+                WeaverNetStyles.DropdownButton,
+                GUILayout.Height(30),
+                GUILayout.Width(150));
+
+            state.ButtonRect = buttonRect;
+
+
+            if (GUI.Button(
+                buttonRect,
+                GUIContent.none,
+                WeaverNetStyles.DropdownButton))
+            {
+                state.Expanded = !state.Expanded;
+
+                if (state.Expanded && elements.Count > 0)
+                {
+                    Vector2 screenPos = GUIUtility.GUIToScreenPoint(
+                        buttonRect.position);
+
+                    state.ScreenButtonRect = new Rect(
+                        screenPos,
+                        buttonRect.size);
+
+                    context.ShowOverlay(
+                        new DropdownOverlay<T>(
+                            state,
+                            elements,
+                            optionLabelSelector));
+                }
+            }
+
+
+            // Draw text
+            Rect textRect = new Rect(
+                buttonRect.x + 8,
+                buttonRect.y,
+                buttonRect.width - 28,
+                buttonRect.height);
+
+            GUI.Label(
+                textRect,
+                buttonText,
+                WeaverNetStyles.DropdownButtonText);
+
+
+            // Draw arrow
+            Rect arrowRect = new Rect(
+                buttonRect.xMax - 24,
+                buttonRect.y,
+                20,
+                buttonRect.height);
+
+            GUI.Label(
+                arrowRect,
+                state.Expanded ? "▲" : "▼",
+                WeaverNetStyles.DropdownArrow);
+
+
+            GUI.enabled = oldEnabled;
+
+
+            if (elements.Count > 0)
+                state.SelectedOption = elements[state.SelectedIdx];
+            else
+                state.SelectedOption = null;
+
+
+            if (state.SelectedIdx != oldSelection)
+                state.SelectionChanged = true;
+
+
             return state;
         }
+
+
     }
 }

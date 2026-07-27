@@ -8,24 +8,20 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
         public static bool TopBar(string text)
         {
             bool pressed = false;
-            GUILayout.BeginHorizontal(GUI.skin.label);
 
-            GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-            labelStyle.fontStyle = FontStyle.Bold;
-            labelStyle.fontSize = 20;
-            labelStyle.alignment = TextAnchor.MiddleCenter;
+            GUILayout.BeginHorizontal(WeaverNetStyles.TopBar);
 
-            GUILayout.Label(text, labelStyle, GUILayout.ExpandWidth(true));
+            GUILayout.Label(text, WeaverNetStyles.WindowTitleLabel, GUILayout.ExpandWidth(true));
 
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button("✕", PluginGUIStyles.CloseButton, GUILayout.Width(20), GUILayout.Height(20)))
+            if (GUILayout.Button("✕", WeaverNetStyles.CancelButton, GUILayout.Width(22), GUILayout.Height(22)))
             {
                 pressed = true;
             }
 
             GUILayout.EndHorizontal();
-
+            GUILayout.Space(10);
             return pressed;
         }
     }

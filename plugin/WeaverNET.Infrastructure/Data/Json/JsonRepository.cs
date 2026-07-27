@@ -5,9 +5,9 @@ using System.IO;
 using System.Linq;
 using WeaverNet.Core.Infrastructure.Interfaces;
 
-namespace WeaverNET.Infrastructure.Data
+namespace WeaverNET.Infrastructure.Data.Json
 {
-    public class JsonRepository<TData> : JsonRepositoryBase<TData>, IRepository<TData>
+    public class JsonRepository<TData> : JsonRepositoryBase<TData>, IRepository<TData, string>
     {
         public event Action RepositoryChanged;
         public JsonRepository(string repositoryRoot, Func<TData, string> idSelector) : base(repositoryRoot, idSelector) { }

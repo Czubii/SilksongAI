@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace WeaverNet.Mod.WeaverGUI
 {
-    public static class CursorPatcher
+    public static class CursorPatches
     {
         private static bool _forceFisible = false;
         public static bool ForceFisible
@@ -33,5 +33,7 @@ namespace WeaverNet.Mod.WeaverGUI
         {
             if (_forceFisible) value = CursorLockMode.None;
         }
+
+
     }
 }

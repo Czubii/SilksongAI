@@ -4,7 +4,7 @@ namespace WeaverNet.Core.Game.Interfaces
 {
     public interface IBossSpawner
     {
-        void Respawn();
-        void RespawnTemporary(TemporaryStateModifier modifier);
+        void Respawn(BossRespawnFlags flags);
+        void RespawnTemporary(BossRespawnFlags flags, TemporaryStateModifier modifier);
     }
 }

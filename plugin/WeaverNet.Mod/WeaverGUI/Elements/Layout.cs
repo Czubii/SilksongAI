@@ -9,11 +9,11 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
         public static Vector2 BeginScrollView(Vector2 scroll)
         {
             scroll = GUILayout.BeginScrollView(scroll, 
-                PluginGUIStyles.ScrollView, 
-                PluginGUIStyles.VerticalScrollbar, 
-                GUILayout.ExpandHeight(true));
+                WeaverNetStyles.ScrollView, 
+                WeaverNetStyles.VerticalScrollbar,
+                GUILayout.ExpandHeight(false));
 
-            GUI.skin.verticalScrollbarThumb = PluginGUIStyles.VerticalScrollbarThumb;
+            GUI.skin.verticalScrollbarThumb = WeaverNetStyles.VerticalScrollbarThumb;
             return scroll;
         }
         public static void EndScrollView()

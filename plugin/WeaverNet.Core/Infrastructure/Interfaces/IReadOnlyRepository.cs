@@ -2,9 +2,9 @@
 
 namespace WeaverNet.Core.Infrastructure.Interfaces
 {
-    public interface IReadOnlyRepository<TData>
+    public interface IReadOnlyRepository<TData, TId>
     {
         IReadOnlyCollection<TData> All { get; }
-        TData GetById(string id);
+        TData GetById(TId id);
     }
 }

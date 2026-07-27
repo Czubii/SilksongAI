@@ -1,18 +1,43 @@
 ﻿using WeaverNet.Mod.WeaverGUI.Styles;
 using UnityEngine;
+using System;
 
 namespace WeaverNet.Mod.WeaverGUI.Elements
 {
     public static partial class PluginGUI
     {
-        public static bool LabeledToggle(bool value, string text, params GUILayoutOption[] options)
+        public static TResult Labeled<TResult>(
+             string label,
+             Func<TResult> elementHandler,
+             string description = null)
         {
+            GUILayout.Space(5);
+
             GUILayout.BeginHorizontal();
-            GUILayout.Label(text, GUILayout.ExpandWidth(true));
-            GUILayout.FlexibleSpace();
-            value = GUILayout.Toggle(value, "", PluginGUIStyles.Toggle, options);
+
+            
+            GUILayout.BeginVertical();  // --- Left Side ---
+            GUILayout.Label(
+                label,
+                WeaverNetStyles.ElementLabelTitle);
+            if (description != null)
+            {
+                GUILayout.Label(
+                    description,
+                    WeaverNetStyles.ElementLabelDescription);
+            }
+            GUILayout.EndVertical();    // --- --------- ---
+
+            GUILayout.FlexibleSpace();  // push the handler to the right side of the view
+
+            TResult result = elementHandler();
+
+
             GUILayout.EndHorizontal();
-            return value;
+
+            GUILayout.Space(5);
+
+            return result;
         }
     }
 }

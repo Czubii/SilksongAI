@@ -12,7 +12,7 @@ using WeaverNet.Mod.Game.Player;
 
 namespace WeaverNet.Mod.WeaverGUI.Windows
 {
-    public class DebugWindow : BaseWindow
+    public class DebugWindow : __BaseWindow
     {
         private HitboxVisualizer HitboxVisualizer { get; }
         private ILoadoutManager LoadoutManager { get; }
@@ -27,23 +27,23 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
         public override void DrawContent()
         {
             GUILayout.BeginVertical();
-            _hitboxesEnabled = Elements.PluginGUI.LabeledToggle(_hitboxesEnabled, "Hitboxes");
+            _hitboxesEnabled = Elements.PluginGUI.Toggle(_hitboxesEnabled);
             if(_hitboxesEnabled != HitboxVisualizer.enabled)
             {
                 HitboxVisualizer.enabled = _hitboxesEnabled;
             }
 
             GUILayout.Label("Loadouts");
-            if (GUILayout.Button("Print Current Loadout", PluginGUIStyles.Button))
+            if (GUILayout.Button("Print Current Loadout", WeaverNetStyles.Button))
             {
                 LoadoutManager.BuildLoadout("Debug Print Loadout").Print();
             }
-            if (GUILayout.Button("Store Current Loadout", PluginGUIStyles.Button))
+            if (GUILayout.Button("Store Current Loadout", WeaverNetStyles.Button))
             {
                 _loadout = LoadoutManager.BuildLoadout("Debug Store Loadout");
             }
             GUI.enabled = _loadout != null;
-            if (GUILayout.Button("Apply Stored Loadout", PluginGUIStyles.Button))
+            if (GUILayout.Button("Apply Stored Loadout", WeaverNetStyles.Button))
             {
                 LoadoutManager.SetLoadout(_loadout);
             }

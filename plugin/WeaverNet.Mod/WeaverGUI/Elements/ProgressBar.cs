@@ -11,10 +11,10 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
 
             Rect rect = GUILayoutUtility.GetRect(1, 25, options);
 
-            GUI.Box(rect, GUIContent.none, PluginGUIStyles.ProgressBarBackground);
+            GUI.Box(rect, GUIContent.none, WeaverNetStyles.ProgressBarBackground);
 
             Rect fill = new Rect(rect.x, rect.y, rect.width * progress, rect.height);
-            GUI.Box(fill, GUIContent.none, PluginGUIStyles.ProgressBarFill);
+            GUI.Box(fill, GUIContent.none, WeaverNetStyles.ProgressBarFill);
 
             if (!string.IsNullOrEmpty(label))
             {

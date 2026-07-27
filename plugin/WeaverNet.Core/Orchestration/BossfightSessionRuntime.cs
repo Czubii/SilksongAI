@@ -14,9 +14,9 @@ namespace WeaverNet.Core.Orchestration
             CurrentIteration = 0;
             ResultHistory = new List<FightResult>();
         }
-        public BossfightContext IterationStarted()
+        public FightContext IterationStarted()
         {
-            return new BossfightContext(
+            return new FightContext(
                 Session.Boss,
                 Session.Loadout,
                 DateTime.Now,

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WeaverNet.Core.Infrastructure;
 
-namespace WeaverNET.Infrastructure.Data
+namespace WeaverNET.Infrastructure.Data.Json
 {
     public class JsonRepositoryBase<TData>
     {

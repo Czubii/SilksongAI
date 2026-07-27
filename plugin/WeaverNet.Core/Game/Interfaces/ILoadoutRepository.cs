@@ -7,5 +7,5 @@ using WeaverNet.Core.Infrastructure.Interfaces;
 
 namespace WeaverNet.Core.Game.Interfaces
 {
-    public interface ILoadoutRepository: IRepository<Loadout> {}
+    public interface ILoadoutRepository: IRepository<Loadout, string> {}
 }

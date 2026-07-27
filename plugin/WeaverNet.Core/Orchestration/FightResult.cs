@@ -4,6 +4,9 @@
     {
         Success,
         Failure,
+        BossMissing,
+        HeroMissing,
+        Cancelled,
         Exception
     }
 }

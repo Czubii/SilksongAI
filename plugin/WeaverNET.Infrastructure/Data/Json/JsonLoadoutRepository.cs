@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
 
-namespace WeaverNET.Infrastructure.Data
+namespace WeaverNET.Infrastructure.Data.Json
 {
     public class JsonLoadoutRepository: JsonRepository<Loadout>, ILoadoutRepository
     {

@@ -10,7 +10,8 @@ namespace WeaverNet.Core.Orchestration.Interfaces
 {
     public interface IBossfightSessionOrchestrator
     {
-        bool CanStart();
+        bool CanStart { get; }
+        bool IsRunning { get; }
         Task StartAsync(BossfightSession session, CancellationToken ct);
         Task StopAsync();
     }

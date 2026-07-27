@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using WeaverNet.Core.Infrastructure;
@@ -12,22 +11,24 @@ namespace WeaverNet.Core.Orchestration
     public class BossfightSessionOrchestrator: IBossfightSessionOrchestrator
     {
         private readonly IBossfightSessionGameController _controller;
+        private readonly IBossfightSessionStatusWriter _statusWriter;
         private Task _runningTask;
         private readonly object _startLock = new object();
         private CancellationTokenSource _cts;
-        public BossfightSessionOrchestrator(IBossfightSessionGameController controller)
+        public BossfightSessionOrchestrator(
+            IBossfightSessionGameController controller,
+            IBossfightSessionStatusWriter statusWriter)
         {
+            _statusWriter = statusWriter;
             _controller = controller;
         }
-        public bool CanStart()
-        {
-            return _runningTask == null || _runningTask.IsCompleted;
-        }
+        public bool IsRunning => _runningTask != null && !_runningTask.IsCompleted;
+        public bool CanStart => _runningTask == null || _runningTask.IsCompleted; // TODO add check for game state via the controller
         public Task StartAsync(BossfightSession session, CancellationToken ct)
         {
             lock (_startLock)
             {
-                if (_runningTask != null && !_runningTask.IsCompleted)
+                if (!CanStart)
                 {
                     throw new InvalidOperationException("Bossfight session already running");
                 }
@@ -46,7 +47,7 @@ namespace WeaverNet.Core.Orchestration
 
             lock (_startLock)
             {
-                if (_runningTask != null && !_runningTask.IsCompleted)
+                if (IsRunning)
                 {
                     cts = _cts;
                     task = _runningTask;
@@ -67,44 +68,93 @@ namespace WeaverNet.Core.Orchestration
         private async Task ExecuteAsync(BossfightSession session, CancellationToken ct)
         {
             var runtime = new BossfightSessionRuntime(session);
+
+            PluginLog.Info($"Starting bossfight session for boss: {session.Boss.DisplayName}");
+
             try
             {
+                _statusWriter.Start(session);
                 using (GameStateScope scope = new GameStateScope())
                 {
-                    await NotifySessionStart(session); // let the plugins load necessary data for example an ONNX ai model
-                    await PrepareSession(session, scope.Modifier); // set abilities etc
+                    PluginLog.Info("Initializing session plugins...");
+                    await NotifySessionStart(session);
+                    PluginLog.Info("Session plugins initialized.");
 
-                    var boundary = runtime.Session.Boundary; // object defining the stop criterion
+                    PluginLog.Info("Preparing session state...");
+                    await PrepareSession(session, scope.Modifier);
+                    PluginLog.Info("Session preparation completed.");
+
+                    var boundary = runtime.Session.Boundary;
+
+                    PluginLog.Info("Beginning fight iterations.");
+
                     while (!boundary.ShouldTerminate(runtime) && !ct.IsCancellationRequested)
                     {
                         var fightContext = runtime.IterationStarted();
-                        await PrepareFight(runtime);
+                        PluginLog.Info($"Starting fight iteration {runtime.CurrentIteration}.");
 
-                        runtime.IterationFinished(FightResult.Exception);
+                        _statusWriter.UpdateProgress(runtime);
+
+                        var result = await ExecuteFight(fightContext, scope.Modifier, ct);
+
+                        runtime.IterationFinished(result);
+
+                        PluginLog.Info(
+                            $"Finished fight iteration {runtime.CurrentIteration} with result: {runtime.PreviousIterationResult()}.");
+                    }
+
+                    if (ct.IsCancellationRequested)
+                    {
+                        PluginLog.Info("Bossfight session cancelled.");
+                    }
+                    else
+                    {
+                        PluginLog.Info("Bossfight session boundary reached.");
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                PluginLog.Error($"Bossfight session failed:\n{ex}");
+                throw;
+            }
             finally
             {
+                try
+                {
+                    _statusWriter.Stop();
+                    await PostSessionCleanup();
+                }
+                catch (Exception ex)
+                {
+                    PluginLog.Error($"Cleanup failed: {ex}");
+                }
                 PluginRuntime.State.IsSessionActive = false;
+                PluginLog.Info("Bossfight session cleanup completed.");
             }
         }
         private async Task PrepareSession(BossfightSession session, TemporaryStateModifier modifier)
         {
-            await _controller.SelectAbilities(session.Loadout.Abilities, modifier);
-            await _controller.SelectTools(session.Loadout.Tools, modifier);
-            await _controller.SetRespawnPoint(session.RespawnPoint, modifier);
+            _controller.SelectLoadout(session.Loadout, modifier);
+            _controller.SelectRespawnPoint(session.RespawnPoint, modifier);
         }
-        private async Task PrepareFight(BossfightSessionRuntime runtime)
+        private async Task<FightResult> ExecuteFight(
+            FightContext context, 
+            TemporaryStateModifier modifier, 
+            CancellationToken ct)
         {
+            var boss = context.Boss;
+            _controller.RespawnBoss(boss, modifier);
+            await _controller.TeleportToBossAsync(boss);
 
-            await Task.Delay(5000);
-            //var boss = runtime.Session.Boss;
-            //if (runtime.FirstIteration)
-            //{
-            //    _controller.TeleportToArena(boss.ArenaSceneName, boss.ArenaPosition);
-            //}
+            var bossId = await _controller.WaitForBossAsync(context.Boss, ct); 
+            var result = await _controller.AwaitFightFinishedAsync(bossId, ct);
 
+            return result;
+        }
+        private async Task PostSessionCleanup()
+        {
+            await _controller.TeleportToBenchAsync();
         }
         private Task NotifySessionStart(BossfightSession session)
         {

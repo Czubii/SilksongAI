@@ -56,6 +56,7 @@
     <Compile Include="Game\Interfaces\IBossRepository.cs" />
     <Compile Include="Game\Interfaces\IBossSpawner.cs" />
     <Compile Include="Game\CrestToolSet.cs" />
+    <Compile Include="Game\Interfaces\ICombatEntityTracker.cs" />
     <Compile Include="Game\Interfaces\ILoadoutManager.cs" />
     <Compile Include="Game\Interfaces\ILoadoutRepository.cs" />
     <Compile Include="Game\Interfaces\IRespawnPoint.cs" />
@@ -75,7 +76,13 @@
     <Compile Include="Infrastructure\TemporaryStateModifier.cs" />
     <Compile Include="Infrastructure\PluginRuntime.cs" />
     <Compile Include="Infrastructure\PluginState.cs" />
-    <Compile Include="Orchestration\BossfightContext.cs" />
+    <Compile Include="Orchestration\BossfightSessionConfiguration.cs" />
+    <Compile Include="Orchestration\BossfightSessionAssembler.cs" />
+    <Compile Include="Orchestration\BossfightSessionObjectFactory.cs" />
+    <Compile Include="Infrastructure\ObjectRegistry.cs" />
+    <Compile Include="Orchestration\BossfightSessionProgress.cs" />
+    <Compile Include="Orchestration\BossfightSessionStatus.cs" />
+    <Compile Include="Orchestration\FightContext.cs" />
     <Compile Include="Orchestration\BossfightSession.cs" />
     <Compile Include="Orchestration\BossfightSessionBuilder.cs" />
     <Compile Include="Orchestration\BossfightSessionOrchestrator.cs" />
@@ -83,9 +90,12 @@
     <Compile Include="Orchestration\Boundaries\IBossfightSessionBoundary.cs" />
     <Compile Include="Orchestration\Boundaries\IterationBoundary.cs" />
     <Compile Include="Orchestration\FightResult.cs" />
+    <Compile Include="Orchestration\Interfaces\IBossfightSessionAssembler.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionGameController.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionOrchestrator.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionPlugin.cs" />
+    <Compile Include="Orchestration\BossfightSessionOption.cs" />
+    <Compile Include="Orchestration\Interfaces\IBossfightSessionStatus.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

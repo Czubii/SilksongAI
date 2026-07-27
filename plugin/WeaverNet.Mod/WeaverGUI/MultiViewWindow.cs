@@ -6,7 +6,7 @@ using WeaverNet.Mod.WeaverGUI.Views;
 
 namespace WeaverNet.Mod.WeaverGUI
 {
-    public abstract class MultiViewWindow: BaseWindow
+    public abstract class MultiViewWindow: __BaseWindow
     {
         private class ViewEntry
         {
@@ -56,7 +56,7 @@ namespace WeaverNet.Mod.WeaverGUI
 
             if (_views.TryGetValue(CurrentView, out var view))
             {
-                if(view.Title != null) GUILayout.Label(view.Title, PluginGUIStyles.ViewTitle);
+                if(view.Title != null) GUILayout.Label(view.Title, WeaverNetStyles.ViewTitleLabel);
 
                 view.Draw();
             }

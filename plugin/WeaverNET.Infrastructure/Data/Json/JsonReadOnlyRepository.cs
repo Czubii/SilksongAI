@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using WeaverNet.Core.Infrastructure.Interfaces;
 
-namespace WeaverNET.Infrastructure.Data
+namespace WeaverNET.Infrastructure.Data.Json
 {
-    public class JsonReadOnlyRepository<TData>: JsonRepositoryBase<TData>, IReadOnlyRepository<TData>
+    public class JsonReadOnlyRepository<TData>: JsonRepositoryBase<TData>, IReadOnlyRepository<TData, string>
     {
         public JsonReadOnlyRepository(string repositoryRoot, Func<TData, string> idSelector) : base(repositoryRoot, idSelector) { }
         public IReadOnlyCollection<TData> All
