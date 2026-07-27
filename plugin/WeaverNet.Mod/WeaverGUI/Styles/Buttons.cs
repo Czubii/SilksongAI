@@ -14,12 +14,14 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
 
             SetBackgrounds(
                 style,
-                Tex(normal),
-                Tex(hover),
-                Tex(active));
+                RoundedBorderedTex(Theme.Border, normal),
+                RoundedBorderedTex(Theme.Border, hover),
+                RoundedBorderedTex(Theme.Border, active));
 
-            style.padding = new RectOffset(4, 4, 4, 4);
-            style.margin = margin ?? new RectOffset(2, 2, 2, 2);
+            style.fontSize = 13;
+            style.border = new RectOffset(7, 7, 7, 7);
+            style.padding = new RectOffset(8, 8, 6, 6);
+            style.margin = margin ?? new RectOffset(2, 2, 3, 3);
             style.alignment = TextAnchor.MiddleCenter;
 
             return style;

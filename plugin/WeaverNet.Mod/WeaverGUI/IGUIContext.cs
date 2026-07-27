@@ -15,5 +15,7 @@ namespace WeaverNet.Mod.WeaverGUI
         void ShowGUI();
         void HideGUI();
         void ShowOverlay(IGUIOverlay draw);
+        void ShowPopup(IPopup popup, object owner = null);
+        bool IsLockedByPopup(object obj);
     }
 }

@@ -36,11 +36,11 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
         {
             var style = new GUIStyle();
 
-            style.normal.background = BorderedTex(
+            style.normal.background = RoundedBorderedTex(1,14,
                 Theme.Border,
                 Theme.Background);
 
-            style.border = new RectOffset(1, 1, 1, 1);
+            style.border = new RectOffset(15,15,15,15);
 
             return style;
         });
@@ -52,11 +52,11 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
         {
             var style = new GUIStyle();
 
-            style.normal.background = BorderedTex(
+            style.normal.background = RoundedBorderedTex(1, 14,
                 Theme.BorderAccent,
                 Theme.Primary);
 
-            style.border = new RectOffset(1, 1, 1, 1);
+            style.border = new RectOffset(15, 15, 15, 15);
 
             return style;
         });
@@ -68,8 +68,8 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
         {
             var style = new GUIStyle();
 
-            style.normal.background = Tex(Theme.Text);
-
+            style.normal.background = RoundedBorderedTex(0, 10, Theme.Text, Theme.Text);
+            style.border = new RectOffset(10,10,10,10);
             return style;
         });
     }

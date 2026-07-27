@@ -15,9 +15,9 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
         {
             var style = new GUIStyle(GUI.skin.textField);
 
-            Texture2D normalTex = BorderedTex(Theme.Border, Theme.Background);
-            Texture2D hoverTex = BorderedTex(Theme.Border, Theme.Surface);
-            Texture2D activeTex = BorderedTex(Theme.BorderAccent, Theme.Surface);
+            Texture2D normalTex = RoundedBorderedTex(Theme.Border, Theme.Background);
+            Texture2D hoverTex = RoundedBorderedTex(Theme.Border, Theme.Surface);
+            Texture2D activeTex = RoundedBorderedTex(Theme.BorderAccent, Theme.Surface);
 
             style.normal.background = normalTex;
             style.hover.background = hoverTex;
@@ -29,7 +29,7 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
             style.onActive.background = activeTex;
             style.onFocused.background = activeTex;
 
-            style.border = new RectOffset(1, 1, 1, 1);
+            style.border = new RectOffset(7,7,7,7);
 
             // Increased size
             style.fontSize = 13;
@@ -62,6 +62,28 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
             style.fontSize = 14;
             style.normal.textColor = Theme.Text;
             style.clipping = TextClipping.Clip;
+
+            return style;
+        });
+
+        private static GUIStyle _dropdownOverlayBacground;
+        public static GUIStyle DropdownOverlayBacground => Lazy(ref _dropdownOverlayBacground, () =>
+        {
+            var style = new GUIStyle(GUI.skin.box);
+
+            Texture2D tex = RoundedBorderedTex(
+                Theme.Border,
+                Theme.Border);
+
+            style.normal.background = tex;
+            style.hover.background = tex;
+            style.active.background = tex;
+            style.focused.background = tex;
+
+
+            style.border = new RectOffset(7, 7, 7, 7);
+            style.padding = new RectOffset(10, 10, 10, 10);
+            style.margin = new RectOffset(0, 0, 0, 0);
 
             return style;
         });

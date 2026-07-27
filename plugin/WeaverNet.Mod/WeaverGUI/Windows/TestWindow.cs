@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using WeaverNet.Core.Game;
+using WeaverNet.Core.Infrastructure;
 using WeaverNet.Core.Infrastructure.Interfaces;
 using WeaverNet.Mod.WeaverGUI.Elements;
+using WeaverNet.Mod.WeaverGUI.Styles;
 
 namespace WeaverNet.Mod.WeaverGUI.Windows
 {
@@ -40,6 +42,16 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
                 () => PluginGUI.Dropdown(Context, dropdownState, _catalog.Bosses, a => a.DisplayName));
 
             PluginGUI.EndScrollView();
+            GUILayout.FlexibleSpace();
+            PluginGUI.BeginHorizontal();
+            PluginGUI.Button("Cancel");
+            if (PluginGUI.Button("Accept"))
+            {
+                var confirmPopup = new Popups.ConfirmPopup(WindowRect, "Confirm Action", "this is very important", () => { PluginLog.Error("YOU CONFIRMED DEMISE"); });
+                Context.ShowPopup(confirmPopup, this);
+            }
+            PluginGUI.EndHorizontal();
+
         }
     }
 }

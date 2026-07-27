@@ -8,10 +8,10 @@ namespace WeaverNet.Mod.WeaverGUI
 {
     public interface IPopup
     {
-        int ID { get; }
         PopupLayer Layer { get; }
-        bool IsOpen { get; }
-        void AssignID(int id);
+        bool IsAlive { get; }
+        void BringToFront();
+        void Initialize(IGUIContext context);
         void Render();
         void Close();
     }

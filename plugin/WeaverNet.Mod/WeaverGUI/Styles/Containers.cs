@@ -9,12 +9,29 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
 {
     public static partial class WeaverNetStyles
     {
+        private static GUIStyle _popupLock;
+        public static GUIStyle PopupLock => Lazy(ref _popupLock, () =>
+        {
+            var style = new GUIStyle(GUI.skin.box);
+
+            style.normal.background = RoundedBorderedTex(
+                1,
+                6,
+                Theme.BorderAccent,
+                Theme.BackgroundTranslucent);
+
+            style.border = new RectOffset(6, 6, 6, 6);
+            style.padding = new RectOffset(0, 0, 0, 0);
+
+            return style;
+        });
+
         private static GUIStyle _window = null;
         public static GUIStyle Window => Lazy(ref _window, () =>
         {
             var style = new GUIStyle(GUI.skin.box);
 
-            Texture2D tex = BorderedTex(
+            Texture2D tex = RoundedBorderedTex(
                 Theme.Border,
                 Theme.Background);
 
@@ -23,8 +40,8 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
             style.active.background = tex;
             style.focused.background = tex;
 
-            style.border = new RectOffset(1, 1, 1, 1);
 
+            style.border = new RectOffset(7,7,7,7);
             style.padding = new RectOffset(10, 10, 10, 10);
             style.margin = new RectOffset(0, 0, 0, 0);
 
@@ -35,7 +52,7 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
         {
             var style = new GUIStyle(GUI.skin.box);
 
-            Texture2D tex = BorderedTex(
+            Texture2D tex = RoundedBorderedTex(
                 Theme.BorderAccent,
                 Theme.Background);
 
@@ -44,8 +61,8 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
             style.active.background = tex;
             style.focused.background = tex;
 
-            style.border = new RectOffset(1, 1, 1, 1);
-
+            //style.border = new RectOffset(1, 1, 1, 1);
+            style.border = new RectOffset(7, 7, 7, 7);
             style.padding = new RectOffset(10, 10, 10, 10);
             style.margin = new RectOffset(0, 0, 0, 0);
 

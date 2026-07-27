@@ -22,5 +22,7 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
         }
         public static void BeginHorizontal() => GUILayout.BeginHorizontal();
         public static void EndHorizontal() => GUILayout.EndHorizontal();
+        public static void BeginVertical() => GUILayout.BeginVertical();
+        public static void EndVertical() => GUILayout.EndVertical();
     }
 }

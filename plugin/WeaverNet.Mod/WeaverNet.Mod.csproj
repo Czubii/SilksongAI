@@ -135,6 +135,8 @@
     <Compile Include="WeaverGUI\IGUIOverlay.cs" />
     <Compile Include="WeaverGUI\IPopup.cs" />
     <Compile Include="WeaverGUI\PopupLayer.cs" />
+    <Compile Include="WeaverGUI\Popups\BasePopup.cs" />
+    <Compile Include="WeaverGUI\Popups\ConfirmPopup.cs" />
     <Compile Include="WeaverGUI\Styles\Dropdown.cs" />
     <Compile Include="WeaverGUI\Windows\TestWindow.cs" />
     <Compile Include="WeaverGUI\__BaseWindow.cs" />

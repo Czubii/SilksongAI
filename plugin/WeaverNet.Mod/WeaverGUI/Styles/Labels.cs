@@ -9,6 +9,25 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
 {
     public static partial class WeaverNetStyles
     {
+        private static GUIStyle _standardLabel = null;
+        public static GUIStyle StandardLabel => Lazy(ref _standardLabel, () =>
+        {
+            var style = new GUIStyle(GUI.skin.label);
+
+            style.fontStyle = FontStyle.Normal;
+            style.fontSize = 14;
+            style.alignment = TextAnchor.MiddleLeft;
+
+            style.margin = new RectOffset(0, 0, 0, 0);
+            style.padding = new RectOffset(0, 0, 0, 0);
+
+            style.wordWrap = true;
+            style.clipping = TextClipping.Clip;
+
+            style.normal.textColor = Theme.Text;
+
+            return style;
+        });
         private static GUIStyle _viewTitleLabel = null;
         public static GUIStyle ViewTitleLabel => Lazy(ref _viewTitleLabel, () =>
         {
@@ -61,6 +80,47 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
             style.alignment = TextAnchor.MiddleLeft;
             style.margin = new RectOffset(0, 0, 0, 0);
             style.normal.textColor = Theme.TextMuted;
+            return style;
+        });
+
+        private static GUIStyle _popupTitleLabel = null;
+        public static GUIStyle PopupTitleLabel => Lazy(ref _popupTitleLabel, () =>
+        {
+            var style = new GUIStyle(GUI.skin.label);
+
+            style.fontStyle = FontStyle.Bold;
+            style.fontSize = 18;
+            style.alignment = TextAnchor.MiddleCenter;
+
+            style.margin = new RectOffset(0, 0, 0, 4);
+            style.padding = new RectOffset(0, 0, 0, 0);
+
+            style.wordWrap = false;
+            style.clipping = TextClipping.Clip;
+
+            style.normal.textColor = Theme.Text;
+
+            return style;
+        });
+
+
+        private static GUIStyle _popupDescriptionLabel = null;
+        public static GUIStyle PopupDescriptionLabel => Lazy(ref _popupDescriptionLabel, () =>
+        {
+            var style = new GUIStyle(GUI.skin.label);
+
+            style.fontStyle = FontStyle.Normal;
+            style.fontSize = 14;
+            style.alignment = TextAnchor.MiddleCenter;
+
+            style.margin = new RectOffset(0, 0, 0, 8);
+            style.padding = new RectOffset(0, 0, 0, 0);
+
+            style.wordWrap = true;
+            style.clipping = TextClipping.Overflow;
+
+            style.normal.textColor = Theme.TextMuted;
+
             return style;
         });
     }

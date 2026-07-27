@@ -9,7 +9,7 @@ namespace WeaverNet.Mod.WeaverGUI
     public interface IWindow
     {
         string Name { get; }
-        bool Enabled { get; set; }
+        bool IsOpen { get; set; }
         bool ShowInToolbar { get; }
         bool CanEnable();
         void Initialize(IGUIContext context);

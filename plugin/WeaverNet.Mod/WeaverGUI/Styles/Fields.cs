@@ -15,9 +15,9 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
         {
             var style = new GUIStyle(GUI.skin.textField);
 
-            Texture2D normalTex = BorderedTex(Theme.Border, Theme.Background);
-            Texture2D hoverTex = BorderedTex(Theme.Border, Theme.Surface);
-            Texture2D activeTex = BorderedTex(Theme.BorderAccent, Theme.Surface);
+            Texture2D normalTex = RoundedBorderedTex(Theme.Border, Theme.Background);
+            Texture2D hoverTex = RoundedBorderedTex(Theme.Border, Theme.Surface);
+            Texture2D activeTex = RoundedBorderedTex(Theme.BorderAccent, Theme.Surface);
 
             style.normal.background = normalTex;
             style.hover.background = hoverTex;
@@ -29,7 +29,7 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
             style.onActive.background = activeTex;
             style.onFocused.background = activeTex;
 
-            style.border = new RectOffset(1, 1, 1, 1);
+            style.border = new RectOffset(6,6,6,6);
 
             // Increased size
             style.fontSize = 13;

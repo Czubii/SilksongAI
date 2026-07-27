@@ -13,7 +13,7 @@ namespace WeaverNet.Mod.WeaverGUI
         private readonly bool _showInToolbar;
         public bool ShowInToolbar => _showInToolbar;
 
-        public bool Enabled { get; set; }
+        public bool IsOpen { get; set; }
 
         private int? _id;
 
@@ -89,12 +89,12 @@ namespace WeaverNet.Mod.WeaverGUI
 
         public void Render()
         {
-            if (!Enabled)
+            if (!IsOpen)
                 return;
 
             if (!CanEnable())
             {
-                Enabled = false;
+                IsOpen = false;
                 return;
             }
 
@@ -116,18 +116,86 @@ namespace WeaverNet.Mod.WeaverGUI
                 Context.SetActiveWindow(this);
             }
 
+            bool locked = Context.IsLockedByPopup(this);
+
+            if (locked)
+            {
+                BlockInput();
+            }
+
             DrawHeader();
             DrawContent();
-            HandleResize();
 
+            if (locked)
+            {
+                DrawLockedOverlay();
+                return;
+            }
+
+            HandleResize();
             GUI.DragWindow();
         }
+        private void BlockInput()
+        {
+            Event current = Event.current;
+
+            if (current.type == EventType.MouseDown ||
+                current.type == EventType.MouseUp ||
+                current.type == EventType.MouseDrag ||
+                current.type == EventType.MouseMove)
+            {
+                current.Use();
+            }
+        }
+        private void DrawLockedOverlay()
+        {
+            Event current = Event.current;
+
+            Rect rect = new Rect(
+                0,
+                0,
+                WindowRect.width,
+                WindowRect.height);
+
+            // Block all mouse interaction inside this window
+            if (current.type == EventType.MouseDown ||
+                current.type == EventType.MouseUp ||
+                current.type == EventType.MouseDrag ||
+                current.type == EventType.MouseMove)
+            {
+                if (rect.Contains(current.mousePosition))
+                    current.Use();
+            }
 
 
+            if (current.type != EventType.Repaint)
+                return;
+
+
+            Color previous = GUI.color;
+
+            GUI.color = new Color(0, 0, 0, 0.25f);
+
+            GUI.DrawTexture(
+                rect,
+                Texture2D.whiteTexture);
+
+            GUI.color = previous;
+
+
+            // Optional border indicator
+            WeaverNetStyles.PopupLock.Draw(
+                rect,
+                GUIContent.none,
+                false,
+                false,
+                false,
+                false);
+        }
         protected virtual void DrawHeader()
         {
             if (PluginGUI.TopBar(Name))
-                Enabled = false;
+                IsOpen = false;
         }
 
 
@@ -223,7 +291,6 @@ namespace WeaverNet.Mod.WeaverGUI
 
             (hovered? WeaverNetStyles.ResizeHandleHover : WeaverNetStyles.ResizeHandle).Draw(drawRect,"◢",false,false,false,false);
         }
-
 
         protected abstract void DrawContent();
 

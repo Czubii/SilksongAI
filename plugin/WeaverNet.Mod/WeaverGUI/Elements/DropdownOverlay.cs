@@ -42,7 +42,7 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
             GUI.Box(
                 rect,
                 GUIContent.none,
-                WeaverNetStyles.Window);
+                WeaverNetStyles.DropdownOverlayBacground);
 
 
             for (int i = 0; i < _elements.Count; i++)

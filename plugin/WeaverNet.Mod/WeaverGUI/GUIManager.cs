@@ -9,6 +9,7 @@ namespace WeaverNet.Mod.WeaverGUI
     public class GUIManager : MonoBehaviour, IGUIContext
     {
         private readonly List<IWindow> _windows = new List<IWindow>();
+        private readonly Dictionary<object, List<IPopup>> _popups = new Dictionary<object, List<IPopup>>();
         private readonly List<IGUIOverlay> _overlays = new List<IGUIOverlay>();
 
         private int _buttonWidth = 150;
@@ -34,7 +35,6 @@ namespace WeaverNet.Mod.WeaverGUI
                 "Show/Hide Main Plugin Menu",
                 new KeyboardShortcut(KeyCode.F2));
         }
-
         public void Register(IWindow window)
         {
             if (window == null)
@@ -46,6 +46,23 @@ namespace WeaverNet.Mod.WeaverGUI
             window.Initialize(this);
 
             _windows.Add(window);
+        }
+        public void ShowPopup(IPopup popup, object owner = null)
+        {
+            if (popup == null)
+                throw new ArgumentNullException(nameof(popup));
+
+            popup.Initialize(this);
+
+            if (owner == null) owner = popup;
+
+            if (!_popups.TryGetValue(owner, out var list))
+            {
+                list = new List<IPopup>();
+                _popups.Add(owner, list);
+            }
+
+            list.Add(popup);
         }
         public void HideGUI()
         {
@@ -72,6 +89,7 @@ namespace WeaverNet.Mod.WeaverGUI
             if (!_drawingEnabled)
                 return;
             DrawWindows();
+            DrawPopups();
             DrawOverlays();
         }
         private void DrawWindows()
@@ -99,9 +117,9 @@ namespace WeaverNet.Mod.WeaverGUI
 
                 GUI.enabled = window.CanEnable();
 
-                window.Enabled =
+                window.IsOpen =
                     GUILayout.Toggle(
-                        window.Enabled,
+                        window.IsOpen,
                         window.Name,
                         WeaverNetStyles.ToggleButton,
                         GUILayout.Height(40),
@@ -130,6 +148,42 @@ namespace WeaverNet.Mod.WeaverGUI
             if (!_overlays.Contains(overlay))
                 _overlays.Add(overlay);
         }
+        private void DrawPopups()
+        {
+            var emptyOwners = new List<object>();
+
+            foreach (var pair in _popups)
+            {
+                var popups = pair.Value;
+
+                for (int i = popups.Count - 1; i >= 0; i--)
+                {
+                    if (!popups[i].IsAlive)
+                        popups.RemoveAt(i);
+                }
+
+                if (popups.Count == 0)
+                {
+                    emptyOwners.Add(pair.Key);
+                    continue;
+                }
+
+                foreach (var popup in popups)
+                {
+                    popup.BringToFront();
+                    popup.Render();
+                }
+
+            }
+
+            foreach (var owner in emptyOwners)
+                _popups.Remove(owner);
+        }
+        public bool IsLockedByPopup(object obj)
+        {
+            return _popups.TryGetValue(obj, out var popups)
+                && popups.Count > 0;
+        }
         private void DrawOverlays()
         {
             GUI.depth = -1000;
@@ -137,6 +191,7 @@ namespace WeaverNet.Mod.WeaverGUI
             for (int i = _overlays.Count - 1; i >= 0; i--)
             {
                 var overlay = _overlays[i];
+
 
                 if (!overlay.IsAlive)
                 {

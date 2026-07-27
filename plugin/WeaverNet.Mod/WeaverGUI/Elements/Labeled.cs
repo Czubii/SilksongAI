@@ -28,6 +28,7 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
             }
             GUILayout.EndVertical();    // --- --------- ---
 
+            GUILayout.Space(20);
             GUILayout.FlexibleSpace();  // push the handler to the right side of the view
 
             TResult result = elementHandler();
