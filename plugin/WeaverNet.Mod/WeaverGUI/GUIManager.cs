@@ -86,10 +86,11 @@ namespace WeaverNet.Mod.WeaverGUI
         }
         private void OnGUI()
         {
+            DrawPopups(); // those decide internally whether they should be drawn or not
+
             if (!_drawingEnabled)
                 return;
             DrawWindows();
-            DrawPopups();
             DrawOverlays();
         }
         private void DrawWindows()

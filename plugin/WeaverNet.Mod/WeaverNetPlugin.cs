@@ -163,54 +163,37 @@ namespace WeaverNet.Mod
             var windowManager = gameObject.AddComponent<GUIManager>();
             windowManager.Initialize(Config);
 
+            //var testWindow = new TestWindow(repositories.Catalog);
+            //windowManager.Register(testWindow);
 
-            var testWindow = new TestWindow(repositories.Catalog);
-            var testWindow2 = new TestWindow(repositories.Catalog);
-            var testWindow3 = new TestWindow(repositories.Catalog);
-            windowManager.Register(testWindow);
-            windowManager.Register(testWindow2);
-            windowManager.Register(testWindow3);
 
             //var utilitiesWindow = new UtilitiesWindow(
             //    "Utilities",
             //    services.TeleportService,
             //    repositories.BossRepository);
 
-            //var loadoutWindow = new LoadoutWindow(
-            //    "Loadouts",
-            //    services.LoadoutManager,
-            //    repositories.LoadoutRepository);
+            var loadoutWindow = new LoadoutWindow(
+                "Loadouts",
+                services.LoadoutManager,
+                repositories.LoadoutRepository);
 
-            //var setupView = new StandardBossfightSetupView(
-            //    repositories.Catalog,
-            //    services.SessionAssembler,
-            //    services.Orchestrator);
+            var setupView = new StandardBossfightSetupView(
+                repositories.Catalog,
+                services.SessionAssembler,
+                services.Orchestrator,
+                services.BossfightSessionStatus);
 
-            //var bossfightSessionWindow = new BossfightSessionWindow(
-            //    "Bossfight Session",
-            //    services.Orchestrator,
-            //    services.BossfightSessionStatus,
-            //    setupView);
+            var bossfightSessionWindow = new BossfightSessionWindow(
+                "Bossfight Session",
+                setupView);
+
 
             //var debugWindow = new DebugWindow(
             //    "Debug",
             //    services.HitboxVisualizer);
 
-            //windowManager.Register(
-            //    utilitiesWindow,
-            //    true);
-
-            //windowManager.Register(
-            //    loadoutWindow,
-            //    true);
-
-            //windowManager.Register(
-            //    bossfightSessionWindow,
-            //    true);
-
-            //windowManager.Register(
-            //    debugWindow,
-            //    true);
+            windowManager.Register(loadoutWindow);
+            windowManager.Register(bossfightSessionWindow);
 
             PluginLog.Info("GUI initialized successfully.");
         }

@@ -11,7 +11,7 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
             public static readonly Color Surface = new Color(0.125f, 0.125f, 0.125f);
             public static readonly Color SurfaceRaised = new Color(0.15f, 0.15f, 0.15f);
 
-            public static readonly Color BackgroundTranslucent = new Color(0.1f, 0.1f, 0.1f, 0.5f);
+            public static readonly Color BackgroundTranslucent = new Color(0.1f, 0.1f, 0.1f, 0.3f);
             // Interactive neutral states
             public static readonly Color Control = new Color(0.18f, 0.18f, 0.18f);
             public static readonly Color ControlHover = new Color(0.23f, 0.23f, 0.23f);

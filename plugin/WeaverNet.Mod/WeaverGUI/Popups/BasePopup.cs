@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using WeaverNet.Mod.WeaverGUI.Styles;
 
@@ -39,15 +35,25 @@ namespace WeaverNet.Mod.WeaverGUI.Popups
                 return _context;
             }
         }
+        public abstract bool AlwaysVisible { get; }
+        private Rect _windowRect;
 
-        private readonly Rect _parentRect;
-        private readonly Rect _windowRect;
+        /// <summary>
+        /// Creates the popup at the center of the parent rect
+        /// </summary>
         protected BasePopup(PopupLayer layer, Rect parentRect, Vector2 size)
         {
             _popupLayer = layer;
-            _parentRect = parentRect;
 
             Vector2 position = parentRect.center - size/2;
+            _windowRect = new Rect(position, size);
+        }
+        /// <summary>
+        /// Creates the popup at given screen positon
+        /// </summary>
+        protected BasePopup(PopupLayer layer, Vector2 position, Vector2 size)
+        {
+            _popupLayer = layer;
             _windowRect = new Rect(position, size);
         }
         public void Close()
@@ -70,17 +76,36 @@ namespace WeaverNet.Mod.WeaverGUI.Popups
 
         public void Render()
         {
-            if (!IsAlive)
-                return;
+            if (!IsAlive) return;
+            if (!_context.IsGUIVisible && !AlwaysVisible) return;
 
-            GUILayout.Window(
-                ID,
-                _windowRect,
-                DrawWindow,
-                GUIContent.none,
-                WeaverNetStyles.ActiveWindow);
+            if (_context.IsGUIVisible)
+            {
+                
+                _windowRect = GUILayout.Window(
+                    ID,
+                    _windowRect,
+                    DrawWindow,
+                    GUIContent.none,
+                    WeaverNetStyles.ActiveWindow);
+
+            }
+            else
+            {
+                GUILayout.Window(
+                    ID,
+                    _windowRect,
+                    DrawWindow,
+                    GUIContent.none,
+                    WeaverNetStyles.TransparentWindow);
+            }
         }
-        protected abstract void DrawWindow(int id);
+        private void DrawWindow(int id)
+        {
+            DrawContent();
+            GUI.DragWindow();
+        }
+        protected abstract void DrawContent();
 
         public void BringToFront()
         {

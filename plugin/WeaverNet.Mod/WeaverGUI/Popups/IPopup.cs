@@ -10,6 +10,7 @@ namespace WeaverNet.Mod.WeaverGUI
     {
         PopupLayer Layer { get; }
         bool IsAlive { get; }
+        bool AlwaysVisible { get; }
         void BringToFront();
         void Initialize(IGUIContext context);
         void Render();

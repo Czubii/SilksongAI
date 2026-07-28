@@ -15,8 +15,8 @@
         public BossfightSessionProgress GetSessionProgress(BossfightSessionRuntime runtime)
         {
             return new BossfightSessionProgress(
-                $"Iteration {runtime.CurrentIteration+1}/{MaxIter}",
-                (float)(runtime.CurrentIteration+1)/(float)MaxIter //TODO fix that smelly iteration+1
+                $"Completed Fights: {runtime.CurrentIteration}/{MaxIter}",
+                (float)(runtime.CurrentIteration)/(float)MaxIter
                 );
         }
     }

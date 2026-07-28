@@ -68,19 +68,38 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
 
             return style;
         });
+        private static GUIStyle _transparentWindow = null;
+        public static GUIStyle TransparentWindow => Lazy(ref _transparentWindow, () =>
+        {
+            var style = new GUIStyle(GUI.skin.box);
+
+            Texture2D tex = RoundedBorderedTex(
+                Theme.Border,
+                Theme.BackgroundTranslucent);
+
+            style.normal.background = tex;
+            style.hover.background = tex;
+            style.active.background = tex;
+            style.focused.background = tex;
+
+            style.border = new RectOffset(7, 7, 7, 7);
+            style.padding = new RectOffset(10, 10, 10, 10);
+            style.margin = new RectOffset(0, 0, 0, 0);
+
+            return style;
+        });
         private static GUIStyle _card = null;
         public static GUIStyle Card => Lazy(ref _card, () =>
         {
             var style = new GUIStyle(GUI.skin.box);
 
-            Texture2D tex = BorderedTex(
+            Texture2D tex = RoundedBorderedTex(
                 Theme.Border,
-                Theme.Background);
+                Theme.Surface);
 
             style.normal.background = tex;
 
-            style.border = new RectOffset(1, 1, 1, 1);
-
+            style.border = new RectOffset(7, 7, 7, 7);
             style.padding = new RectOffset(10, 10, 8, 8);
             style.margin = new RectOffset(4, 4, 4, 4);
             return style;
@@ -106,10 +125,22 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
         private static GUIStyle _topBar = null;
         public static GUIStyle TopBar => Lazy(ref _topBar, () =>
         {
-            var style = new GUIStyle
-            {
-                //padding = new RectOffset(5, 5, 5, 5)
-            };
+            var style = new GUIStyle();
+
+            style.margin = new RectOffset(0, 0, 0, 12);
+            return style;
+        });
+
+        private static GUIStyle _separator = null;
+        public static GUIStyle Separator => Lazy(ref _separator, () =>
+        {
+            var style = new GUIStyle();
+
+            style.normal.background = Tex(Theme.Border);
+
+            style.border = new RectOffset(0, 0, 0, 0);
+            style.padding = new RectOffset(0, 0, 0, 0);
+            style.margin = new RectOffset(0, 0, 0, 0);
 
             return style;
         });

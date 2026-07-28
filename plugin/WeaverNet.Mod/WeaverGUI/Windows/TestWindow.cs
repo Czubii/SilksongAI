@@ -14,7 +14,7 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
         private Vector2 scroll = new Vector2();
         string text = "";
         bool toggle = false;
-        public TestWindow(IBossfightCatalog catalog) : base("Test window", new UnityEngine.Rect(100, 100, 100, 100))
+        public TestWindow(IBossfightCatalog catalog) : base("Test window", new Rect(100, 100, 100, 100))
         {
             _catalog = catalog;
         }

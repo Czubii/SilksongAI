@@ -5,21 +5,25 @@ using WeaverNet.Mod.WeaverGUI.Styles;
 
 namespace WeaverNet.Mod.WeaverGUI.Popups
 {
-    public class ConfirmPopup : BasePopup
+    public class ErrorPopup : BasePopup
     {
-        private readonly Action _onConfirmed;
-        private readonly Action _onCancelled;
         private readonly string _message;
         private readonly string _title;
-        public ConfirmPopup(Rect parentRect, string Title, string message, Action OnConfirmed, Action OnCancelled = null) : 
+        public ErrorPopup(Rect parentRect, string Title, Exception message) : 
             base(PopupLayer.Notification, parentRect, new Vector2(350,120))
         {
             _title = Title;
-            _message = message;
-            _onConfirmed = OnConfirmed;
-            _onCancelled = OnCancelled;
+            _message = message.ToString();
         }
+        public ErrorPopup(Rect parentRect, string Title, string message) :
+        base(PopupLayer.Notification, parentRect, new Vector2(350, 120))
+        {
+            _title = Title;
+            _message = message.ToString();
+        }
+
         public override bool AlwaysVisible => false;
+
         protected override void DrawContent()
         {
             PluginGUI.BeginVertical();
@@ -29,15 +33,8 @@ namespace WeaverNet.Mod.WeaverGUI.Popups
             PluginGUI.Label(_message, WeaverNetStyles.PopupDescriptionLabel);
             GUILayout.FlexibleSpace();
             PluginGUI.BeginHorizontal();
-            if (PluginGUI.Button("Cancel"))
+            if (PluginGUI.Button("Ok"))
             {
-                _onCancelled?.Invoke();
-                Close();
-            }
-            GUILayout.Space(10);
-            if (PluginGUI.Button("Confirm"))
-            {
-                _onConfirmed?.Invoke();
                 Close();
             }
             PluginGUI.EndHorizontal();

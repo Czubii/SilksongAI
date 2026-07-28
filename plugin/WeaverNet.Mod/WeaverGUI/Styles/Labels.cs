@@ -49,7 +49,7 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
             style.fontStyle = FontStyle.Bold;
             style.fontSize = 20;
             style.normal.textColor = Theme.Text;
-            style.margin = new RectOffset(0, 0, 0, 0);
+            style.margin = new RectOffset(0, 0, 4, 0);
             style.padding = new RectOffset(0, 0, 0, 0);
             style.wordWrap = false;
             style.clipping = TextClipping.Clip;

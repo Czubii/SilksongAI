@@ -40,11 +40,9 @@ namespace WeaverNet.Mod.WeaverGUI
                 return _context;
             }
         }
-
-        protected Rect WindowRect;
-
+        private Rect _windowRect;
+        public Rect WindowRect => _windowRect;
         public bool IsActive => Context.ActiveWindow == this;
-
 
         // Resize configuration
         protected virtual float ResizeHandleSize => 30f;
@@ -66,14 +64,14 @@ namespace WeaverNet.Mod.WeaverGUI
         {
             _name = name;
             _showInToolbar = showInToolbar;
-            WindowRect = initialRect;
+            _windowRect = initialRect;
 
-            WindowRect.width = Mathf.Max(WindowRect.width, MinWidth);
-            WindowRect.height = Mathf.Max(WindowRect.height, MinHeight);
+            _windowRect.width = Mathf.Max(_windowRect.width, MinWidth);
+            _windowRect.height = Mathf.Max(_windowRect.height, MinHeight);
         }
 
 
-        public void Initialize(IGUIContext context)
+        public virtual void Initialize(IGUIContext context)
         {
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
@@ -98,9 +96,9 @@ namespace WeaverNet.Mod.WeaverGUI
                 return;
             }
 
-            WindowRect = GUILayout.Window(
+            _windowRect = GUILayout.Window(
                 ID,
-                WindowRect,
+                _windowRect,
                 DrawWindow,
                 GUIContent.none,
                 IsActive
@@ -197,13 +195,11 @@ namespace WeaverNet.Mod.WeaverGUI
             if (PluginGUI.TopBar(Name))
                 IsOpen = false;
         }
-
-
         private void HandleResize()
         {
             Rect resizeRect = new Rect(
-                WindowRect.width - ResizeHandleSize,
-                WindowRect.height - ResizeHandleSize,
+                _windowRect.width - ResizeHandleSize,
+                _windowRect.height - ResizeHandleSize,
                 ResizeHandleSize,
                 ResizeHandleSize);
 
@@ -256,8 +252,8 @@ namespace WeaverNet.Mod.WeaverGUI
                         Vector2 delta =
                             mouse - _resizeStartMousePos;
 
-                        WindowRect.width =Mathf.Max(MinWidth,_resizeStartWindowSize.x + delta.x);
-                        WindowRect.height =Mathf.Max(MinHeight, _resizeStartWindowSize.y + delta.y);
+                        _windowRect.width =Mathf.Max(MinWidth,_resizeStartWindowSize.x + delta.x);
+                        _windowRect.height =Mathf.Max(MinHeight, _resizeStartWindowSize.y + delta.y);
                         current.Use();
                     }
 
@@ -276,24 +272,24 @@ namespace WeaverNet.Mod.WeaverGUI
                     break;
             }
         }
-
-
         private void DrawResizeHandle(bool hovered)
         {
             if (Event.current.type != EventType.Repaint)
                 return;
 
             Rect drawRect = new Rect(
-                WindowRect.width - ResizeHandleSize + 2,
-                WindowRect.height - ResizeHandleSize + 12,
+                _windowRect.width - ResizeHandleSize + 2,
+                _windowRect.height - ResizeHandleSize + 12,
                 ResizeHandleSize,
                 ResizeHandleSize);
 
             (hovered? WeaverNetStyles.ResizeHandleHover : WeaverNetStyles.ResizeHandle).Draw(drawRect,"◢",false,false,false,false);
         }
-
+        protected void ShowPopup(IPopup popup, bool lockWindow = true)
+        {
+            Context.ShowPopup(popup, lockWindow ? this : null);
+        }
         protected abstract void DrawContent();
-
         public abstract bool CanEnable();
     }
 }

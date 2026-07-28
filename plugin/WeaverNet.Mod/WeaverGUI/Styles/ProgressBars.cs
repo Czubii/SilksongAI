@@ -14,13 +14,14 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
         {
             var style = new GUIStyle(GUI.skin.box);
 
-            Texture2D bgTex = Tex(Theme.Control);
+            Texture2D bgTex = RoundedBorderedTex(Theme.Border, Theme.Surface);
 
             style.normal.background = bgTex;
 
-            style.padding = new RectOffset(2, 2, 2, 2);
-            style.margin = new RectOffset(2, 2, 4, 4);
-            style.border = new RectOffset(1, 1, 1, 1);
+            style.fontSize = 13;
+            style.padding = new RectOffset(8, 8, 6, 6);
+            style.margin = new RectOffset(2, 2, 3, 3);
+            style.border = new RectOffset(7,7,7,7);
 
             return style;
         });
@@ -30,13 +31,14 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
         {
             var style = new GUIStyle(GUI.skin.box);
 
-            Texture2D bgTex = Tex(Theme.Primary);
+            Texture2D bgTex = RoundedBorderedTex(Theme.PrimaryPressed, Theme.Primary);
 
             style.normal.background = bgTex;
 
-            style.padding = new RectOffset(2, 2, 2, 2);
-            style.margin = new RectOffset(2, 2, 4, 4);
-            style.border = new RectOffset(1, 1, 1, 1);
+            style.fontSize = 13;
+            style.padding = new RectOffset(8, 8, 6, 6);
+            style.margin = new RectOffset(2, 2, 3, 3);
+            style.border = new RectOffset(7, 7, 7, 7);
 
             return style;
         });

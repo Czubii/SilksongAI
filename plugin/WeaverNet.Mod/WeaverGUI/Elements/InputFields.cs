@@ -94,7 +94,7 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
                 value,
                 WeaverNetStyles.TextField,
                 MergeOptions(
-                    GUILayout.Width(150),
+                    GUILayout.Width(180),
                     options));
 
             return value;

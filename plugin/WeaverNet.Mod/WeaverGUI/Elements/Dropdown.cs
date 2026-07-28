@@ -61,7 +61,7 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
                 GUIContent.none,
                 WeaverNetStyles.DropdownButton,
                 GUILayout.Height(30),
-                GUILayout.Width(150));
+                GUILayout.Width(180));
 
             state.ButtonRect = buttonRect;
 

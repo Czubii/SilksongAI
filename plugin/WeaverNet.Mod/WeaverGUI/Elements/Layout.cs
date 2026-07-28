@@ -24,5 +24,14 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
         public static void EndHorizontal() => GUILayout.EndHorizontal();
         public static void BeginVertical() => GUILayout.BeginVertical();
         public static void EndVertical() => GUILayout.EndVertical();
+
+        public static void HorizontalLine()
+        {
+            GUILayout.Box(
+            GUIContent.none,
+            WeaverNetStyles.Separator,
+            GUILayout.Height(1),
+            GUILayout.ExpandWidth(true));
+        }
     }
 }

@@ -21,7 +21,8 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
             }
 
             GUILayout.EndHorizontal();
-            GUILayout.Space(10);
+            HorizontalLine();
+            GUILayout.Space(8);
             return pressed;
         }
     }

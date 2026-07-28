@@ -9,7 +9,8 @@ namespace WeaverNet.Mod.WeaverGUI.Views
     public interface IView
     {
         event Action<string> ViewRequested;
-        void Draw();
+        void Initialize(IGUIContext context, IViewHost owner);
+        void DrawContent();
     }
 }
     

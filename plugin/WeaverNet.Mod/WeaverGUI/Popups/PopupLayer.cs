@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WeaverNet.Mod.WeaverGUI
 {
-    public enum PopupLayer
+    public enum PopupLayer // TODO implement this or discard
     {
         Notification,
         Floating,
