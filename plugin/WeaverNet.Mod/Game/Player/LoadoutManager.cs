@@ -7,7 +7,7 @@ using WeaverNet.Core.Infrastructure;
 
 namespace WeaverNet.Mod.Game.Player
 {
-    public class LoadoutManager : ILoadoutManager
+    public class LoadoutManager : ILoadoutManager, ILoadoutQuery
     {
         private PlayerData CurrentPlayerData { 
             get 
@@ -95,22 +95,24 @@ namespace WeaverNet.Mod.Game.Player
         }
         private void SetPlayerUpgradeSet(PlayerData pd, PlayerUpgradeSet pus)
         {
-            pd.maxHealthBase = pus.HP;
+            pd.AddToMaxHealth(pus.HP - pd.maxHealth);
             pd.silkMax = pus.Silk;
             pd.silkRegenMax = pus.SilkHearts;
             pd.ToolKitUpgrades = pus.CraftingKits;
             pd.ToolPouchUpgrades = pus.ToolPouches;
             pd.nailUpgrades = pus.NailUpgrades;
+            pd.IsSilkSpoolBroken = false;
+
+            HudHelper.RefreshMasks();
+            HudHelper.RefreshSpool();
         }
 
         public void SetLoadout(Loadout loadout)
         {
-            var pd = CurrentPlayerData;
-            
+            var pd = PlayerData.instance;
             SetCrestToolSet(pd, loadout.Tools);
             SetAbilities(pd, loadout.Abilities);
             SetPlayerUpgradeSet(pd, loadout.Upgrades);
-
             ToolItemManager.SendEquippedChangedEvent(true); // refreshes UI for health + silk + tools + crest (easiest method i found so far)
         }
         public void SetLoadoutTemporary(Loadout Loadout, TemporaryStateModifier modifier)
@@ -122,5 +124,6 @@ namespace WeaverNet.Mod.Game.Player
             });
             SetLoadout(Loadout);
         }
+
     }
 }

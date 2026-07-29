@@ -11,7 +11,6 @@ namespace WeaverNET.Infrastructure.Data
      
         private readonly IBossRepository _bossRepository;
         private readonly ILoadoutRepository _loadoutRepository;
-
         public IReadOnlyList<BossData> Bosses { get; private set; }
         public IReadOnlyList<Loadout> Loadouts { get; private set; }
 

@@ -1,0 +1,37 @@
+{
+  "Name": "Wet Princess",
+  "Abilities": {
+    "Dash": true,
+    "DoubleJump": true,
+    "WallJump": true,
+    "HarpoonDash": true,
+    "SuperJump": true,
+    "Brolly": true,
+    "ChargeSlash": true,
+    "Needolin": true,
+    "Sylphsong": true
+  },
+  "Tools": {
+    "CrestID": "Witch",
+    "ToolNames": [
+      "Silk Spear",
+      "Flea Brew",
+      "Lifeblood Syringe",
+      "Dazzle Bind Upgraded",
+      "Bell Bind",
+      "Multibind"
+    ],
+    "ExtraBlueSlotToolName": "Longneedle",
+    "ExtraYellowSlotToolName": "Sprintmaster",
+    "ExtraBlueSlotUnlocked": true,
+    "ExtraYellowSlotUnlocked": true
+  },
+  "Upgrades": {
+    "HP": 10,
+    "Silk": 18,
+    "SilkHearts": 3,
+    "CraftingKits": 4,
+    "ToolPouches": 4,
+    "NailUpgrades": 4
+  }
+}

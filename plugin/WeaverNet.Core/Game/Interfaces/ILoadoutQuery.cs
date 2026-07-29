@@ -3,14 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WeaverNet.Core.Infrastructure;
 
 namespace WeaverNet.Core.Game.Interfaces
 {
-    public interface ILoadoutManager
+    public interface ILoadoutQuery
     {
         Loadout BuildLoadout(string name);
-        void SetLoadout(Loadout Loadout);
-        void SetLoadoutTemporary(Loadout Loadout, TemporaryStateModifier modifier);
     }
 }

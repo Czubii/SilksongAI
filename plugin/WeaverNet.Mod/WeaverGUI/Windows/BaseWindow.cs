@@ -47,8 +47,8 @@ namespace WeaverNet.Mod.WeaverGUI
         // Resize configuration
         protected virtual float ResizeHandleSize => 30f;
 
-        public float MinWidth { get; set; } = 400f;
-        public float MinHeight { get; set; } = 150f;
+        public virtual float MinWidth { get; set; } = 400f;
+        public virtual float MinHeight { get; set; } = 150f;
 
 
         // Resize state

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using WeaverNet.Core.Game;
+using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure.Interfaces;
 using WeaverNet.Core.Orchestration;
 using WeaverNet.Core.Orchestration.Boundaries;
@@ -24,17 +25,20 @@ namespace WeaverNet.Mod.WeaverGUI.Views
         }
 
         private readonly IBossfightCatalog _catalog;
+        private readonly ILoadoutQuery _loadoutQuery;
         private readonly IBossfightSessionAssembler _sessionAssembler;
         private readonly IBossfightSessionOrchestrator _orchestrator;
         private readonly IBossfightSessionStatus _sessionStatus;
         private ViewState _state = new ViewState();
         public StandardBossfightSetupView(
             IBossfightCatalog catalog,
+            ILoadoutQuery loadoutQuery,
             IBossfightSessionAssembler sessionAssembler,
             IBossfightSessionOrchestrator bossfightSessionOrchestrator,
             IBossfightSessionStatus sessionStatus)
         {
             _catalog = catalog;
+            _loadoutQuery = loadoutQuery;
             _sessionAssembler = sessionAssembler;
             _orchestrator = bossfightSessionOrchestrator;
             _sessionStatus = sessionStatus;
@@ -70,11 +74,7 @@ namespace WeaverNet.Mod.WeaverGUI.Views
             GUI.enabled = _orchestrator.CanStart;
             if (PluginGUI.Button("Start"))
             {
-                var confirmPopup = new ConfirmPopup(WindowRect,
-                    "Are you sure?",
-                    "Are you sure you want to start the session?",
-                    () => StartSession());
-                ShowPopup(confirmPopup);
+                StartSession();
             }
             GUI.enabled = true;
             PluginGUI.EndHorizontal();
@@ -86,9 +86,14 @@ namespace WeaverNet.Mod.WeaverGUI.Views
 
             try
             {
+                var defaultLoadout = _loadoutQuery.BuildLoadout("TempLoadout");
+
+                var loadout = _state.KeepCurrentLoadout
+                    ? defaultLoadout : _state.LoadoutDropdownState.SelectedOption ?? defaultLoadout;
+                
                 var sessionConfig = new BossfightSessionConfiguration(
                     _state.BossDropdownState.SelectedOption,
-                    _state.LoadoutDropdownState.SelectedOption,
+                    loadout,
                     new IterationBoundary(_state.NumberOfAttempts.Value), //TODO: how to pass parameters for this? List of objects under one interface containing the configurations for each feature?
                     new List<BossfightSessionOption>() // no features for now //TODO: how to pass parameters for this? List of objects under one interface containing the configurations for each feature?
                     );

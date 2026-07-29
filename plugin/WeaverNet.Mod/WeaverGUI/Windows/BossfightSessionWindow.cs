@@ -10,7 +10,7 @@ namespace WeaverNet.Mod.WeaverGUI.Windows
 {
     internal class BossfightSessionWindow: MultiViewWindow
     {
-
+        public override float MinHeight => 300;
         public BossfightSessionWindow(
             string name,
 

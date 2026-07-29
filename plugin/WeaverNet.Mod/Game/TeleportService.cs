@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Bson;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -45,6 +46,14 @@ namespace WeaverNet.Mod.Game
             catch
             {
                 return false;
+            }
+        }
+        public async Task AwaitCanTeleportAsync()
+        {
+            while (true)
+            {
+                if (CanTeleport()) return;
+                await Task.Yield();
             }
         }
         public bool TeleportInProgress() => _runningTask != null && !_runningTask.IsCompleted;

@@ -72,6 +72,8 @@ namespace WeaverNet.Mod.Game
         }
         public async Task<EnemyInstance> WaitForEnemyAsync(Predicate<EnemyInstance> predicate, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             //check if it is already present on scene:
             foreach (var enemy in _enemies.Values)
             {
@@ -83,27 +85,23 @@ namespace WeaverNet.Mod.Game
             //await the enemy otherwise:
             void Handler(EnemyInstance instance)
             {
-                if (!predicate(instance))
-                    return;
-
-                OnEnemyRegistered -= Handler;
-                tcs.TrySetResult(instance);
+                if (predicate(instance))
+                {
+                    tcs.TrySetResult(instance);
+                }
             }
 
             OnEnemyRegistered += Handler;
-            using (var registration = ct.Register(() =>
+            using (ct.Register(() => tcs.TrySetCanceled(ct)))
             {
-                OnEnemyRegistered -= Handler;
-                tcs.TrySetCanceled(ct);
-            }));
-
-            try
-            {
-                return await tcs.Task;
-            }
-            finally
-            {
-                OnEnemyRegistered -= Handler;
+                try
+                {
+                    return await tcs.Task;
+                }
+                finally
+                {
+                    OnEnemyRegistered -= Handler;
+                }
             }
         }
     }

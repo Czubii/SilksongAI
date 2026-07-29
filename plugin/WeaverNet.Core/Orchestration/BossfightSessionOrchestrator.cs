@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Contexts;
 using System.Threading;
 using System.Threading.Tasks;
 using WeaverNet.Core.Infrastructure;
@@ -35,7 +36,7 @@ namespace WeaverNet.Core.Orchestration
                 PluginRuntime.State.IsSessionActive = true;
 
                 _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                _runningTask = ExecuteAsync(session, _cts.Token);
+                _runningTask = ExecuteAsync(new BossfightSessionRuntime(session), _cts.Token);
             }
 
             return _runningTask;
@@ -65,43 +66,26 @@ namespace WeaverNet.Core.Orchestration
             }
         }
 
-        private async Task ExecuteAsync(BossfightSession session, CancellationToken ct)
+        private async Task ExecuteAsync(BossfightSessionRuntime runtime, CancellationToken ct)
         {
-            var runtime = new BossfightSessionRuntime(session);
 
-            PluginLog.Info($"Starting bossfight session for boss: {session.Boss.DisplayName}");
+            PluginLog.Info($"Starting bossfight session for boss: {runtime.Session.Boss.DisplayName}");
 
             try
             {
-                _statusWriter.Start(session);
+                _statusWriter.Start(runtime.Session);
                 using (GameStateScope scope = new GameStateScope())
                 {
                     PluginLog.Info("Initializing session plugins...");
-                    await NotifySessionStart(session);
+                    await NotifySessionStart(runtime.Session);
                     PluginLog.Info("Session plugins initialized.");
 
                     PluginLog.Info("Preparing session state...");
-                    await PrepareSession(session, scope.Modifier);
+                    await PrepareSession(runtime.Session, scope.Modifier);
                     PluginLog.Info("Session preparation completed.");
 
-                    var boundary = runtime.Session.Boundary;
-
                     PluginLog.Info("Beginning fight iterations.");
-
-                    while (!boundary.ShouldTerminate(runtime) && !ct.IsCancellationRequested)
-                    {
-                        var fightContext = runtime.IterationStarted();
-                        PluginLog.Info($"Starting fight iteration {runtime.CurrentIteration}.");
-
-                        _statusWriter.UpdateProgress(runtime);
-
-                        var result = await ExecuteFight(fightContext, scope.Modifier, ct);
-
-                        runtime.IterationFinished(result);
-
-                        PluginLog.Info(
-                            $"Finished fight iteration {runtime.CurrentIteration} with result: {runtime.PreviousIterationResult()}.");
-                    }
+                    await ExecuteSession(runtime, scope.Modifier, ct);
 
                     if (ct.IsCancellationRequested)
                     {
@@ -123,7 +107,7 @@ namespace WeaverNet.Core.Orchestration
                 try
                 {
                     _statusWriter.Stop();
-                    await PostSessionCleanup();
+                    await PostSessionCleanup(runtime);
                 }
                 catch (Exception ex)
                 {
@@ -135,29 +119,93 @@ namespace WeaverNet.Core.Orchestration
         }
         private async Task PrepareSession(BossfightSession session, TemporaryStateModifier modifier)
         {
+            _controller.TryRemoveCocoon();
             _controller.SelectLoadout(session.Loadout, modifier);
             _controller.SelectRespawnPoint(session.RespawnPoint, modifier);
         }
+        private async Task ExecuteSession(BossfightSessionRuntime runtime, TemporaryStateModifier modifier, CancellationToken ct)
+        {
+            var boundary = runtime.Session.Boundary;
+            while (!boundary.ShouldTerminate(runtime) && !ct.IsCancellationRequested)
+            {
+                var fightContext = runtime.IterationStarted();
+                PluginLog.Info($"Starting fight iteration {runtime.CurrentIteration}.");
+
+                _statusWriter.UpdateProgress(runtime);
+
+                await PrepareFight(runtime, modifier, ct);
+                var result = await ExecuteFight(fightContext, ct);
+                if(result == FightResult.Failure)
+                {
+                    await _controller.AwaitCocoonAndRemoveAsync();
+                }
+
+                runtime.IterationFinished(result);
+
+                PluginLog.Info(
+                    $"Finished fight iteration {runtime.CurrentIteration} with result: {runtime.PreviousIterationResult()}.");
+            }
+        }
+        private async Task PrepareFight(BossfightSessionRuntime runtime, TemporaryStateModifier modifier, CancellationToken ct)
+        {
+            await _controller.AwaitCanTeleportAsync();
+            var boss = runtime.Session.Boss;    
+            if (runtime.FirstIteration)
+            {
+                _controller.RespawnBoss(boss, modifier);
+                await _controller.TeleportToBossAsync(boss);
+                PluginLog.Info($"Teleported player for the first iteration");
+            }
+            else if (runtime.PreviousIterationResult() == FightResult.Failure)
+            {
+                await _controller.AwaitPlayerRespawnedAsync();
+                PluginLog.Info($"Player respawned.");
+                if (!boss.CanRespawnOnArena)
+                {
+                    await _controller.TeleportToBossAsync(boss);
+                    PluginLog.Info($"Teleported player to the arena because the respawn point was not on it");
+                }
+            }
+            else
+            {
+                _controller.RespawnBoss(boss, modifier);
+                await _controller.TeleportToBossAsync(boss);
+                PluginLog.Info($"Teleported player");
+            }
+            _controller.ReplenishPlayerResources();
+        }
         private async Task<FightResult> ExecuteFight(
             FightContext context, 
-            TemporaryStateModifier modifier, 
             CancellationToken ct)
         {
             var boss = context.Boss;
-            _controller.RespawnBoss(boss, modifier);
-            await _controller.TeleportToBossAsync(boss);
-
-            var bossId = await _controller.WaitForBossAsync(context.Boss, ct); 
-            var result = await _controller.AwaitFightFinishedAsync(bossId, ct);
-
-            return result;
+            using (var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct))
+            {
+                try
+                {
+                    timeoutCts.CancelAfter(TimeSpan.FromSeconds(10));
+                    var bossId = await _controller.WaitForBossAsync(boss, timeoutCts.Token);
+                    PluginLog.Info("Boss found");
+                    var result = await _controller.AwaitFightFinishedAsync(bossId, ct);
+                    return result;
+                }
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                {
+                    PluginLog.Warning($"'{context.Boss.DisplayName}' Not found!");
+                    return FightResult.BossMissing;
+                }
+            }
         }
-        private async Task PostSessionCleanup()
+        private async Task PostSessionCleanup(BossfightSessionRuntime runtime)
         {
-            await _controller.TeleportToBenchAsync();
+            if(runtime.PreviousIterationResult() != FightResult.Failure)
+            {
+                await _controller.TeleportToBenchAsync();
+            }
         }
         private Task NotifySessionStart(BossfightSession session)
         {
+
             return NotifyPlugins(
                 session.Plugins,
                 plugin => plugin.OnSessionStart());

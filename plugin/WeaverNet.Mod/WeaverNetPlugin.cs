@@ -27,6 +27,52 @@ namespace WeaverNet.Mod
     )]
     public class WeaverNetPlugin : BaseUnityPlugin
     {
+        public sealed class RepositoryContainer
+        {
+            public IBossfightCatalog Catalog { get; }
+            public IBossRepository BossRepository { get; }
+            public ILoadoutRepository LoadoutRepository { get; }
+
+            public RepositoryContainer(
+                IBossfightCatalog catalog,
+                IBossRepository bossRepository,
+                ILoadoutRepository loadoutRepository)
+            {
+                Catalog = catalog;
+                BossRepository = bossRepository;
+                LoadoutRepository = loadoutRepository;
+            }
+        }
+
+        public sealed class ServiceContainer
+        {
+            public ITeleportService TeleportService { get; }
+            public HitboxVisualizer HitboxVisualizer { get; }
+            public IBossfightSessionAssembler SessionAssembler { get; }
+            public IBossfightSessionOrchestrator Orchestrator { get; }
+            public IBossfightSessionStatus BossfightSessionStatus { get; }
+            public LoadoutManager LoadoutManager { get; }
+            public IResourceReplenisher ResourceManager { get; }
+
+            public ServiceContainer(
+                ITeleportService teleportService,
+                HitboxVisualizer hitboxVisualizer,
+                IBossfightSessionAssembler sessionAssembler,
+                IBossfightSessionOrchestrator orchestrator,
+                IBossfightSessionStatus bossfightSessionStatus,
+                LoadoutManager loadoutManager,
+                IResourceReplenisher resourceManager)
+            {
+                TeleportService = teleportService;
+                HitboxVisualizer = hitboxVisualizer;
+                SessionAssembler = sessionAssembler;
+                Orchestrator = orchestrator;
+                BossfightSessionStatus = bossfightSessionStatus;
+                LoadoutManager = loadoutManager;
+                ResourceManager = resourceManager;
+            }
+        }
+
         private void Awake()
         {
             try
@@ -59,11 +105,7 @@ namespace WeaverNet.Mod
             PluginLog.Info("Runtime initialized.");
         }
 
-        private (
-            IBossfightCatalog Catalog,
-            IBossRepository BossRepository,
-            ILoadoutRepository LoadoutRepository
-        ) InitializeRepositories()
+        private RepositoryContainer InitializeRepositories()
         {
             PluginLog.Info("Loading repositories...");
 
@@ -88,20 +130,13 @@ namespace WeaverNet.Mod
 
             PluginLog.Info("Repositories loaded successfully.");
 
-            return (
+            return new RepositoryContainer(
                 catalog,
                 bossRepository,
                 loadoutRepository);
         }
 
-        private (
-            ITeleportService TeleportService,
-            HitboxVisualizer HitboxVisualizer,
-            IBossfightSessionAssembler SessionAssembler,
-            IBossfightSessionOrchestrator Orchestrator,
-            IBossfightSessionStatus BossfightSessionStatus,
-            LoadoutManager LoadoutManager
-        ) InitializeServices()
+        private ServiceContainer InitializeServices()
         {
             PluginLog.Info("Initializing services...");
 
@@ -109,12 +144,15 @@ namespace WeaverNet.Mod
             var bossSpawner = new BossSpawner();
             var teleportService = new TeleportService();
             var combatEntityTracker = new CombatEntityTracker();
+            var resourceManager = new ResourceReplenisher();
+
             CombatEntityTrackerPatches.Initialize(combatEntityTracker);
 
             var hitboxVisualizer = gameObject.AddComponent<HitboxVisualizer>();
 
             var bossfightController = new BossfightSessionGameController(
                 loadoutManager,
+                resourceManager,
                 teleportService,
                 bossSpawner,
                 combatEntityTracker);
@@ -126,6 +164,7 @@ namespace WeaverNet.Mod
                 bossfightSessionStatus);
 
             var respawnPointFactory = new RespawnPointFactory();
+
             var objectFactory = new BossfightSessionObjectFactory(
                 respawnPointFactory);
 
@@ -134,43 +173,22 @@ namespace WeaverNet.Mod
 
             PluginLog.Info("Services initialized successfully.");
 
-            return (
+            return new ServiceContainer(
                 teleportService,
                 hitboxVisualizer,
                 assembler,
                 orchestrator,
                 bossfightSessionStatus,
-                loadoutManager);
+                loadoutManager,
+                resourceManager);
         }
 
-        private void InitializeGUI(
-            (
-                IBossfightCatalog Catalog,
-                IBossRepository BossRepository,
-                ILoadoutRepository LoadoutRepository
-            ) repositories,
-            (
-                ITeleportService TeleportService,
-                HitboxVisualizer HitboxVisualizer,
-                IBossfightSessionAssembler SessionAssembler,
-                IBossfightSessionOrchestrator Orchestrator,
-                IBossfightSessionStatus BossfightSessionStatus,
-                LoadoutManager LoadoutManager
-            ) services)
+        private void InitializeGUI(RepositoryContainer repositories, ServiceContainer services)
         {
             PluginLog.Info("Initializing GUI...");
 
             var windowManager = gameObject.AddComponent<GUIManager>();
             windowManager.Initialize(Config);
-
-            //var testWindow = new TestWindow(repositories.Catalog);
-            //windowManager.Register(testWindow);
-
-
-            //var utilitiesWindow = new UtilitiesWindow(
-            //    "Utilities",
-            //    services.TeleportService,
-            //    repositories.BossRepository);
 
             var loadoutWindow = new LoadoutWindow(
                 "Loadouts",
@@ -179,6 +197,7 @@ namespace WeaverNet.Mod
 
             var setupView = new StandardBossfightSetupView(
                 repositories.Catalog,
+                services.LoadoutManager,
                 services.SessionAssembler,
                 services.Orchestrator,
                 services.BossfightSessionStatus);
@@ -186,11 +205,6 @@ namespace WeaverNet.Mod
             var bossfightSessionWindow = new BossfightSessionWindow(
                 "Bossfight Session",
                 setupView);
-
-
-            //var debugWindow = new DebugWindow(
-            //    "Debug",
-            //    services.HitboxVisualizer);
 
             windowManager.Register(loadoutWindow);
             windowManager.Register(bossfightSessionWindow);

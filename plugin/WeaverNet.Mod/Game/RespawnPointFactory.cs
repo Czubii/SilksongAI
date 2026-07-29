@@ -10,9 +10,9 @@ namespace WeaverNet.Mod.Game
 {
     public class RespawnPointFactory : IRespawnPointFactory
     {
-        public IRespawnPoint DefaultRespawnPoint()
+        public IRespawnPoint DefaultRespawnPoint(string name = null)
         {
-            throw new NotImplementedException(); // TODO
+            return new RespawnPoint("Tut_01", new Vector3(0, 0, 0), name);
         }
 
         public IRespawnPoint RespawnPoint(string scene, Vector3 position, string name = null)

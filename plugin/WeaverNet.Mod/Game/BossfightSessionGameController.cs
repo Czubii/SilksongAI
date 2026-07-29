@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,38 +21,33 @@ namespace WeaverNet.Mod.Game
         private readonly ITeleportService _teleportService;
         private readonly IBossSpawner _bossSpawner;
         private readonly ICombatEntityQuery _combatEntityQuery;
+        private readonly IResourceReplenisher _resourceManager;
         public BossfightSessionGameController(
             ILoadoutManager loadoutManager,
+            IResourceReplenisher resourceManager,
             ITeleportService teleportService,
             IBossSpawner bossSpawner,
             ICombatEntityQuery combatEntityQuery)
         {
             _loadoutManager = loadoutManager;
+            _resourceManager = resourceManager;
             _teleportService = teleportService;
             _bossSpawner = bossSpawner;
             _combatEntityQuery = combatEntityQuery;
         }
 
-        public void SelectLoadout(Loadout loaodut, TemporaryStateModifier modifier)
+        public void SelectLoadout(Loadout loaodut, TemporaryStateModifier modifier) => _loadoutManager.SetLoadoutTemporary(loaodut, modifier);
+        public void ReplenishPlayerResources()
         {
-            _loadoutManager.SetLoadoutTemporary(loaodut, modifier);
+            _resourceManager.ReplenishSilk();
+            _resourceManager.ReplenishHP();
+            _resourceManager.ReplenishTools();
         }
-        public void SelectRespawnPoint(IRespawnPoint spawnPoint, TemporaryStateModifier modifier)
-        {
-            spawnPoint.UseAsTemporary(modifier);
-        }
-        public void RespawnBoss(BossData boss, TemporaryStateModifier modifier)
-        {
-            _bossSpawner.RespawnTemporary(boss.RespawnFlags, modifier);
-        }
-        public Task TeleportToBossAsync(BossData boss)
-        {
-            return _teleportService.TeleportAsync(boss.ArenaSceneName, boss.ArenaPosition, boss.RequireHardSceneReload);
-        }
-        public Task TeleportToBenchAsync()
-        {
-            return _teleportService.TeleportToBenchAsync();
-        }
+        public void SelectRespawnPoint(IRespawnPoint spawnPoint, TemporaryStateModifier modifier) => spawnPoint.UseAsTemporary(modifier);
+        public void RespawnBoss(BossData boss, TemporaryStateModifier modifier) => _bossSpawner.RespawnTemporary(boss.RespawnFlags, modifier);
+        public Task TeleportToBossAsync(BossData boss) => _teleportService.TeleportAsync(boss.ArenaSceneName, boss.ArenaPosition, boss.RequireHardSceneReload);
+        public Task TeleportToBenchAsync() => _teleportService.TeleportToBenchAsync();
+        public Task AwaitCanTeleportAsync() => _teleportService.AwaitCanTeleportAsync();
         public async Task<int> WaitForBossAsync(BossData boss, CancellationToken ct)
         {
             var enemyInstance = await _combatEntityQuery.WaitForEnemyAsync(a => a.Name == boss.Id, ct);
@@ -84,5 +80,45 @@ namespace WeaverNet.Mod.Game
                 await Task.Yield();
             }
         }
+
+        public async Task AwaitPlayerRespawnedAsync()
+        {
+            while (true)
+            {
+                var gm = GameManager.instance;
+                var hc = HeroController.instance;
+                if (hc != null && gm != null && hc.acceptingInput && !gm.RespawningHero)
+                {
+                    return;
+                }
+
+                await Task.Yield();
+            }
+        }
+        public void TryRemoveCocoon()
+        {
+            HeroController heroController = HeroController.instance;
+            if (heroController == null) return;
+            heroController.CocoonBroken();
+        }
+
+        public async Task AwaitCocoonAndRemoveAsync()
+        {
+            while (true)
+            {
+                var pd = PlayerData.instance;
+                var ch = HeroController.instance;
+                if (pd != null && pd.HeroCorpseMarkerGuid != null && ch != null)
+                {
+                    await Task.Yield();
+                    TryRemoveCocoon();
+                    break;
+                }
+
+                await Task.Yield();
+            }
+        }
+
+
     }
 }

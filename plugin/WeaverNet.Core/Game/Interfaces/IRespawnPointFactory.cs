@@ -10,6 +10,6 @@ namespace WeaverNet.Core.Game.Interfaces
     public interface IRespawnPointFactory
     {
         IRespawnPoint RespawnPoint(string scene, Vector3 position, string name = null);
-        IRespawnPoint DefaultRespawnPoint();
+        IRespawnPoint DefaultRespawnPoint(string name = null);
     }
 }

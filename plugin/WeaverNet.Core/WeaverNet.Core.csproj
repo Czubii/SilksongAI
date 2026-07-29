@@ -58,7 +58,9 @@
     <Compile Include="Game\CrestToolSet.cs" />
     <Compile Include="Game\Interfaces\ICombatEntityTracker.cs" />
     <Compile Include="Game\Interfaces\ILoadoutManager.cs" />
+    <Compile Include="Game\Interfaces\ILoadoutQuery.cs" />
     <Compile Include="Game\Interfaces\ILoadoutRepository.cs" />
+    <Compile Include="Game\Interfaces\IResourceReplenisher.cs" />
     <Compile Include="Game\Interfaces\IRespawnPoint.cs" />
     <Compile Include="Game\Interfaces\IRespawnPointFactory.cs" />
     <Compile Include="Game\Interfaces\ITeleportService.cs" />

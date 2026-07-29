@@ -11,5 +11,6 @@ namespace WeaverNet.Core.Game.Interfaces
         Task TeleportToBenchAsync();
         bool CanTeleport();
         bool TeleportInProgress();
+        Task AwaitCanTeleportAsync();
     }
 }
