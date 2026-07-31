@@ -40,13 +40,13 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
             return tex;
         }
         private static Texture2D MakeRoundedBorderedTex(
-       int border,
-       int radius,
-       Color borderColor,
-       Color fillColor)
+            int border,
+            int radius,
+            Color borderColor,
+            Color fillColor)
         {
             int size = radius * 2 + 1 + border * 2;
-            Texture2D tex = new Texture2D(size, size);
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
             Color[] pixels = new Color[size * size];
 
             Rect outer = new Rect(0, 0, size, size);
@@ -65,36 +65,53 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
                     float px = x + 0.5f;
                     float py = y + 0.5f;
 
-                    bool insideOuter = IsInsideRoundedRect(
-                        px,
-                        py,
-                        outer,
-                        radius);
+                    // 1. Calculate continuous distance-based coverage (0.0 to 1.0)
+                    float outerAlpha = GetRoundedRectAlpha(px, py, outer, radius);
+                    float innerAlpha = GetRoundedRectAlpha(px, py, inner, innerRadius);
 
-                    if (!insideOuter)
-                    {
-                        pixels[y * size + x] = Color.clear;
-                        continue;
-                    }
+                    // 2. Blend inner fill over border color
+                    Color color = Color.Lerp(borderColor, fillColor, innerAlpha);
 
-                    bool insideInner = IsInsideRoundedRect(
-                        px,
-                        py,
-                        inner,
-                        innerRadius);
+                    // 3. Apply outer edge anti-aliasing transparency
+                    color.a *= outerAlpha;
 
-                    pixels[y * size + x] = insideInner
-                        ? fillColor
-                        : borderColor;
+                    pixels[y * size + x] = color;
                 }
             }
 
             tex.SetPixels(pixels);
             tex.wrapMode = TextureWrapMode.Clamp;
-            tex.filterMode = FilterMode.Point;
+
+            // Switch to Bilinear filtering so GPU smoothly renders subpixel edges
+            tex.filterMode = FilterMode.Bilinear;
+
             tex.Apply(false, true);
 
             return tex;
+        }
+
+        /// <summary>
+        /// Returns continuous coverage alpha [0..1] for a point near a rounded rectangle boundary.
+        /// Uses a Signed Distance Field (SDF) smoothed over 1 pixel unit.
+        /// </summary>
+        private static float GetRoundedRectAlpha(float x, float y, Rect rect, float radius)
+        {
+            radius = Mathf.Min(radius, rect.width / 2f, rect.height / 2f);
+
+            // Compute distance vector from the inner corner anchor
+            float cx = Mathf.Clamp(x, rect.xMin + radius, rect.xMax - radius);
+            float cy = Mathf.Clamp(y, rect.yMin + radius, rect.yMax - radius);
+
+            float dx = x - cx;
+            float dy = y - cy;
+
+            float dist = Mathf.Sqrt(dx * dx + dy * dy);
+
+            // Signed distance: positive outside, negative inside
+            float sd = dist - radius;
+
+            // Smooth over a 1.0 pixel band (from -0.5 to +0.5 distance from boundary)
+            return Mathf.Clamp01(0.5f - sd);
         }
 
         private static bool IsInsideRoundedRect(

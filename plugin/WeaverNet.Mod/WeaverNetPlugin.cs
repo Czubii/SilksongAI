@@ -2,11 +2,13 @@
 using HarmonyLib;
 using System;
 using System.IO;
+using WeaverNet.Core.DataCollection;
 using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure;
 using WeaverNet.Core.Infrastructure.Interfaces;
 using WeaverNet.Core.Orchestration;
 using WeaverNet.Core.Orchestration.Interfaces;
+using WeaverNet.Mod.DataCollection;
 using WeaverNet.Mod.Game;
 using WeaverNet.Mod.Game.Bosses;
 using WeaverNet.Mod.Game.Debug;
@@ -53,7 +55,8 @@ namespace WeaverNet.Mod
             public IBossfightSessionStatus BossfightSessionStatus { get; }
             public LoadoutManager LoadoutManager { get; }
             public IResourceReplenisher ResourceManager { get; }
-
+            public IRaycastScanner RaycastScanner { get; }
+            public RaycastScannerVisualizer RaycastVisualizer {  get; }
             public ServiceContainer(
                 ITeleportService teleportService,
                 HitboxVisualizer hitboxVisualizer,
@@ -61,7 +64,9 @@ namespace WeaverNet.Mod
                 IBossfightSessionOrchestrator orchestrator,
                 IBossfightSessionStatus bossfightSessionStatus,
                 LoadoutManager loadoutManager,
-                IResourceReplenisher resourceManager)
+                IResourceReplenisher resourceManager,
+                IRaycastScanner raycastScanner,
+                RaycastScannerVisualizer raycastVisualizer)
             {
                 TeleportService = teleportService;
                 HitboxVisualizer = hitboxVisualizer;
@@ -70,6 +75,8 @@ namespace WeaverNet.Mod
                 BossfightSessionStatus = bossfightSessionStatus;
                 LoadoutManager = loadoutManager;
                 ResourceManager = resourceManager;
+                RaycastScanner = raycastScanner;
+                RaycastVisualizer = raycastVisualizer;
             }
         }
 
@@ -145,10 +152,13 @@ namespace WeaverNet.Mod
             var teleportService = new TeleportService();
             var combatEntityTracker = new CombatEntityTracker();
             var resourceManager = new ResourceReplenisher();
+            var raycastScanner = new HeroSurroundingsScanner();
 
             CombatEntityTrackerPatches.Initialize(combatEntityTracker);
 
             var hitboxVisualizer = gameObject.AddComponent<HitboxVisualizer>();
+            var raycastVisualizer = gameObject.AddComponent<RaycastScannerVisualizer>();
+            raycastVisualizer.Initialize(raycastScanner);
 
             var bossfightController = new BossfightSessionGameController(
                 loadoutManager,
@@ -180,7 +190,9 @@ namespace WeaverNet.Mod
                 orchestrator,
                 bossfightSessionStatus,
                 loadoutManager,
-                resourceManager);
+                resourceManager,
+                raycastScanner,
+                raycastVisualizer);
         }
 
         private void InitializeGUI(RepositoryContainer repositories, ServiceContainer services)
@@ -206,8 +218,11 @@ namespace WeaverNet.Mod
                 "Bossfight Session",
                 setupView);
 
+            var debugWindow = new DebugWindow("Debug", services.HitboxVisualizer, services.RaycastVisualizer);
+
             windowManager.Register(loadoutWindow);
             windowManager.Register(bossfightSessionWindow);
+            windowManager.Register(debugWindow);
 
             PluginLog.Info("GUI initialized successfully.");
         }

@@ -118,7 +118,5 @@ namespace WeaverNet.Mod.Game
                 await Task.Yield();
             }
         }
-
-
     }
 }

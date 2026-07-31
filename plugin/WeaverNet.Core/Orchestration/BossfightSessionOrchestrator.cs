@@ -106,6 +106,8 @@ namespace WeaverNet.Core.Orchestration
             {
                 try
                 {
+                    //TODO: await "can stop".
+                    //Now for example if game is paused and one stops the session the game freezes in a weird loading state state
                     _statusWriter.Stop();
                     await PostSessionCleanup(runtime);
                 }

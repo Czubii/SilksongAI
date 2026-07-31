@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Microsoft.SqlServer.Server;
+using UnityEngine;
 
 namespace WeaverNet.Mod.WeaverGUI.Styles
 {
@@ -77,6 +78,28 @@ namespace WeaverNet.Mod.WeaverGUI.Styles
             var style = new GUIStyle(ResizeHandle);
 
             style.normal.textColor = Theme.ControlHover;
+
+            return style;
+        });
+
+
+        private static GUIStyle _foldableButton = null;
+        public static GUIStyle FoldableButton => Lazy(ref _foldableButton, () =>
+        {
+            // Derive from label instead of textField to remove button/input behavior defaults
+            var style = new GUIStyle();
+
+            SetBackgrounds(
+                style,
+                RoundedBorderedTex(Color.clear, Color.clear),
+                RoundedBorderedTex(Theme.Border, Theme.ControlHover),
+                RoundedBorderedTex(Theme.Border, Theme.ControlPressed));
+
+            // Layout & Spacing
+            style.alignment = TextAnchor.MiddleLeft;
+            style.padding = new RectOffset(4, 4, 4, 4);
+            style.margin = new RectOffset(0, 0, 2, 4);
+            style.border = new RectOffset(7, 7, 7, 7);
 
             return style;
         });

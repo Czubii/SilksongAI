@@ -106,6 +106,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\UnityEngine.Physics2DModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.TextRenderingModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong\Hollow Knight Silksong_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
@@ -117,6 +121,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BepInExPluginLogger.cs" />
+    <Compile Include="DataCollection\HeroSurroundingsScanner.cs" />
+    <Compile Include="DataCollection\IRaycastScanner.cs" />
+    <Compile Include="DataCollection\RaycastTargetLayers.cs" />
+    <Compile Include="DataCollection\RayData.cs" />
+    <Compile Include="Game\Debug\RaycastScannerVisulizer.cs" />
+    <Compile Include="Game\HitboxLayers.cs" />
     <Compile Include="Game\HudHelper.cs" />
     <Compile Include="Game\ICombatEntityQuery.cs" />
     <Compile Include="Game\Bosses\BossSpawner.cs" />
@@ -127,10 +137,12 @@
     <Compile Include="Game\EnemyInstance.cs" />
     <Compile Include="Game\Player\LoadoutManager.cs" />
     <Compile Include="Game\Player\ResourceReplenisher.cs" />
+    <Compile Include="Game\PresetLayerMasks.cs" />
     <Compile Include="Game\RespawnPoint.cs" />
     <Compile Include="Game\RespawnPointFactory.cs" />
     <Compile Include="Game\TeleportService.cs" />
     <Compile Include="ResizableWindow.cs" />
+    <Compile Include="WeaverGUI\Elements\Foldable.cs" />
     <Compile Include="WeaverGUI\Popups\BossfightSessionProgressPopup.cs" />
     <Compile Include="WeaverGUI\Views\IViewHost.cs" />
     <Compile Include="WeaverGUI\Windows\BaseWindow.cs" />

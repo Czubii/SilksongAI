@@ -7,16 +7,15 @@ using WeaverNet.Mod.WeaverGUI.Styles;
 namespace WeaverNet.Mod.WeaverGUI.Elements
 {
     public class DropdownState<T>
-        where T : class
     {
         public int SelectedIdx = -1;
         public T SelectedOption;
-        public bool SelectionChanged;
         public bool Expanded;
 
         public Rect ButtonRect;
         public Rect ScreenButtonRect;
     }
+
     public static partial class PluginGUI
     {
         public static DropdownState<T> Dropdown<T>(
@@ -24,17 +23,15 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
             DropdownState<T> state,
             IReadOnlyList<T> elements,
             Func<T, string> optionLabelSelector)
-            where T : class
         {
             var oldSelection = state.SelectedIdx;
-            state.SelectionChanged = false;
 
             var oldEnabled = GUI.enabled;
 
             if (elements.Count == 0)
             {
                 state.SelectedIdx = -1;
-                state.SelectedOption = null;
+                state.SelectedOption = default; // Changed null -> default
                 state.Expanded = false;
             }
             else
@@ -65,7 +62,6 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
 
             state.ButtonRect = buttonRect;
 
-
             if (GUI.Button(
                 buttonRect,
                 GUIContent.none,
@@ -90,7 +86,6 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
                 }
             }
 
-
             // Draw text
             Rect textRect = new Rect(
                 buttonRect.x + 8,
@@ -102,7 +97,6 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
                 textRect,
                 buttonText,
                 WeaverNetStyles.DropdownButtonText);
-
 
             // Draw arrow
             Rect arrowRect = new Rect(
@@ -116,23 +110,14 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
                 state.Expanded ? "▲" : "▼",
                 WeaverNetStyles.DropdownArrow);
 
-
             GUI.enabled = oldEnabled;
-
 
             if (elements.Count > 0)
                 state.SelectedOption = elements[state.SelectedIdx];
             else
-                state.SelectedOption = null;
-
-
-            if (state.SelectedIdx != oldSelection)
-                state.SelectionChanged = true;
-
+                state.SelectedOption = default; // Changed null -> default
 
             return state;
         }
-
-
     }
 }

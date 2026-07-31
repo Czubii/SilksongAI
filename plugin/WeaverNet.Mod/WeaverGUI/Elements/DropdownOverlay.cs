@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using WeaverNet.Mod.WeaverGUI.Styles;
 
 namespace WeaverNet.Mod.WeaverGUI.Elements
 {
     public class DropdownOverlay<T> : IGUIOverlay
-        where T : class
     {
         private readonly DropdownState<T> _state;
         private readonly IReadOnlyList<T> _elements;
