@@ -81,42 +81,39 @@ namespace WeaverNet.Mod.Game
         }
         private async Task ExecuteTeleportAsync(string targetSceneName, Vector3 targetPos, bool requireSceneReload)
         {
-            try
+
+            string currentSceneName = SceneManager.GetActiveScene().name;
+
+            if (currentSceneName != targetSceneName || requireSceneReload) // if we are not in the same scene or we do require reload
             {
-                string currentSceneName = SceneManager.GetActiveScene().name;
-
-                if (currentSceneName != targetSceneName || requireSceneReload) // if we are not in the same scene or we do require reload
+                GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo // change the scene
                 {
-                    GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo // change the scene
-                    {
-                        SceneName = targetSceneName,
-                        EntryGateName = "left1",
-                        EntrySkip = CanSkipEntry(),
-                        HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
-                        EntryDelay = 0f,
-                        Visualization = GameManager.SceneLoadVisualizations.Default,
-                        AlwaysUnloadUnusedAssets = true,
-                        WaitForSceneTransitionCameraFade = true,
-                    });
-                    await Task.Yield(); // Wait one frame so GameManager sets transition flags internally
-                }
-
-                await AwaitTransitionFinished(); // Make sure we are ready to teleport hero
-
-                TeleportHero(targetPos);
-
-                var gm = GameManager.instance;
-
-                if (gm == null) return;
-
-                for (int i = 0; i < 10; i++) // this delay is needed as in some larger rooms the camera would not snap to player if there was no delay 
-                {
-                    await Task.Yield();
-                }
-                gm.cameraCtrl.PositionToHeroInstant(true);
-
+                    SceneName = targetSceneName,
+                    EntryGateName = "left1",
+                    EntrySkip = CanSkipEntry(),
+                    HeroLeaveDirection = GlobalEnums.GatePosition.unknown,
+                    EntryDelay = 0f,
+                    Visualization = GameManager.SceneLoadVisualizations.Default,
+                    AlwaysUnloadUnusedAssets = true,
+                    WaitForSceneTransitionCameraFade = true,
+                });
+                await Task.Yield(); // Wait one frame so GameManager sets transition flags internally
             }
-            finally { PluginRuntime.State.TeleportInProgress = false; }
+
+            await AwaitTransitionFinished(); // Make sure we are ready to teleport hero
+
+            TeleportHero(targetPos);
+
+            var gm = GameManager.instance;
+
+            if (gm == null) return;
+
+            for (int i = 0; i < 10; i++) // this delay is needed as in some larger rooms the camera would not snap to player if there was no delay 
+            {
+                await Task.Yield();
+            }
+            gm.cameraCtrl.PositionToHeroInstant(true);
+
         }
         private async Task ExecuteTeleportToBenchAsync()
         {

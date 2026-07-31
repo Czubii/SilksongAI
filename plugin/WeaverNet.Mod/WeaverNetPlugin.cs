@@ -104,8 +104,6 @@ namespace WeaverNet.Mod
 
         private void InitializeRuntime()
         {
-            PluginRuntime.Initialize();
-
             var logger = new BepInExPluginLogger(Logger);
             PluginLog.Bind(logger);
 

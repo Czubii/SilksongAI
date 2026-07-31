@@ -76,8 +76,6 @@
     <Compile Include="Infrastructure\Interfaces\IRepository.cs" />
     <Compile Include="Infrastructure\Logger.cs" />
     <Compile Include="Infrastructure\TemporaryStateModifier.cs" />
-    <Compile Include="Infrastructure\PluginRuntime.cs" />
-    <Compile Include="Infrastructure\PluginState.cs" />
     <Compile Include="Orchestration\BossfightSessionConfiguration.cs" />
     <Compile Include="Orchestration\BossfightSessionAssembler.cs" />
     <Compile Include="Orchestration\BossfightSessionObjectFactory.cs" />
@@ -98,6 +96,8 @@
     <Compile Include="Orchestration\Interfaces\IBossfightSessionPlugin.cs" />
     <Compile Include="Orchestration\BossfightSessionOption.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionStatus.cs" />
+    <Compile Include="Plugins\IFrameCollector.cs" />
+    <Compile Include="Plugins\IFrameListener.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

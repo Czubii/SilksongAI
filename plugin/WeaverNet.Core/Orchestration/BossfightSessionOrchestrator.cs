@@ -33,7 +33,6 @@ namespace WeaverNet.Core.Orchestration
                 {
                     throw new InvalidOperationException("Bossfight session already running");
                 }
-                PluginRuntime.State.IsSessionActive = true;
 
                 _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 _runningTask = ExecuteAsync(new BossfightSessionRuntime(session), _cts.Token);
@@ -43,26 +42,30 @@ namespace WeaverNet.Core.Orchestration
         }
         public async Task StopAsync()
         {
-            CancellationTokenSource cts = null;
-            Task task = null;
+            Task task;
+            CancellationTokenSource cts;
 
             lock (_startLock)
             {
-                if (IsRunning)
-                {
-                    cts = _cts;
-                    task = _runningTask;
-                }
+                task = _runningTask;
+                cts = _cts;
             }
+
+            if (task == null)
+                return;
+
+            cts.Cancel();
+
             try
             {
-                _cts?.Cancel();
-                await _runningTask;
+                await task;
             }
-            catch (OperationCanceledException){ }
+            catch (OperationCanceledException)
+            {
+            }
             finally
             {
-                _cts?.Dispose();
+                cts.Dispose();
             }
         }
 
@@ -115,7 +118,6 @@ namespace WeaverNet.Core.Orchestration
                 {
                     PluginLog.Error($"Cleanup failed: {ex}");
                 }
-                PluginRuntime.State.IsSessionActive = false;
                 PluginLog.Info("Bossfight session cleanup completed.");
             }
         }
