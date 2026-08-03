@@ -9,13 +9,14 @@ namespace WeaverNet.Core.Orchestration
         public BossData Boss { get; }
         public Loadout Loadout { get; }
         public IBossfightSessionBoundary Boundary { get; }
-        public IReadOnlyCollection<BossfightSessionOption> Features { get; }
-        public BossfightSessionConfiguration(BossData boss, Loadout loadout, IBossfightSessionBoundary boundary, IReadOnlyCollection<BossfightSessionOption> features)
+        public BossfightSessionConfiguration(
+            BossData boss, 
+            Loadout loadout, 
+            IBossfightSessionBoundary boundary)
         {
             Boss = boss;
             Loadout = loadout;
             Boundary = boundary;
-            Features = features;
         }
     }
 }

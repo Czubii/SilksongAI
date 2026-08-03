@@ -58,6 +58,7 @@ namespace WeaverNET.Infrastructure.Data.Json
 
             try
             {
+                Directory.CreateDirectory(_repositoryRoot);
                 string[] files = Directory.GetFiles(
                     _repositoryRoot,
                     "*.json",

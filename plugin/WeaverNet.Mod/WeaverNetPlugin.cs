@@ -8,17 +8,18 @@ using WeaverNet.Core.Infrastructure;
 using WeaverNet.Core.Infrastructure.Interfaces;
 using WeaverNet.Core.Orchestration;
 using WeaverNet.Core.Orchestration.Interfaces;
+using WeaverNet.Core.Plugins;
 using WeaverNet.Mod.DataCollection;
 using WeaverNet.Mod.Game;
 using WeaverNet.Mod.Game.Bosses;
 using WeaverNet.Mod.Game.Debug;
 using WeaverNet.Mod.Game.Player;
 using WeaverNet.Mod.WeaverGUI;
-using WeaverNet.Mod.WeaverGUI.Styles;
 using WeaverNet.Mod.WeaverGUI.Views;
 using WeaverNet.Mod.WeaverGUI.Windows;
 using WeaverNET.Infrastructure.Data;
 using WeaverNET.Infrastructure.Data.Json;
+using WeaverNET.Infrastructure.Databases;
 
 namespace WeaverNet.Mod
 {
@@ -88,7 +89,7 @@ namespace WeaverNet.Mod
 
                 InitializeRuntime();
 
-                var repositories = InitializeRepositories();
+                var repositories = InitializePersistent();
                 var services = InitializeServices();
 
                 InitializeGUI(repositories, services);
@@ -110,18 +111,20 @@ namespace WeaverNet.Mod
             PluginLog.Info("Runtime initialized.");
         }
 
-        private RepositoryContainer InitializeRepositories()
+        private RepositoryContainer InitializePersistent()
         {
+            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
             PluginLog.Info("Loading repositories...");
 
             var bossRepoPath = Path.Combine(
-                Paths.PluginPath,
+                appDataPath,
                 "WeaverNet",
                 "Data",
                 "Bosses");
 
             var loadoutRepoPath = Path.Combine(
-                Paths.PluginPath,
+                appDataPath,
                 "WeaverNet",
                 "Data",
                 "Loadouts");
@@ -143,6 +146,7 @@ namespace WeaverNet.Mod
 
         private ServiceContainer InitializeServices()
         {
+            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             PluginLog.Info("Initializing services...");
 
             var loadoutManager = new LoadoutManager();
@@ -176,8 +180,21 @@ namespace WeaverNet.Mod
             var objectFactory = new BossfightSessionObjectFactory(
                 respawnPointFactory);
 
+
+            var sessionTypeRegistry = new BossfightSessionTypeRegistry();
+            var defaultSession = new DefaultBossfightSession();
+
+            var recordingFrameSource = gameObject.AddComponent<FixedUpdateFrameSource>();
+
+            var recordingFileWriter = new JsonFrameWriter();
+            var recordingSession = new RecordingBossfightSession(Path.Combine(appDataPath, "WeaverNet","Recordings"), recordingFrameSource, recordingFileWriter);
+
+            sessionTypeRegistry.Register(defaultSession);
+            sessionTypeRegistry.Register(recordingSession);
+
             var assembler = new BossfightSessionAssembler(
-                objectFactory);
+                objectFactory,
+                sessionTypeRegistry);
 
             PluginLog.Info("Services initialized successfully.");
 

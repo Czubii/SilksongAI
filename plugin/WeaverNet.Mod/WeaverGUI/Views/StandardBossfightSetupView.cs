@@ -94,11 +94,10 @@ namespace WeaverNet.Mod.WeaverGUI.Views
                 var sessionConfig = new BossfightSessionConfiguration(
                     _state.BossDropdownState.SelectedOption,
                     loadout,
-                    new IterationBoundary(_state.NumberOfAttempts.Value), //TODO: how to pass parameters for this? List of objects under one interface containing the configurations for each feature?
-                    new List<BossfightSessionOption>() // no features for now //TODO: how to pass parameters for this? List of objects under one interface containing the configurations for each feature?
+                    new IterationBoundary(_state.NumberOfAttempts.Value)
                     );
 
-                var session = _sessionAssembler.Assemble(sessionConfig);
+                var session = _sessionAssembler.Assemble("recording", sessionConfig);
                 var sessionTask = _orchestrator.StartAsync(session, CancellationToken.None);
 
                 Context.HideGUI();
@@ -124,7 +123,6 @@ namespace WeaverNet.Mod.WeaverGUI.Views
                 Context.ShowGUI();
                 progressPopup.Close();
             }
-
         }
     }
 }

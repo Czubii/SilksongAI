@@ -113,6 +113,7 @@ namespace WeaverNet.Core.Orchestration
                     //Now for example if game is paused and one stops the session the game freezes in a weird loading state state
                     _statusWriter.Stop();
                     await PostSessionCleanup(runtime);
+                    await NotifySessionEnd(runtime.Session);
                 }
                 catch (Exception ex)
                 {
@@ -133,7 +134,9 @@ namespace WeaverNet.Core.Orchestration
             while (!boundary.ShouldTerminate(runtime) && !ct.IsCancellationRequested)
             {
                 var fightContext = runtime.IterationStarted();
+
                 PluginLog.Info($"Starting fight iteration {runtime.CurrentIteration}.");
+                await NotifyFightStart(runtime.Session, fightContext);
 
                 _statusWriter.UpdateProgress(runtime);
 
@@ -144,6 +147,7 @@ namespace WeaverNet.Core.Orchestration
                     await _controller.AwaitCocoonAndRemoveAsync();
                 }
 
+                await NotifyFightEnd(runtime.Session, result);
                 runtime.IterationFinished(result);
 
                 PluginLog.Info(
@@ -209,10 +213,28 @@ namespace WeaverNet.Core.Orchestration
         }
         private Task NotifySessionStart(BossfightSession session)
         {
+            return NotifyPlugins(
+                session.Plugins,
+                plugin => plugin.OnSessionStartAsync());
+        }
+        private Task NotifyFightStart(BossfightSession session, FightContext context)
+        {
+            return NotifyPlugins(
+                session.Plugins,
+                plugin => plugin.OnFightStartAsync(context));
+        }
+        private Task NotifyFightEnd(BossfightSession session, FightResult result)
+        {
+            return NotifyPlugins(
+                session.Plugins,
+                plugin => plugin.OnFightEndAsync(result));
+        }
+        private Task NotifySessionEnd(BossfightSession session)
+        {
 
             return NotifyPlugins(
                 session.Plugins,
-                plugin => plugin.OnSessionStart());
+                plugin => plugin.OnSessionEndAsync());
         }
         private async Task NotifyPlugins(IEnumerable<IBossfightSessionPlugin> plugins, Func<IBossfightSessionPlugin, Task> callback)
         {

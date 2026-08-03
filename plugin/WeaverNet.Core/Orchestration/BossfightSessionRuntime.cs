@@ -20,8 +20,7 @@ namespace WeaverNet.Core.Orchestration
                 Session.Boss,
                 Session.Loadout,
                 DateTime.Now,
-                Guid.NewGuid(),
-                CurrentIteration
+                Guid.NewGuid()
             );
         }
         public void IterationFinished(FightResult result)

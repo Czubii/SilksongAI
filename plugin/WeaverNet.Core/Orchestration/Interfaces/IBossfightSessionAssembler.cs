@@ -8,6 +8,6 @@ namespace WeaverNet.Core.Orchestration.Interfaces
 {
     public interface IBossfightSessionAssembler
     {
-        BossfightSession Assemble(BossfightSessionConfiguration configuration);
+        BossfightSession Assemble(string type, BossfightSessionConfiguration configuration);
     }
 }

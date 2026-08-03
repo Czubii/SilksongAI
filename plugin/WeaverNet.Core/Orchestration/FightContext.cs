@@ -9,14 +9,12 @@ namespace WeaverNet.Core.Orchestration
         public Loadout Loadout { get; }
         public DateTime StartTime { get; }
         public Guid Id { get; }
-        public int CurrentIteration { get; }
-        public FightContext(BossData boss, Loadout loadout, DateTime startTime, Guid id, int currentIteration)
+        public FightContext(BossData boss, Loadout loadout, DateTime startTime, Guid id)
         {
             Boss = boss;
             Loadout = loadout;
             StartTime = startTime;
             Id = id;
-            CurrentIteration = currentIteration;
         }
     }
 }

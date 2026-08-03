@@ -36,8 +36,20 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=10.0.0.10, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.10.0.10\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.1.2\lib\net462\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Channels, Version=10.0.0.10, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Channels.10.0.10\lib\net462\System.Threading.Channels.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.3\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -74,14 +86,15 @@
     <Compile Include="Infrastructure\Interfaces\IPluginLogger.cs" />
     <Compile Include="Infrastructure\Interfaces\IReadOnlyRepository.cs" />
     <Compile Include="Infrastructure\Interfaces\IRepository.cs" />
+    <Compile Include="Infrastructure\IRecordingManager.cs" />
     <Compile Include="Infrastructure\Logger.cs" />
+    <Compile Include="Infrastructure\ServiceRegistry.cs" />
     <Compile Include="Infrastructure\TemporaryStateModifier.cs" />
     <Compile Include="Orchestration\BossfightSessionConfiguration.cs" />
     <Compile Include="Orchestration\BossfightSessionAssembler.cs" />
-    <Compile Include="Orchestration\BossfightSessionObjectFactory.cs" />
-    <Compile Include="Infrastructure\ObjectRegistry.cs" />
     <Compile Include="Orchestration\BossfightSessionProgress.cs" />
     <Compile Include="Orchestration\BossfightSessionStatus.cs" />
+    <Compile Include="Orchestration\BossfightSessionTypeRegistry.cs" />
     <Compile Include="Orchestration\FightContext.cs" />
     <Compile Include="Orchestration\BossfightSession.cs" />
     <Compile Include="Orchestration\BossfightSessionBuilder.cs" />
@@ -92,14 +105,22 @@
     <Compile Include="Orchestration\FightResult.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionAssembler.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionGameController.cs" />
+    <Compile Include="Orchestration\Interfaces\IBossfightSessionObjectFactory.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionOrchestrator.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionPlugin.cs" />
-    <Compile Include="Orchestration\BossfightSessionOption.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionStatus.cs" />
-    <Compile Include="Plugins\IFrameCollector.cs" />
-    <Compile Include="Plugins\IFrameListener.cs" />
+    <Compile Include="Orchestration\Interfaces\IBossfightSessionType.cs" />
+    <Compile Include="Plugins\DefaultBossfightSession.cs" />
+    <Compile Include="Plugins\FrameData.cs" />
+    <Compile Include="Plugins\FrameSourcePlugin.cs" />
+    <Compile Include="Plugins\IFixedUpdateDataSource.cs" />
+    <Compile Include="Plugins\IChannelFileWriter.cs" />
+    <Compile Include="Plugins\IFramePipelinePlugin.cs" />
+    <Compile Include="Plugins\IFrameSink.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

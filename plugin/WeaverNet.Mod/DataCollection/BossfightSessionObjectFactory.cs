@@ -1,10 +1,11 @@
 ﻿
 using UnityEngine;
 using WeaverNet.Core.Game.Interfaces;
+using WeaverNet.Core.Orchestration.Interfaces;
 
-namespace WeaverNet.Core.Orchestration
+namespace WeaverNet.Mod.DataCollection
 {
-    public class BossfightSessionObjectFactory
+    public class BossfightSessionObjectFactory : IBossfightSessionObjectFactory
     {
         private readonly IRespawnPointFactory _respawnPointFactory;
         public BossfightSessionObjectFactory(IRespawnPointFactory respawnPointFactory)
