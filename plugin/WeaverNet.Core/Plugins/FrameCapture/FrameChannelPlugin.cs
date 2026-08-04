@@ -9,14 +9,14 @@ using WeaverNet.Core.Plugins;
 
 namespace WeaverNet.Mod.DataCollection
 {
-    public class FramePipelinePlugin : IFramePipelinePlugin
+    public class FrameChannelPlugin<TFrame> : IFrameChannelPlugin<TFrame>
     {
-        private readonly IReadOnlyCollection<IFrameSink> _listeners;
-        private readonly IFixedUpdateDataSource<FrameData> _frameSource;
+        private readonly IReadOnlyCollection<IFrameChannelPluginSink<TFrame>> _listeners;
+        private readonly IFixedUpdateDataSource<TFrame> _frameSource;
         private CancellationTokenSource _cts;
         private Task _runningTask;
 
-        public FramePipelinePlugin(IFixedUpdateDataSource<FrameData> frameSource, IReadOnlyCollection<IFrameSink> listeners)
+        public FrameChannelPlugin(IFixedUpdateDataSource<TFrame> frameSource, IReadOnlyCollection<IFrameChannelPluginSink<TFrame>> listeners)
         {
             _listeners = listeners ?? throw new ArgumentNullException(nameof(listeners));
             _frameSource = frameSource ?? throw new ArgumentNullException(nameof(frameSource));
@@ -87,9 +87,9 @@ namespace WeaverNet.Mod.DataCollection
             }
         }
 
-        private List<ChannelWriter<FrameData>> NotifyStreamStart()
+        private List<ChannelWriter<TFrame>> NotifyStreamStart()
         {
-            var channels = new List<ChannelWriter<FrameData>>(_listeners.Count);
+            var channels = new List<ChannelWriter<TFrame>>(_listeners.Count);
             foreach (var listener in _listeners)
             {
                 if (listener == null) continue;
@@ -103,7 +103,7 @@ namespace WeaverNet.Mod.DataCollection
             return channels;
         }
 
-        private void PostFrame(FrameData frame, List<ChannelWriter<FrameData>> writers)
+        private void PostFrame(TFrame frame, List<ChannelWriter<TFrame>> writers)
         {
             for (int i = 0; i < writers.Count; i++)
             {
@@ -113,7 +113,7 @@ namespace WeaverNet.Mod.DataCollection
 
         private async Task DistributeFramesAsync(CancellationToken ct)
         {
-            var source = Channel.CreateBounded<FrameData>(
+            var source = Channel.CreateBounded<TFrame>(
                 new BoundedChannelOptions(100)
                 {
                     FullMode = BoundedChannelFullMode.DropOldest,

@@ -86,9 +86,9 @@
     <Compile Include="Infrastructure\Interfaces\IPluginLogger.cs" />
     <Compile Include="Infrastructure\Interfaces\IReadOnlyRepository.cs" />
     <Compile Include="Infrastructure\Interfaces\IRepository.cs" />
-    <Compile Include="Infrastructure\IRecordingManager.cs" />
+    <Compile Include="Plugins\Recording\IRecordingCoordinator.cs" />
+    <Compile Include="Plugins\Recording\IRecordingRepository.cs" />
     <Compile Include="Infrastructure\Logger.cs" />
-    <Compile Include="Infrastructure\ServiceRegistry.cs" />
     <Compile Include="Infrastructure\TemporaryStateModifier.cs" />
     <Compile Include="Orchestration\BossfightSessionConfiguration.cs" />
     <Compile Include="Orchestration\BossfightSessionAssembler.cs" />
@@ -111,16 +111,19 @@
     <Compile Include="Orchestration\Interfaces\IBossfightSessionStatus.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionType.cs" />
     <Compile Include="Plugins\DefaultBossfightSession.cs" />
-    <Compile Include="Plugins\FrameData.cs" />
-    <Compile Include="Plugins\FrameSourcePlugin.cs" />
-    <Compile Include="Plugins\IFixedUpdateDataSource.cs" />
-    <Compile Include="Plugins\IChannelFileWriter.cs" />
-    <Compile Include="Plugins\IFramePipelinePlugin.cs" />
-    <Compile Include="Plugins\IFrameSink.cs" />
+    <Compile Include="Plugins\Recording\RecordingFrame.cs" />
+    <Compile Include="Plugins\FrameCapture\FrameChannelPlugin.cs" />
+    <Compile Include="Infrastructure\IFixedUpdateDataSource.cs" />
+    <Compile Include="Infrastructure\IChannelFileWriter.cs" />
+    <Compile Include="Plugins\FrameCapture\IFrameChannelPlugin.cs" />
+    <Compile Include="Plugins\FrameCapture\IFrameChannelPluginSink.cs" />
+    <Compile Include="Plugins\Recording\BossfightRecording.cs" />
+    <Compile Include="Plugins\Recording\BossfightRecordingMetadata.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

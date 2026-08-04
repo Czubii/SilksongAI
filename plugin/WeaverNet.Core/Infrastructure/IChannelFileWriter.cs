@@ -1,9 +1,8 @@
 ﻿using System.IO;
-using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace WeaverNet.Core.Plugins
+namespace WeaverNet.Core.Infrastructure
 {
     public interface IChannelFileWriter<TData>
     {

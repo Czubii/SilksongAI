@@ -20,6 +20,7 @@ using WeaverNet.Mod.WeaverGUI.Windows;
 using WeaverNET.Infrastructure.Data;
 using WeaverNET.Infrastructure.Data.Json;
 using WeaverNET.Infrastructure.Databases;
+using WeaverNET.Infrastructure.Recording;
 
 namespace WeaverNet.Mod
 {
@@ -35,15 +36,17 @@ namespace WeaverNet.Mod
             public IBossfightCatalog Catalog { get; }
             public IBossRepository BossRepository { get; }
             public ILoadoutRepository LoadoutRepository { get; }
-
+            public IRecordingRepository RecordingRepository { get; }
             public RepositoryContainer(
                 IBossfightCatalog catalog,
                 IBossRepository bossRepository,
-                ILoadoutRepository loadoutRepository)
+                ILoadoutRepository loadoutRepository,
+                IRecordingRepository recordingRepository)
             {
                 Catalog = catalog;
                 BossRepository = bossRepository;
                 LoadoutRepository = loadoutRepository;
+                RecordingRepository = recordingRepository;
             }
         }
 
@@ -90,7 +93,7 @@ namespace WeaverNet.Mod
                 InitializeRuntime();
 
                 var repositories = InitializePersistent();
-                var services = InitializeServices();
+                var services = InitializeServices(repositories);
 
                 InitializeGUI(repositories, services);
                 InitializeHarmony();
@@ -129,8 +132,15 @@ namespace WeaverNet.Mod
                 "Data",
                 "Loadouts");
 
+            var recordingRepoPath = Path.Combine(
+                appDataPath,
+                "WeaverNet",
+                "Recordings"
+                );
+
             var bossRepository = new JsonBossRepository(bossRepoPath);
             var loadoutRepository = new JsonLoadoutRepository(loadoutRepoPath);
+            var recordingRepository = new RecordingRepository(recordingRepoPath);
 
             var catalog = new BossfightCatalog(
                 bossRepository,
@@ -141,12 +151,14 @@ namespace WeaverNet.Mod
             return new RepositoryContainer(
                 catalog,
                 bossRepository,
-                loadoutRepository);
+                loadoutRepository,
+                recordingRepository);
         }
 
-        private ServiceContainer InitializeServices()
+        private ServiceContainer InitializeServices(RepositoryContainer repositories)
         {
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var tempDirectory = Path.GetTempPath();
+
             PluginLog.Info("Initializing services...");
 
             var loadoutManager = new LoadoutManager();
@@ -180,14 +192,17 @@ namespace WeaverNet.Mod
             var objectFactory = new BossfightSessionObjectFactory(
                 respawnPointFactory);
 
-
             var sessionTypeRegistry = new BossfightSessionTypeRegistry();
             var defaultSession = new DefaultBossfightSession();
 
             var recordingFrameSource = gameObject.AddComponent<FixedUpdateFrameSource>();
 
-            var recordingFileWriter = new JsonFrameWriter();
-            var recordingSession = new RecordingBossfightSession(Path.Combine(appDataPath, "WeaverNet","Recordings"), recordingFrameSource, recordingFileWriter);
+            var recordingFileWriter = new JsonRecordingFrameWriter();
+            var recordingSession = new RecordingBossfightSession(
+                Path.Combine(tempDirectory, "WeaverNet", "Recordings"), 
+                recordingFrameSource, 
+                recordingFileWriter,
+                repositories.RecordingRepository);
 
             sessionTypeRegistry.Register(defaultSession);
             sessionTypeRegistry.Register(recordingSession);

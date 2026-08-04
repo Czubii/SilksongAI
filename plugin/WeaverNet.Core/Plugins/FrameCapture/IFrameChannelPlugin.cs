@@ -2,7 +2,7 @@
 
 namespace WeaverNet.Core.Plugins
 {
-    public interface IFramePipelinePlugin: IBossfightSessionPlugin
+    public interface IFrameChannelPlugin<TFrame>: IBossfightSessionPlugin
     {
     }
 }

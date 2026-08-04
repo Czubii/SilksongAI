@@ -126,7 +126,6 @@
     <Compile Include="BepInExPluginLogger.cs" />
     <Compile Include="DataCollection\BossfightSessionObjectFactory.cs" />
     <Compile Include="DataCollection\FixedUpdateFrameSource.cs" />
-    <Compile Include="DataCollection\FramePipelinePlugin.cs" />
     <Compile Include="DataCollection\HeroSurroundingsScanner.cs" />
     <Compile Include="DataCollection\IRaycastScanner.cs" />
     <Compile Include="DataCollection\RaycastTargetLayers.cs" />

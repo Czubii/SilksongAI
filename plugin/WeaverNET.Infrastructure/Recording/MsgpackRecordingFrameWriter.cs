@@ -2,18 +2,19 @@
 using System.IO;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using WeaverNet.Core.Infrastructure;
 using WeaverNet.Core.Plugins;
 
 namespace WeaverNET.Infrastructure.Databases
 {
-    public class MsgpackFrameWriter : IChannelFileWriter<FrameData>
+    public class MsgpackFrameWriter : IChannelFileWriter<RecordingFrame>
     {
         public string FileExtension => ".msgpack";
 
         /// <summary>
         /// To stop the exectuion you should close the stream
         /// </summary>
-        public async Task WriteAsync(ChannelReader<FrameData> reader, FileInfo file)
+        public async Task WriteAsync(ChannelReader<RecordingFrame> reader, FileInfo file)
         {
             file.Directory?.Create();
 

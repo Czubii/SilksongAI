@@ -1,11 +1,11 @@
 ﻿using System;
 namespace WeaverNet.Core.Plugins
 {
-    public class FrameData
+    public class RecordingFrame
     {
         public DateTime CreatedOn;
         public int FrameNumber { get; }
-        public FrameData() 
+        public RecordingFrame() 
         { 
             CreatedOn = DateTime.Now;
            // FrameNumber = frameNumber; 

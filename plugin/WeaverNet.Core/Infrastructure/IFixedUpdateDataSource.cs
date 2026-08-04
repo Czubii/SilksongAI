@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Channels;
-using System.Threading.Tasks;
+﻿using System.Threading.Channels;
 
-namespace WeaverNet.Core.Plugins
+namespace WeaverNet.Core.Infrastructure
 {
     public interface IFixedUpdateDataSource<TData> // collects the game data, from the main thread (Ideally that should be by implementing MonoBehavior)
     {
