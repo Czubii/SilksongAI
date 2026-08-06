@@ -66,6 +66,28 @@ namespace WeaverNet.Mod.Game
                 return false;
             }
         }
+        public bool TryGetEnemy(Predicate<EnemyInstance> predicate, out EnemyInstance enemy)
+        {
+            try
+            {
+                foreach (var e in _enemies.Values)
+                { 
+                    if (predicate(e))
+                    {
+                        enemy = e;
+                        return true;
+                    }
+                }
+
+                enemy = null;
+                return false;
+            }
+            catch
+            {
+                enemy = null;
+                return false;
+            }
+        }
         public IEnumerable<EnemyInstance> GetEnemiesByName(string name)
         {
             return _enemies.Values.Where(e => e.Name == name);

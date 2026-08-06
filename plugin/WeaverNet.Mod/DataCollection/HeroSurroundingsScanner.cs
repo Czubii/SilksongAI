@@ -15,10 +15,6 @@ namespace WeaverNet.Mod.DataCollection
         {
             return HeroController.instance?.transform;
         }
-        public bool TryScanTerrain(out IReadOnlyList<RayData> rays)
-        {
-            return TryScan((int)RaycastTargetLayers.DefaultTerrain, out rays);
-        }
         public bool TryScan(int mask, out IReadOnlyList<RayData> rays)
         {
             rays = Array.Empty<RayData>();

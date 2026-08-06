@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -11,25 +12,34 @@ using WeaverNet.Core.Plugins.Recording;
 namespace WeaverNET.Infrastructure.Databases
 {
     /// <summary>
-    /// manages saving raw recordings
+    /// manages creation and saving of the recordings
     /// </summary>
-    public class RecordingCoordinator: IRecordingCoordinator
+    public class RecordingCoordinator<TFrame> : IRecordingCoordinator<TFrame>
     {
+        private readonly RecordingFrameTypeDefinition _recordingType;
         private readonly IRecordingRepository _recordingRepository;
-        private readonly IChannelFileWriter<RecordingFrame> _fileWriter;
+        private readonly IRecordingWriter _fileWriter;
         private readonly string _tempDirectory;
 
         private FileInfo _currentTempFile;
         private FightContext _currentFight;
 
-        private Channel<RecordingFrame> _channel;
+        private Channel<TFrame> _channel;
         private Task _writingTask;
 
-        public RecordingCoordinator(string tempDirectory, IChannelFileWriter<RecordingFrame> fileWriter, IRecordingRepository recordingRepository)
+        public RecordingCoordinator(string tempDirectory, RecordingFrameTypeDefinition recordingType, IRecordingWriter fileWriter, IRecordingRepository recordingRepository)
         {
             _tempDirectory = tempDirectory ?? throw new ArgumentNullException(nameof(tempDirectory));
+            _recordingType = recordingType ?? throw new ArgumentNullException(nameof(recordingType));
             _fileWriter = fileWriter ?? throw new ArgumentNullException(nameof(fileWriter));
             _recordingRepository = recordingRepository ?? throw new ArgumentNullException(nameof(recordingRepository));
+
+            if (_recordingType.FrameType != typeof(TFrame))
+            {
+                throw new ArgumentException(
+                    $"Recording type '{_recordingType.Id}' expects frames of type {_recordingType.FrameType.Name}, " +
+                    $"but coordinator uses {typeof(TFrame).Name}.");
+            }
         }
         public Task OnSessionStartAsync()
         {
@@ -40,9 +50,9 @@ namespace WeaverNET.Infrastructure.Databases
             _currentFight = context;
             return Task.CompletedTask;
         }
-        public ChannelWriter<RecordingFrame> BeginStream()
+        public ChannelWriter<TFrame> BeginStream()
         {
-            _channel = Channel.CreateBounded<RecordingFrame>(100);
+            _channel = Channel.CreateBounded<TFrame>(100);
             _currentTempFile = GetTempOutputFileInfo();
 
             // Store the task
@@ -81,11 +91,14 @@ namespace WeaverNET.Infrastructure.Databases
             var metadata = 
                 new BossfightRecordingMetadata(
                     _currentFight.Id, 
+                    _recordingType.Id,
+                    _recordingType.Version,
                     _currentFight.Boss.Id, 
                     _currentFight.StartTime, 
-                    _currentFight.Loadout, result, 
-                    _fileWriter.FileExtension);
-            var recording = new BossfightRecording(metadata, _currentTempFile);
+                    _currentFight.Loadout, 
+                    result);
+
+            var recording = new BossfightRecordingFile(metadata, _currentTempFile, _fileWriter.FileExtension);
             _recordingRepository.Add(recording);
         }
         private FileInfo GetTempOutputFileInfo()
@@ -95,7 +108,7 @@ namespace WeaverNET.Infrastructure.Databases
             return new FileInfo(
                 Path.Combine(
                     _tempDirectory,
-                    $"bossfight_recording_{Guid.NewGuid()}{_fileWriter.FileExtension}.temp"));
+                    $"bossfight_recording{_fileWriter.FileExtension}.temp"));
         }
     }
 }

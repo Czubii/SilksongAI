@@ -9,6 +9,8 @@ using WeaverNet.Core.Infrastructure.Interfaces;
 using WeaverNet.Core.Orchestration;
 using WeaverNet.Core.Orchestration.Interfaces;
 using WeaverNet.Core.Plugins;
+using WeaverNet.Core.Plugins.FrameCapture;
+using WeaverNet.Core.Plugins.Recording;
 using WeaverNet.Mod.DataCollection;
 using WeaverNet.Mod.Game;
 using WeaverNet.Mod.Game.Bosses;
@@ -157,8 +159,6 @@ namespace WeaverNet.Mod
 
         private ServiceContainer InitializeServices(RepositoryContainer repositories)
         {
-            var tempDirectory = Path.GetTempPath();
-
             PluginLog.Info("Initializing services...");
 
             var loadoutManager = new LoadoutManager();
@@ -192,20 +192,7 @@ namespace WeaverNet.Mod
             var objectFactory = new BossfightSessionObjectFactory(
                 respawnPointFactory);
 
-            var sessionTypeRegistry = new BossfightSessionTypeRegistry();
-            var defaultSession = new DefaultBossfightSession();
-
-            var recordingFrameSource = gameObject.AddComponent<FixedUpdateFrameSource>();
-
-            var recordingFileWriter = new JsonRecordingFrameWriter();
-            var recordingSession = new RecordingBossfightSession(
-                Path.Combine(tempDirectory, "WeaverNet", "Recordings"), 
-                recordingFrameSource, 
-                recordingFileWriter,
-                repositories.RecordingRepository);
-
-            sessionTypeRegistry.Register(defaultSession);
-            sessionTypeRegistry.Register(recordingSession);
+            var sessionTypeRegistry = InitializeSessionTypes(repositories, combatEntityTracker);
 
             var assembler = new BossfightSessionAssembler(
                 objectFactory,
@@ -224,7 +211,49 @@ namespace WeaverNet.Mod
                 raycastScanner,
                 raycastVisualizer);
         }
+        private BossfightSessionTypeRegistry InitializeSessionTypes(RepositoryContainer repositories, ICombatEntityQuery entityQuery)
+        {
+            var tempDirectory = Path.GetTempPath();
+            var sessionTypeRegistry = new BossfightSessionTypeRegistry();
+            var fixedUpdateSource = gameObject.AddComponent<FixedUpdateEventSource>();
+            // Default session ----------
+            var defaultSession = new DefaultBossfightSession("default");
 
+            // Recordings ---------------
+            var recordingFrameTypeRegistry = new RecordingFrameTypeRegistry();
+
+            var behavioralCloningFrameType =
+                new RecordingFrameTypeDefinition(
+                    "behavioral-cloning",
+                    BCFrame.FormatVersion,
+                    typeof(BCFrame));
+
+            recordingFrameTypeRegistry.Register(behavioralCloningFrameType);
+
+            // Recording. Here is a nice example of how to capture any data using this generic recording pipeline
+            var frameGenerator = new BCFrameGenerator(entityQuery);
+            var recordingFrameSourceFactory = new FixedUpdateFrameSourceFactory<BCFrame>(frameGenerator, fixedUpdateSource);
+
+            // You can select Msgpack / JSON output:
+            IRecordingParser recordingFileWriter = new JsonRecordingParser();
+            //IRecordingWriter<BehavioralCloningFrame> recordingFileWriter = new MsgpackFrameWriter<BehavioralCloningFrame>();
+
+            // The session factory implements the service wiring:
+            var recordingSession = new RecordingBossfightSessionFactory<BCFrame>(
+                "behavioral-cloning-recording",
+                Path.Combine(tempDirectory, "WeaverNet", "Recordings"),
+                behavioralCloningFrameType,
+                recordingFrameSourceFactory,
+                recordingFileWriter,
+                repositories.RecordingRepository);
+
+
+            // Registration ------------
+            sessionTypeRegistry.Register(defaultSession);
+            sessionTypeRegistry.Register(recordingSession);
+
+            return sessionTypeRegistry;
+        }
         private void InitializeGUI(RepositoryContainer repositories, ServiceContainer services)
         {
             PluginLog.Info("Initializing GUI...");
@@ -256,7 +285,6 @@ namespace WeaverNet.Mod
 
             PluginLog.Info("GUI initialized successfully.");
         }
-
         private void InitializeHarmony()
         {
             PluginLog.Info("Applying Harmony patches...");

@@ -1,4 +1,5 @@
 ﻿using BepInEx.Logging;
+using System;
 using WeaverNet.Core.Infrastructure.Interfaces;
 
 namespace WeaverNet.Mod
@@ -8,10 +9,12 @@ namespace WeaverNet.Mod
         private readonly ManualLogSource _logger;
         // Dedicated lock object to synchronize threads
         private readonly object _lock = new object();
+
         public BepInExPluginLogger(ManualLogSource logger)
         {
             _logger = logger;
         }
+
         public void Info(string message)
         {
             lock (_lock)
@@ -19,6 +22,7 @@ namespace WeaverNet.Mod
                 _logger.LogInfo(message);
             }
         }
+
         public void Warning(string message)
         {
             lock (_lock)
@@ -26,11 +30,19 @@ namespace WeaverNet.Mod
                 _logger.LogWarning(message);
             }
         }
-        public void Error(string message)
+
+        public void Error(string message, Exception exception = null)
         {
             lock (_lock)
             {
-                _logger.LogError(message);
+                if (exception != null)
+                {
+                    _logger.LogError($"{message}\n{exception}");
+                }
+                else
+                {
+                    _logger.LogError(message);
+                }
             }
         }
     }

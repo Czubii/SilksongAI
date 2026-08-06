@@ -99,8 +99,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Recording\MsgpackRecordingFrameWriter.cs" />
-    <Compile Include="Recording\JsonRecordingFrameWriter.cs" />
+    <Compile Include="Recording\MsgpackFrameFileWriter.cs" />
+    <Compile Include="Recording\JsonRecordingParser.cs" />
     <Compile Include="Recording\RecordingCoordinator.cs" />
     <Compile Include="Recording\RecordingRepository.cs" />
     <Compile Include="Repositories\BossfightCatalog.cs" />

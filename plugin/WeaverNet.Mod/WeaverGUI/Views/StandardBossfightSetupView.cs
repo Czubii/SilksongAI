@@ -97,7 +97,7 @@ namespace WeaverNet.Mod.WeaverGUI.Views
                     new IterationBoundary(_state.NumberOfAttempts.Value)
                     );
 
-                var session = _sessionAssembler.Assemble("recording", sessionConfig);
+                var session = _sessionAssembler.Assemble("behavioral-cloning-recording", sessionConfig);
                 var sessionTask = _orchestrator.StartAsync(session, CancellationToken.None);
 
                 Context.HideGUI();

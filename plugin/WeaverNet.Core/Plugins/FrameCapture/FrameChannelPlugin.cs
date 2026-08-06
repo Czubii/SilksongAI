@@ -5,21 +5,23 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using WeaverNet.Core.Infrastructure;
 using WeaverNet.Core.Orchestration;
+using WeaverNet.Core.Orchestration.Interfaces;
 using WeaverNet.Core.Plugins;
+using WeaverNet.Core.Plugins.FrameCapture;
 
 namespace WeaverNet.Mod.DataCollection
 {
-    public class FrameChannelPlugin<TFrame> : IFrameChannelPlugin<TFrame>
+    public class FrameChannelPlugin<TFrame> : IBossfightSessionPlugin
     {
         private readonly IReadOnlyCollection<IFrameChannelPluginSink<TFrame>> _listeners;
-        private readonly IFixedUpdateDataSource<TFrame> _frameSource;
+        private readonly IFixedUpdataFrameSourceFactory<TFrame> _frameSourceFactory;
         private CancellationTokenSource _cts;
         private Task _runningTask;
 
-        public FrameChannelPlugin(IFixedUpdateDataSource<TFrame> frameSource, IReadOnlyCollection<IFrameChannelPluginSink<TFrame>> listeners)
+        public FrameChannelPlugin(IFixedUpdataFrameSourceFactory<TFrame> frameSourceFactory, IReadOnlyCollection<IFrameChannelPluginSink<TFrame>> listeners)
         {
             _listeners = listeners ?? throw new ArgumentNullException(nameof(listeners));
-            _frameSource = frameSource ?? throw new ArgumentNullException(nameof(frameSource));
+            _frameSourceFactory = frameSourceFactory ?? throw new ArgumentNullException(nameof(frameSourceFactory));
         }
 
         public async Task OnSessionStartAsync()
@@ -43,7 +45,7 @@ namespace WeaverNet.Mod.DataCollection
             }
 
             _cts = new CancellationTokenSource();
-            _runningTask = DistributeFramesAsync(_cts.Token);
+            _runningTask = DistributeFramesAsync(context, _cts.Token);
         }
 
         public async Task OnFightEndAsync(FightResult result)
@@ -111,44 +113,45 @@ namespace WeaverNet.Mod.DataCollection
             }
         }
 
-        private async Task DistributeFramesAsync(CancellationToken ct)
+        private async Task DistributeFramesAsync(FightContext context, CancellationToken ct)
         {
-            var source = Channel.CreateBounded<TFrame>(
+            var sourceChannel = Channel.CreateBounded<TFrame>(
                 new BoundedChannelOptions(100)
                 {
                     FullMode = BoundedChannelFullMode.DropOldest,
                     SingleReader = true
                 });
 
-            _frameSource.Attach(source.Writer);
-            var sinks = NotifyStreamStart();
-
-            try
+            using (IFixedUpdateFrameSource<TFrame> FrameSource = _frameSourceFactory.Create(sourceChannel.Writer, context))
             {
-                while (await source.Reader.WaitToReadAsync(ct))
+                var sinks = NotifyStreamStart();
+                try
                 {
-                    while (source.Reader.TryRead(out var frame))
+                    while (await sourceChannel.Reader.WaitToReadAsync(ct))
                     {
-                        PostFrame(frame, sinks);
+                        while (sourceChannel.Reader.TryRead(out var frame))
+                        {
+                            PostFrame(frame, sinks);
+                        }
+                    }
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    // Normal shutdown
+                }
+                catch (Exception ex)
+                {
+                    PluginLog.Error($"Error in frame distribution loop: {ex}");
+                }
+                finally
+                {
+                    for (int i = 0; i < sinks.Count; i++)
+                    {
+                        sinks[i].TryComplete();
                     }
                 }
             }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                // Normal shutdown
-            }
-            catch (Exception ex)
-            {
-                PluginLog.Error($"Error in frame distribution loop: {ex}");
-            }
-            finally
-            {
-                _frameSource.Detach();
-                for (int i = 0; i < sinks.Count; i++)
-                {
-                    sinks[i].TryComplete();
-                }
-            }
+            
         }
     }
 }

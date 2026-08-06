@@ -7,13 +7,13 @@ namespace WeaverNet.Core.Orchestration
 {
     public class BossfightSessionTypeRegistry
     {
-        private readonly Dictionary<string, IBossfightSessionType> _types = new Dictionary<string, IBossfightSessionType>();
-        public IReadOnlyDictionary<string, IBossfightSessionType> Types => _types;
-        public void Register(IBossfightSessionType sessionType)
+        private readonly Dictionary<string, IBossfightSessionPluginFactory> _types = new Dictionary<string, IBossfightSessionPluginFactory>();
+        public IReadOnlyDictionary<string, IBossfightSessionPluginFactory> Types => _types;
+        public void Register(IBossfightSessionPluginFactory sessionType)
         {
-            if (_types.ContainsKey(sessionType.Type)) throw new InvalidOperationException($"Session type '{sessionType.Type}' already exists");
+            if (_types.ContainsKey(sessionType.Id)) throw new InvalidOperationException($"Session type '{sessionType.Id}' already exists");
 
-            _types.Add(sessionType.Type, sessionType);
+            _types.Add(sessionType.Id, sessionType);
         }
 
         public bool TryCreate(string type, BossfightSessionConfiguration context, out IReadOnlyList<IBossfightSessionPlugin> plugins)

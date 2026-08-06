@@ -136,18 +136,19 @@ namespace WeaverNet.Core.Orchestration
                 var fightContext = runtime.IterationStarted();
 
                 PluginLog.Info($"Starting fight iteration {runtime.CurrentIteration}.");
-                await NotifyFightStart(runtime.Session, fightContext);
-
                 _statusWriter.UpdateProgress(runtime);
 
                 await PrepareFight(runtime, modifier, ct);
+
+                await NotifyFightStart(runtime.Session, fightContext);
                 var result = await ExecuteFight(fightContext, ct);
-                if(result == FightResult.Failure)
+                await NotifyFightEnd(runtime.Session, result);
+
+                if (result == FightResult.Failure)
                 {
                     await _controller.AwaitCocoonAndRemoveAsync();
                 }
 
-                await NotifyFightEnd(runtime.Session, result);
                 runtime.IterationFinished(result);
 
                 PluginLog.Info(

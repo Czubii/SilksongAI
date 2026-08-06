@@ -82,10 +82,18 @@
     <Compile Include="Game\SceneBool.cs" />
     <Compile Include="Game\SceneInt.cs" />
     <Compile Include="Infrastructure\GameStateScope.cs" />
+    <Compile Include="Infrastructure\IFixedUpdateEventSource.cs" />
+    <Compile Include="Infrastructure\IFixedUpdateListener.cs" />
     <Compile Include="Infrastructure\Interfaces\IBossfightSetupData.cs" />
     <Compile Include="Infrastructure\Interfaces\IPluginLogger.cs" />
     <Compile Include="Infrastructure\Interfaces\IReadOnlyRepository.cs" />
     <Compile Include="Infrastructure\Interfaces\IRepository.cs" />
+    <Compile Include="Plugins\FrameCapture\IFixedUpdataFrameSourceFactory.cs" />
+    <Compile Include="Plugins\FrameCapture\IRecordingParser.cs" />
+    <Compile Include="Plugins\FrameCapture\IRecordingReader.cs" />
+    <Compile Include="Plugins\FrameCapture\IFrameGenerator.cs" />
+    <Compile Include="Plugins\FrameCapture\RecordingParserRegistry.cs" />
+    <Compile Include="Plugins\IRecordingFileExtension.cs" />
     <Compile Include="Plugins\Recording\IRecordingCoordinator.cs" />
     <Compile Include="Plugins\Recording\IRecordingRepository.cs" />
     <Compile Include="Infrastructure\Logger.cs" />
@@ -109,16 +117,17 @@
     <Compile Include="Orchestration\Interfaces\IBossfightSessionOrchestrator.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionPlugin.cs" />
     <Compile Include="Orchestration\Interfaces\IBossfightSessionStatus.cs" />
-    <Compile Include="Orchestration\Interfaces\IBossfightSessionType.cs" />
+    <Compile Include="Orchestration\Interfaces\IBossfightSessionPluginFactory.cs" />
     <Compile Include="Plugins\DefaultBossfightSession.cs" />
-    <Compile Include="Plugins\Recording\RecordingFrame.cs" />
     <Compile Include="Plugins\FrameCapture\FrameChannelPlugin.cs" />
-    <Compile Include="Infrastructure\IFixedUpdateDataSource.cs" />
-    <Compile Include="Infrastructure\IChannelFileWriter.cs" />
-    <Compile Include="Plugins\FrameCapture\IFrameChannelPlugin.cs" />
+    <Compile Include="Plugins\FrameCapture\IFixedUpdateFrameSource.cs" />
+    <Compile Include="Plugins\FrameCapture\IRecordingWriter.cs" />
     <Compile Include="Plugins\FrameCapture\IFrameChannelPluginSink.cs" />
-    <Compile Include="Plugins\Recording\BossfightRecording.cs" />
+    <Compile Include="Plugins\Recording\BossfightRecordingFile.cs" />
     <Compile Include="Plugins\Recording\BossfightRecordingMetadata.cs" />
+    <Compile Include="Plugins\Recording\IRecordingFrameTypeQuery.cs" />
+    <Compile Include="Plugins\Recording\RecordingFrameTypeDefinition.cs" />
+    <Compile Include="Plugins\Recording\RecordingFrameTypeRegistry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

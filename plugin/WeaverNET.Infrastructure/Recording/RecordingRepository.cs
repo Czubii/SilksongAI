@@ -9,10 +9,10 @@ namespace WeaverNET.Infrastructure.Recording
 {
     public class RecordingRepository : IRecordingRepository
     {
-        private readonly Dictionary<Guid, BossfightRecording> _entriesById =
-            new Dictionary<Guid, BossfightRecording>();
+        private readonly Dictionary<Guid, BossfightRecordingFile> _entriesById =
+            new Dictionary<Guid, BossfightRecordingFile>();
 
-        public IReadOnlyCollection<BossfightRecording> All
+        public IReadOnlyCollection<BossfightRecordingFile> All
         {
             get
             {
@@ -44,43 +44,44 @@ namespace WeaverNET.Infrastructure.Recording
         /// <summary>
         /// Moves the actual Recording File.
         /// </summary>
-        public void Add(BossfightRecording data)
+        public void Add(BossfightRecordingFile recording)
         {
             EnsureLoaded();
 
-            if (_entriesById.ContainsKey(data.Metadata.Id))
+            if (_entriesById.ContainsKey(recording.Metadata.Id))
                 throw new ArgumentException(
-                    $"Recording '{data.Metadata.Id}' already exists.");
+                    $"Recording '{recording.Metadata.Id}' already exists.");
 
             var recordingRoot = GetOutputPath(
-                data.Metadata.Id,
-                data.Metadata.BossId);
+                recording.Metadata.Id,
+                recording.Metadata.BossId);
 
             Directory.CreateDirectory(recordingRoot);
 
             string recordingPath = Path.Combine(
                 recordingRoot,
-                "recording" + data.Metadata.RecordingFormat);
+                "recording" + recording.FileExtension);
 
             File.Move(
-                data.RecordingFile.FullName,
+                recording.RecordingFile.FullName,
                 recordingPath);
 
             string metadataJsonString =
                 JsonConvert.SerializeObject(
-                    data.Metadata,
+                    recording.Metadata,
                     Formatting.Indented);
 
             File.WriteAllText(
                 Path.Combine(recordingRoot, "metadata.json"),
                 metadataJsonString);
 
-            var storedRecording = new BossfightRecording(
-                data.Metadata,
-                new FileInfo(recordingPath));
+            var storedRecording = new BossfightRecordingFile(
+                recording.Metadata,
+                new FileInfo(recordingPath),
+                recording.FileExtension);
 
             _entriesById.Add(
-                data.Metadata.Id,
+                recording.Metadata.Id,
                 storedRecording);
 
             RepositoryChanged?.Invoke();
@@ -89,7 +90,7 @@ namespace WeaverNET.Infrastructure.Recording
         /// <summary>
         /// Moves the actual Recording File.
         /// </summary>
-        public void AddOrReplace(BossfightRecording data)
+        public void AddOrReplace(BossfightRecordingFile data)
         {
             EnsureLoaded();
 
@@ -105,7 +106,7 @@ namespace WeaverNET.Infrastructure.Recording
         {
             EnsureLoaded();
 
-            BossfightRecording recording;
+            BossfightRecordingFile recording;
 
             if (!_entriesById.TryGetValue(id, out recording))
                 return;
@@ -122,7 +123,7 @@ namespace WeaverNET.Infrastructure.Recording
             RepositoryChanged?.Invoke();
         }
 
-        public BossfightRecording GetById(Guid id)
+        public BossfightRecordingFile GetById(Guid id)
         {
             EnsureLoaded();
 
@@ -171,9 +172,10 @@ namespace WeaverNET.Infrastructure.Recording
                     if (metadata == null)
                         continue;
 
-                    var recording = new BossfightRecording(
+                    var recording = new BossfightRecordingFile(
                         metadata,
-                        files.RecordingFile);
+                        files.RecordingFile,
+                        files.RecordingFile.Extension);
 
                     _entriesById.Add(
                         metadata.Id,

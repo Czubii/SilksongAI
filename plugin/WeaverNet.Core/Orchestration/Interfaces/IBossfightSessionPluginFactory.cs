@@ -2,9 +2,9 @@
 
 namespace WeaverNet.Core.Orchestration.Interfaces
 {
-    public interface IBossfightSessionType
+    public interface IBossfightSessionPluginFactory
     {
-        string Type { get; }
+        string Id { get; }
         IReadOnlyList<IBossfightSessionPlugin> CreatePlugins(BossfightSessionConfiguration config);
     }
 }

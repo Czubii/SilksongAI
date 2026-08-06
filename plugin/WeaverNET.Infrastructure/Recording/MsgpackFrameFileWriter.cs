@@ -3,18 +3,17 @@ using System.IO;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using WeaverNet.Core.Infrastructure;
-using WeaverNet.Core.Plugins;
 
 namespace WeaverNET.Infrastructure.Databases
 {
-    public class MsgpackFrameWriter : IChannelFileWriter<RecordingFrame>
+    public class MsgpackFrameWriter<TFrame> : IRecordingWriter<TFrame>
     {
         public string FileExtension => ".msgpack";
 
         /// <summary>
         /// To stop the exectuion you should close the stream
         /// </summary>
-        public async Task WriteAsync(ChannelReader<RecordingFrame> reader, FileInfo file)
+        public async Task WriteAsync(ChannelReader<TFrame> reader, FileInfo file)
         {
             file.Directory?.Create();
 
@@ -24,7 +23,9 @@ namespace WeaverNET.Infrastructure.Databases
                 {
                     while (reader.TryRead(out var frame))
                     {
-                        byte[] msgPackBytes = MessagePackSerializer.Serialize(frame);
+                        var options = MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance); // todo FIND A WAY TO DEAL WITH THIS
+
+                        byte[] msgPackBytes = MessagePackSerializer.Serialize(frame, options);
                         await fileStream.WriteAsync(msgPackBytes, 0, msgPackBytes.Length);
                     }
                 }

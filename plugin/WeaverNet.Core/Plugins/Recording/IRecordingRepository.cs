@@ -4,7 +4,7 @@ using WeaverNet.Core.Plugins.Recording;
 
 namespace WeaverNet.Core.Infrastructure
 {
-    public interface IRecordingRepository: IRepository<BossfightRecording, Guid>
+    public interface IRecordingRepository: IRepository<BossfightRecordingFile, Guid>
     {
     }
 }

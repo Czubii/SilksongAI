@@ -20,12 +20,12 @@ namespace WeaverNet.Mod.Game.Debug
         public int Mask { get; private set; }
         public void Initialize(IRaycastScanner scanner)
         {
-            Mask = (int)RaycastTargetLayers.DefaultTerrain;
+            Mask = (int)HitboxLayers.Terrain;
             _scanner = scanner;
             enabled = true;
         }
 
-        public void SetMask(RaycastTargetLayers mask)
+        public void SetMask(HitboxLayers mask)
         {
             Mask = (int)mask;
         }

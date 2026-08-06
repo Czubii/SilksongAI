@@ -3,36 +3,48 @@ using WeaverNet.Core.Infrastructure;
 using WeaverNet.Core.Orchestration;
 using WeaverNet.Core.Orchestration.Interfaces;
 using WeaverNet.Core.Plugins;
+using WeaverNet.Core.Plugins.FrameCapture;
+using WeaverNet.Core.Plugins.Recording;
 using WeaverNET.Infrastructure.Databases;
 
 namespace WeaverNet.Mod.DataCollection
 {
-    internal class RecordingBossfightSession: IBossfightSessionType
+    internal class RecordingBossfightSessionFactory<TFrame> : IBossfightSessionPluginFactory
     {
-        public string Type => "recording";
-        private readonly IFixedUpdateDataSource<RecordingFrame> _frameSource;
-        private readonly IChannelFileWriter<RecordingFrame> _frameFileWriter;
+        public string Id => _id;
+        private readonly string _id;
+        private readonly IFixedUpdataFrameSourceFactory<TFrame> _frameSourceFactory;
+        private readonly IRecordingWriter _frameFileWriter;
         private readonly IRecordingRepository _recordingRepository;
+        private readonly RecordingFrameTypeDefinition _frameTypeDefinition;
         private readonly string _outputPath;
-        public RecordingBossfightSession(
-            string outputPath, 
-            IFixedUpdateDataSource<RecordingFrame> frameSource, 
-            IChannelFileWriter<RecordingFrame> frameFileWriter, 
+        public RecordingBossfightSessionFactory(
+            string Id,
+            string outputPath,
+            RecordingFrameTypeDefinition frameTypeDefinition,
+            IFixedUpdataFrameSourceFactory<TFrame> frameSourceFactory, 
+            IRecordingWriter frameFileWriter, 
             IRecordingRepository recordingRepository)
         {
+            _id = Id;
             _outputPath = outputPath;
-            _frameSource = frameSource;
+            _frameTypeDefinition = frameTypeDefinition;
+            _frameSourceFactory = frameSourceFactory;
             _frameFileWriter = frameFileWriter;
             _recordingRepository = recordingRepository;
         }
-        public IReadOnlyList<IBossfightSessionPlugin> CreatePlugins(BossfightSessionConfiguration config)
+
+        /// <summary>
+        /// im 99% sure that if someone calls this during session something will break
+        /// </summary>
+        public IReadOnlyList<IBossfightSessionPlugin> CreatePlugins(BossfightSessionConfiguration config) 
         {
             return new IBossfightSessionPlugin[]
             {
-                new FrameChannelPlugin<RecordingFrame>(_frameSource,
-                    new IFrameChannelPluginSink<RecordingFrame>[]
+                new FrameChannelPlugin<TFrame>(_frameSourceFactory,
+                    new IFrameChannelPluginSink<TFrame>[]
                     {
-                        new RecordingCoordinator(_outputPath, _frameFileWriter, _recordingRepository)
+                        new RecordingCoordinator<TFrame>(_outputPath, _frameTypeDefinition, _frameFileWriter, _recordingRepository)
                     })
             };
         }

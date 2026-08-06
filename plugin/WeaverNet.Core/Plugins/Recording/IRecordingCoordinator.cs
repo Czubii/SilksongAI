@@ -1,6 +1,6 @@
 ﻿namespace WeaverNet.Core.Plugins.Recording
 {
-    public interface IRecordingCoordinator : IFrameChannelPluginSink<RecordingFrame>
+    public interface IRecordingCoordinator<TFrame> : IFrameChannelPluginSink<TFrame>
     {
     }
 }
