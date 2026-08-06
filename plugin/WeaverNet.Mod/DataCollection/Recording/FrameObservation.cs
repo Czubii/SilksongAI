@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WeaverNet.Mod.DataCollection.Recording;
-
-namespace WeaverNet.Core.Plugins.Recording
+﻿namespace WeaverNet.Mod.DataCollection.Recording
 {
     public class FrameObservation
     {
+        public HeroObservation Hero { get; }
         public EnemyObservation Boss { get; }
-        public FrameObservation(EnemyObservation boss)
+        public FrameObservation(HeroObservation hero, EnemyObservation boss)
         {
+            Hero = hero;
             Boss = boss;
         }
     }

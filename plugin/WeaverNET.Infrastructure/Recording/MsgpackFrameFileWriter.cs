@@ -3,17 +3,18 @@ using System.IO;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using WeaverNet.Core.Infrastructure;
+using WeaverNet.Core.Plugins.FrameCapture;
 
 namespace WeaverNET.Infrastructure.Databases
 {
-    public class MsgpackFrameWriter<TFrame> : IRecordingWriter<TFrame>
+    public class MsgpackRecordingParser : IRecordingParser
     {
         public string FileExtension => ".msgpack";
 
         /// <summary>
         /// To stop the exectuion you should close the stream
         /// </summary>
-        public async Task WriteAsync(ChannelReader<TFrame> reader, FileInfo file)
+        public async Task WriteAsync<TFrame>(ChannelReader<TFrame> reader, FileInfo file)
         {
             file.Directory?.Create();
 
@@ -33,5 +34,11 @@ namespace WeaverNET.Infrastructure.Databases
                 await fileStream.FlushAsync();
             }
         }
+
+        public Task ReadAsync<TFrame>(ChannelWriter<TFrame> writer, FileInfo file)
+        {
+            throw new System.NotImplementedException();
+        }
+
     }
 }

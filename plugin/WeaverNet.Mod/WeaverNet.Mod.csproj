@@ -135,7 +135,10 @@
     <Compile Include="DataCollection\RayData.cs" />
     <Compile Include="DataCollection\RecordingBossfightSession.cs" />
     <Compile Include="DataCollection\Recording\BCFrameGenerator.cs" />
+    <Compile Include="DataCollection\Recording\FrameAction.cs" />
     <Compile Include="DataCollection\Recording\FrameObservation.cs" />
+    <Compile Include="DataCollection\Recording\FsmObservation.cs" />
+    <Compile Include="DataCollection\Recording\HeroObservation.cs" />
     <Compile Include="Game\Debug\RaycastScannerVisulizer.cs" />
     <Compile Include="Game\HitboxLayers.cs" />
     <Compile Include="Game\HudHelper.cs" />

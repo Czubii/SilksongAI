@@ -213,7 +213,18 @@ namespace WeaverNet.Mod
         }
         private BossfightSessionTypeRegistry InitializeSessionTypes(RepositoryContainer repositories, ICombatEntityQuery entityQuery)
         {
-            var tempDirectory = Path.GetTempPath();
+            var tempDirectory = Path.GetTempPath(); // for recordings
+
+            //File parsers for recording/processing
+            var recordingParserRegistry = new RecordingParserRegistry();
+
+            IRecordingParser jsonRecordingParser = new JsonRecordingParser();
+            IRecordingParser msgpackRecordingParser = new MsgpackRecordingParser();
+
+            recordingParserRegistry.Register(jsonRecordingParser);
+            recordingParserRegistry.Register(msgpackRecordingParser);
+
+
             var sessionTypeRegistry = new BossfightSessionTypeRegistry();
             var fixedUpdateSource = gameObject.AddComponent<FixedUpdateEventSource>();
             // Default session ----------
@@ -234,9 +245,7 @@ namespace WeaverNet.Mod
             var frameGenerator = new BCFrameGenerator(entityQuery);
             var recordingFrameSourceFactory = new FixedUpdateFrameSourceFactory<BCFrame>(frameGenerator, fixedUpdateSource);
 
-            // You can select Msgpack / JSON output:
-            IRecordingParser recordingFileWriter = new JsonRecordingParser();
-            //IRecordingWriter<BehavioralCloningFrame> recordingFileWriter = new MsgpackFrameWriter<BehavioralCloningFrame>();
+
 
             // The session factory implements the service wiring:
             var recordingSession = new RecordingBossfightSessionFactory<BCFrame>(
@@ -244,7 +253,7 @@ namespace WeaverNet.Mod
                 Path.Combine(tempDirectory, "WeaverNet", "Recordings"),
                 behavioralCloningFrameType,
                 recordingFrameSourceFactory,
-                recordingFileWriter,
+                jsonRecordingParser,
                 repositories.RecordingRepository);
 
 
