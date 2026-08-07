@@ -11,7 +11,7 @@ namespace WeaverNet.Core.Game
         public Loadout(string name, AbilitySet abilities, CrestToolSet tools, PlayerUpgradeSet upgrades)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            Abilities = abilities ?? throw new ArgumentNullException(nameof(abilities)); //TODO implement such pattern in the remaining data classes
+            Abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
             Tools = tools ?? throw new ArgumentNullException(nameof(tools));
             Upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
         }

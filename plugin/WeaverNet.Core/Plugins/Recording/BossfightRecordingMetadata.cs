@@ -9,6 +9,7 @@ namespace WeaverNet.Core.Plugins.Recording
         public Guid Id { get; }
         public string RecordingFrameTypeId { get; }
         public int RecordingFrameTypeVersion { get; }
+        //TODO public int string byte[] GameVersion { get; }
         public string BossId { get; }
         public DateTime StartTime { get; }
         public Loadout Loadout { get; }

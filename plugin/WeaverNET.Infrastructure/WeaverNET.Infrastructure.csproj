@@ -102,7 +102,7 @@
     <Compile Include="Recording\MsgpackFrameFileWriter.cs" />
     <Compile Include="Recording\JsonRecordingParser.cs" />
     <Compile Include="Recording\RecordingCoordinator.cs" />
-    <Compile Include="Recording\RecordingRepository.cs" />
+    <Compile Include="Repositories\RecordingRepository.cs" />
     <Compile Include="Repositories\BossfightCatalog.cs" />
     <Compile Include="Repositories\Json\JsonBossRepository.cs" />
     <Compile Include="Repositories\Json\JsonLoadoutRepository.cs" />
@@ -125,6 +125,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Databases\" />
+    <Folder Include="Processing\" />
     <Folder Include="Repositories\Interfaces\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -7,7 +7,7 @@ using WeaverNet.Core.Plugins.Recording;
 
 namespace WeaverNET.Infrastructure.Recording
 {
-    public class RecordingRepository : IRecordingRepository
+    public class RecordingRepository : IRecordingRepository // TODO in the future it may be worth adding a database for metadata storage
     {
         private readonly Dictionary<Guid, BossfightRecordingFile> _entriesById =
             new Dictionary<Guid, BossfightRecordingFile>();
