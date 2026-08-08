@@ -1,19 +1,41 @@
 ﻿using BepInEx;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using WeaverNet.Mod.WeaverGUI.Styles;
 
 namespace WeaverNet.Mod.WeaverGUI.Elements
 {
+
     public class DropdownState<T>
     {
-        public int SelectedIdx = -1;
-        public T SelectedOption;
-        public bool Expanded;
+        private int _selectedIdx;
 
-        public Rect ButtonRect;
-        public Rect ScreenButtonRect;
+        public event Action<T> ValueChanged;
+        public event Action<int> IndexChanged;
+        public int SelectedIdx
+        {
+            get => _selectedIdx;
+            set
+            {
+                if (_selectedIdx != value)
+                {
+                    _selectedIdx = value;
+                    IndexChanged?.Invoke(_selectedIdx);
+                    ValueChanged?.Invoke(SelectedOption);
+                }
+            }
+        }
+        public T SelectedOption { get; set; }
+        public bool Expanded { get; set; }
+        public Rect ButtonRect { get; set; }
+        public Rect ScreenButtonRect { get; set; }
+
+        public DropdownState(int selectedIdx = -1)
+        {
+            _selectedIdx = selectedIdx;
+        }
     }
 
     public static partial class PluginGUI
