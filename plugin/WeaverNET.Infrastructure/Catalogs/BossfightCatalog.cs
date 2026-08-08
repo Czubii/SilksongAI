@@ -4,7 +4,7 @@ using WeaverNet.Core.Game;
 using WeaverNet.Core.Game.Interfaces;
 using WeaverNet.Core.Infrastructure.Interfaces;
 
-namespace WeaverNET.Infrastructure.Data
+namespace WeaverNET.Infrastructure.Catalogs
 {
     public class BossfightCatalog : IBossfightCatalog
     {

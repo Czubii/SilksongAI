@@ -98,8 +98,13 @@ namespace WeaverNET.Infrastructure.Databases
                     _currentFight.Loadout, 
                     result);
 
-            var recording = new BossfightRecordingFile(metadata, _currentTempFile, _fileWriter.FileExtension);
-            _recordingRepository.Add(recording);
+            var recording = new FileReference<BossfightRecordingMetadata>(
+                _currentFight.Id, 
+                metadata, 
+                _currentTempFile, 
+                _fileWriter.FileExtension);
+
+            _recordingRepository.Import(recording);
         }
         private FileInfo GetTempOutputFileInfo()
         {

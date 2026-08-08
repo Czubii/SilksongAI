@@ -170,6 +170,7 @@
     <Compile Include="WeaverGUI\Popups\ConfirmPopup.cs" />
     <Compile Include="WeaverGUI\Styles\Dropdown.cs" />
     <Compile Include="WeaverGUI\Views\BaseView.cs" />
+    <Compile Include="WeaverGUI\Windows\DatasetCreatorWindow.cs" />
     <Compile Include="WeaverGUI\Windows\TestWindow.cs" />
     <Compile Include="WeaverGUI\CursorPatches.cs" />
     <Compile Include="WeaverGUI\Elements\Helpers.cs" />

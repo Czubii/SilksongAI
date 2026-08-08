@@ -39,6 +39,9 @@
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=10.0.0.10, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.10.0.10\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Bcl.HashCode, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.HashCode.6.0.0\lib\net462\Microsoft.Bcl.HashCode.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -77,17 +80,20 @@
     <Compile Include="Game\Interfaces\IRespawnPointFactory.cs" />
     <Compile Include="Game\Interfaces\ITeleportService.cs" />
     <Compile Include="Game\Loadout.cs" />
-    <Compile Include="Game\LoadoutData.cs" />
     <Compile Include="Game\PlayerUpgradeSet.cs" />
     <Compile Include="Game\SceneBool.cs" />
     <Compile Include="Game\SceneInt.cs" />
+    <Compile Include="Infrastructure\FileReference.cs" />
     <Compile Include="Infrastructure\GameStateScope.cs" />
     <Compile Include="Infrastructure\IFixedUpdateEventSource.cs" />
     <Compile Include="Infrastructure\IFixedUpdateListener.cs" />
-    <Compile Include="Infrastructure\Interfaces\IBossfightSetupData.cs" />
+    <Compile Include="Infrastructure\Interfaces\IBossfightCatalog.cs" />
+    <Compile Include="Infrastructure\Interfaces\IFileReferenceRepository.cs" />
     <Compile Include="Infrastructure\Interfaces\IPluginLogger.cs" />
     <Compile Include="Infrastructure\Interfaces\IReadOnlyRepository.cs" />
+    <Compile Include="Infrastructure\Interfaces\IRecordingCatalog.cs" />
     <Compile Include="Infrastructure\Interfaces\IRepository.cs" />
+    <Compile Include="Infrastructure\LoadoutValueComparer.cs" />
     <Compile Include="Plugins\FrameCapture\IFixedUpdataFrameSourceFactory.cs" />
     <Compile Include="Plugins\FrameCapture\IRecordingParser.cs" />
     <Compile Include="Plugins\FrameCapture\IRecordingReader.cs" />
@@ -123,7 +129,6 @@
     <Compile Include="Plugins\FrameCapture\IFixedUpdateFrameSource.cs" />
     <Compile Include="Plugins\FrameCapture\IRecordingWriter.cs" />
     <Compile Include="Plugins\FrameCapture\IFrameChannelPluginSink.cs" />
-    <Compile Include="Plugins\Recording\BossfightRecordingFile.cs" />
     <Compile Include="Plugins\Recording\BossfightRecordingMetadata.cs" />
     <Compile Include="Plugins\Recording\IRecordingFrameTypeQuery.cs" />
     <Compile Include="Plugins\Recording\RecordingFrameTypeDefinition.cs" />

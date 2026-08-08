@@ -19,6 +19,7 @@ using WeaverNet.Mod.Game.Player;
 using WeaverNet.Mod.WeaverGUI;
 using WeaverNet.Mod.WeaverGUI.Views;
 using WeaverNet.Mod.WeaverGUI.Windows;
+using WeaverNET.Infrastructure.Catalogs;
 using WeaverNET.Infrastructure.Data;
 using WeaverNET.Infrastructure.Data.Json;
 using WeaverNET.Infrastructure.Databases;
@@ -39,16 +40,19 @@ namespace WeaverNet.Mod
             public IBossRepository BossRepository { get; }
             public ILoadoutRepository LoadoutRepository { get; }
             public IRecordingRepository RecordingRepository { get; }
+            public IRecordingCatalog RecordingCatalog { get; }
             public RepositoryContainer(
                 IBossfightCatalog catalog,
                 IBossRepository bossRepository,
                 ILoadoutRepository loadoutRepository,
-                IRecordingRepository recordingRepository)
+                IRecordingRepository recordingRepository,
+                IRecordingCatalog recordingCatalog)
             {
                 Catalog = catalog;
                 BossRepository = bossRepository;
                 LoadoutRepository = loadoutRepository;
                 RecordingRepository = recordingRepository;
+                RecordingCatalog = recordingCatalog;
             }
         }
 
@@ -144,17 +148,19 @@ namespace WeaverNet.Mod
             var loadoutRepository = new JsonLoadoutRepository(loadoutRepoPath);
             var recordingRepository = new RecordingRepository(recordingRepoPath);
 
-            var catalog = new BossfightCatalog(
+            var bossfightCatalog = new BossfightCatalog(
                 bossRepository,
                 loadoutRepository);
+            var recordingCatalog = new RecordingCatalog(bossRepository, recordingRepository);
 
             PluginLog.Info("Repositories loaded successfully.");
 
             return new RepositoryContainer(
-                catalog,
+                bossfightCatalog,
                 bossRepository,
                 loadoutRepository,
-                recordingRepository);
+                recordingRepository,
+                recordingCatalog);
         }
 
         private ServiceContainer InitializeServices(RepositoryContainer repositories)
@@ -288,9 +294,12 @@ namespace WeaverNet.Mod
 
             var debugWindow = new DebugWindow("Debug", services.HitboxVisualizer, services.RaycastVisualizer);
 
+            var datasetCreatorWindow = new DatasetCreatorWindow(repositories.RecordingCatalog, repositories.RecordingRepository);
+
             windowManager.Register(loadoutWindow);
             windowManager.Register(bossfightSessionWindow);
             windowManager.Register(debugWindow);
+            windowManager.Register(datasetCreatorWindow);
 
             PluginLog.Info("GUI initialized successfully.");
         }
