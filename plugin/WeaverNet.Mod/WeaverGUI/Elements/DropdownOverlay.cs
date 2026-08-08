@@ -7,16 +7,17 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
 {
     public class DropdownOverlay<T> : IGUIOverlay
     {
-        private readonly DropdownState<T> _state;
+        private readonly IDropdownState<T> _state;
         private readonly IReadOnlyList<T> _elements;
         private readonly Func<T, string> _labelSelector;
-
+        private readonly Action<(bool SelectionChanged, int SelectedIdx)> _onClose;
         public bool IsAlive => _state.Expanded;
 
         public DropdownOverlay(
-            DropdownState<T> state,
+            IDropdownState<T> state,
             IReadOnlyList<T> elements,
-            Func<T, string> labelSelector)
+            Func<T, string> labelSelector,
+            Action<(bool SelectionChanged, int SelectedIdx)> onClose)
         {
             _state = state;
             _elements = elements;
@@ -57,8 +58,7 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
                         ? WeaverNetStyles.AccentButton
                         : WeaverNetStyles.Button))
                 {
-                    _state.SelectedIdx = i;
-                    _state.Expanded = false;
+                    SwitchSelection(i);
                 }
             }
 
@@ -67,8 +67,19 @@ namespace WeaverNet.Mod.WeaverGUI.Elements
             if (Event.current.type == EventType.MouseDown &&
                 !rect.Contains(Event.current.mousePosition))
             {
-                _state.Expanded = false;
+                Close();
                 Event.current.Use();
+            }
+        }
+        private void Close()
+        {
+            _onClose?.Invoke((false, _state.SelectedIdx));
+        }
+        private void SwitchSelection(int newIndex)
+        {
+            if (newIndex >= 0 && newIndex < _elements.Count)
+            {
+                _onClose?.Invoke((true, newIndex));
             }
         }
     }
